@@ -1,4 +1,4 @@
-package futur.apps.composeproject1.DataStore
+package futur.apps.composeproject1._Mains
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import futur.apps.composeproject1.DataStore.DataStoreManager
 import futur.apps.composeproject1.QuizFiles.Question
 import futur.apps.composeproject1.RoomDatabase.DataRepository
 import kotlinx.coroutines.Job
@@ -53,7 +54,7 @@ class MainViewModel @Inject constructor(
         }
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000), initialValue = emptyList()
+            started = SharingStarted.Companion.WhileSubscribed(5000), initialValue = emptyList()
         )
 
 
@@ -77,15 +78,15 @@ class MainViewModel @Inject constructor(
     // dataStore items
     val isDarkMode: StateFlow<Boolean> = dataStore.isDarkTheme.stateIn(
         viewModelScope,
-        SharingStarted.Eagerly, false
+        SharingStarted.Companion.Eagerly, false
     )
     val langue: StateFlow<String> = dataStore.langue.stateIn(
         viewModelScope,
-        SharingStarted.Eagerly, "English"
+        SharingStarted.Companion.Eagerly, "English"
     )
     val username: StateFlow<String> = dataStore.username.stateIn(
         viewModelScope,
-        SharingStarted.Eagerly, "User"
+        SharingStarted.Companion.Eagerly, "User"
     )
 
 

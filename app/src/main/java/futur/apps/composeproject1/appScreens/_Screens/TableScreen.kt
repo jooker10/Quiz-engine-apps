@@ -1,4 +1,4 @@
-package futur.apps.composeproject1.AppScreens._Screens
+package futur.apps.composeproject1.appScreens._Screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
@@ -16,7 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import futur.apps.composeproject1.AppScreens.TableCard
+import futur.apps.composeproject1.appScreens.TableCard
 import futur.apps.composeproject1.RoomDatabase.DbViewModel
 import kotlinx.coroutines.launch
 

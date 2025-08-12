@@ -1,4 +1,4 @@
-package futur.apps.composeproject1.AppScreens._Screens
+package futur.apps.composeproject1.appScreens._Screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -31,7 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import futur.apps.composeproject1.DataStore.MainViewModel
+import futur.apps.composeproject1._Mains.MainViewModel
 
 @Composable
 fun QuizScreen(

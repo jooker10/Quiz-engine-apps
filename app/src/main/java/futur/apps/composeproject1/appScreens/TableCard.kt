@@ -1,4 +1,4 @@
-package futur.apps.composeproject1.AppScreens
+package futur.apps.composeproject1.appScreens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

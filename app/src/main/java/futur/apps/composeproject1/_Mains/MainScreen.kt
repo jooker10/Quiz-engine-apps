@@ -7,11 +7,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
-import futur.apps.composeproject1.AppScreens.NavGraphs.AppNavGraph
-import futur.apps.composeproject1.AppScreens.Scaffold.BottomNavigationBar
-import futur.apps.composeproject1.AppScreens.Scaffold.FAB
-import futur.apps.composeproject1.AppScreens.Scaffold.TopBar
-import futur.apps.composeproject1.DataStore.MainViewModel
+import futur.apps.composeproject1.appScreens.NavGraphs.AppNavGraph
+import futur.apps.composeproject1.appScreens.Scaffold.BottomNavigationBar
+import futur.apps.composeproject1.appScreens.Scaffold.FAB
+import futur.apps.composeproject1.appScreens.Scaffold.TopBar
 
 @Composable
 fun MainScreen(mainViewModel: MainViewModel) {

@@ -1,4 +1,4 @@
-package futur.apps.composeproject1.AppScreens.NavGraphs
+package futur.apps.composeproject1.appScreens.NavGraphs
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -7,14 +7,14 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
-import futur.apps.composeproject1.AppScreens._Screens.TableScreen
-import futur.apps.composeproject1.AppScreens._Screens.LoginScreen
-import futur.apps.composeproject1.AppScreens._Screens.QuizScreen
-import futur.apps.composeproject1.AppScreens._Screens.RegisterScreen
-import futur.apps.composeproject1.AppScreens._Screens.SettingsScreen
-import futur.apps.composeproject1.AppScreens.Screen
-import futur.apps.composeproject1.AppScreens._Screens.HomeScreen
-import futur.apps.composeproject1.DataStore.MainViewModel
+import futur.apps.composeproject1.appScreens._Screens.TableScreen
+import futur.apps.composeproject1.appScreens._Screens.LoginScreen
+import futur.apps.composeproject1.appScreens._Screens.QuizScreen
+import futur.apps.composeproject1.appScreens._Screens.RegisterScreen
+import futur.apps.composeproject1.appScreens._Screens.SettingsScreen
+import futur.apps.composeproject1.appScreens.Screen
+import futur.apps.composeproject1.appScreens._Screens.HomeScreen
+import futur.apps.composeproject1._Mains.MainViewModel
 
 
 @Composable

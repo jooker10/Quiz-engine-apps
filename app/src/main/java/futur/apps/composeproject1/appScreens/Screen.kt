@@ -1,4 +1,4 @@
-package futur.apps.composeproject1.AppScreens
+package futur.apps.composeproject1.appScreens
 
 sealed class Screen(val route : String)
 {

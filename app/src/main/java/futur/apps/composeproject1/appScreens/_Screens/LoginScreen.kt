@@ -1,4 +1,4 @@
-package futur.apps.composeproject1.AppScreens._Screens
+package futur.apps.composeproject1.appScreens._Screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,14 +11,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun RegisterScreen() {
+fun LoginScreen() {
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Register Screen",
+            text = "Login Screen",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
 
