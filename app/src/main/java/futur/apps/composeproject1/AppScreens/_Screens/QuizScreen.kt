@@ -31,13 +31,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import futur.apps.composeproject1.DataStore.DataStoreViewModel
-import futur.apps.composeproject1.QuizFiles.QuizViewModel
+import futur.apps.composeproject1.DataStore.MainViewModel
 
 @Composable
 fun QuizScreen(
-    viewModel: QuizViewModel = hiltViewModel(),
-    dataStoreViewModel: DataStoreViewModel = hiltViewModel()
+    viewModel: MainViewModel = hiltViewModel()
 ) {
     val questions by viewModel.questions.collectAsState()
     val index by viewModel.currentIndex
@@ -99,7 +97,8 @@ fun QuizScreen(
             Button(
                 onClick = {
                     viewModel.stopTimer()
-                    viewModel.confirmAnswer() },
+                    viewModel.confirmAnswer()
+                },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = selectedOption != null
             ) {

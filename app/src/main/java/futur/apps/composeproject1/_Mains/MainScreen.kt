@@ -11,14 +11,13 @@ import futur.apps.composeproject1.AppScreens.NavGraphs.AppNavGraph
 import futur.apps.composeproject1.AppScreens.Scaffold.BottomNavigationBar
 import futur.apps.composeproject1.AppScreens.Scaffold.FAB
 import futur.apps.composeproject1.AppScreens.Scaffold.TopBar
-import futur.apps.composeproject1.DataStore.DataStoreViewModel
-import futur.apps.composeproject1.QuizFiles.QuizViewModel
+import futur.apps.composeproject1.DataStore.MainViewModel
 
 @Composable
-fun MainScreen(dataStoreViewModel: DataStoreViewModel) {
+fun MainScreen(mainViewModel: MainViewModel) {
     val navController = rememberNavController()
-    val showNavigationBar = dataStoreViewModel.showNavigationBar
-    val showFab = dataStoreViewModel.showFab
+    val showNavigationBar = mainViewModel.showNavigationBar
+    val showFab = mainViewModel.showFab
     Scaffold(
         topBar = { TopBar() },
         bottomBar = {
@@ -35,7 +34,7 @@ fun MainScreen(dataStoreViewModel: DataStoreViewModel) {
             {
                 AppNavGraph(
                     navController = navController,
-                    viewModel = dataStoreViewModel,
+                    viewModel = mainViewModel,
                     isUserLoggedIn = true
                 )
             }

@@ -1,4 +1,4 @@
-package futur.apps.composeproject1.QuizFiles
+package futur.apps.composeproject1.DataStore
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import futur.apps.composeproject1.QuizFiles.Question
 import futur.apps.composeproject1.RoomDatabase.DataRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -19,23 +20,35 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class QuizViewModel @Inject constructor(
-    repository : DataRepository
+class MainViewModel @Inject constructor(
+    private val dataStore: DataStoreManager,
+    repository: DataRepository
 ) : ViewModel() {
 
-    val questions : StateFlow<List<Question>> = repository.getAllVerbs()
-        .map { verbs -> verbs.map { verb ->
-            val otherOptions = verbs.filter { it.en != verb.en }
-                .shuffled()
-                .take(2)
-                .map{it.en}
-            val options = (otherOptions + verb.en).shuffled()
-            Question(
-                questionText = verb.fr,
-                options = options,
-                correctAnswer = verb.en
-            )
-        }.shuffled()
+    init {
+        startTimer()
+    }
+
+    var showNavigationBar by mutableStateOf(true)
+        private set
+    var showFab by mutableStateOf(true)
+        private set
+
+    // Quiz items
+    val questions: StateFlow<List<Question>> = repository.getAllVerbs()
+        .map { verbs ->
+            verbs.map { verb ->
+                val otherOptions = verbs.filter { it.en != verb.en }
+                    .shuffled()
+                    .take(2)
+                    .map { it.en }
+                val options = (otherOptions + verb.en).shuffled()
+                Question(
+                    questionText = verb.fr,
+                    options = options,
+                    correctAnswer = verb.en
+                )
+            }.shuffled()
 
         }
         .stateIn(
@@ -61,13 +74,48 @@ class QuizViewModel @Inject constructor(
 
     private var timerJob: Job? = null
 
-    init {
-        // dummy data
-      //  _questions.value =
-        startTimer()
+    // dataStore items
+    val isDarkMode: StateFlow<Boolean> = dataStore.isDarkTheme.stateIn(
+        viewModelScope,
+        SharingStarted.Eagerly, false
+    )
+    val langue: StateFlow<String> = dataStore.langue.stateIn(
+        viewModelScope,
+        SharingStarted.Eagerly, "English"
+    )
+    val username: StateFlow<String> = dataStore.username.stateIn(
+        viewModelScope,
+        SharingStarted.Eagerly, "User"
+    )
+
+
+    fun changeTheme(enabled: Boolean) {
+        viewModelScope.launch {
+            dataStore.setDarkTheme(enabled)
+        }
     }
 
+    fun changeLanguage(lang: String) {
+        viewModelScope.launch {
+            dataStore.setLanguage(lang)
+        }
+    }
 
+    fun changeUserName(username: String) {
+        viewModelScope.launch {
+            dataStore.setLanguage(username)
+        }
+    }
+
+    fun setNavigationBarVisibility(visible: Boolean) {
+        showNavigationBar = visible
+    }
+
+    fun setFabVisibility(visible: Boolean) {
+        showFab = visible
+    }
+
+    // quiz events
     fun startTimer() {
         timerJob?.cancel()
         _timeLeft.intValue = 10

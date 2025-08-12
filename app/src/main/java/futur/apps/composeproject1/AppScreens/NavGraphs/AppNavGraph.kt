@@ -14,13 +14,13 @@ import futur.apps.composeproject1.AppScreens._Screens.RegisterScreen
 import futur.apps.composeproject1.AppScreens._Screens.SettingsScreen
 import futur.apps.composeproject1.AppScreens.Screen
 import futur.apps.composeproject1.AppScreens._Screens.HomeScreen
-import futur.apps.composeproject1.DataStore.DataStoreViewModel
+import futur.apps.composeproject1.DataStore.MainViewModel
 
 
 @Composable
 fun AppNavGraph(
     navController: NavHostController,
-    viewModel: DataStoreViewModel,
+    viewModel: MainViewModel,
     isUserLoggedIn: Boolean
 ) {
 
