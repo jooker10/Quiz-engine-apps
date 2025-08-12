@@ -53,7 +53,10 @@ class QuizViewModel @Inject constructor(
     private val _selectedOption = mutableStateOf<Int?>(null)
     val selectedOption: State<Int?> = _selectedOption
 
-    private val _timeLeft = mutableIntStateOf(10) // 10 secondes for each quiz
+    private val _selectedOptionText = mutableStateOf<String?>(null)
+    val selectedOptionText: State<String?> = _selectedOptionText
+
+    private val _timeLeft = mutableIntStateOf(15) // 15 secondes for each quiz
     val timeLeft: State<Int> = _timeLeft
 
     private var timerJob: Job? = null
@@ -75,6 +78,10 @@ class QuizViewModel @Inject constructor(
             }
             onTimeUp()
         }
+    }
+
+    fun stopTimer() {
+        timerJob?.cancel()
     }
 
     private fun onTimeUp() {
@@ -112,5 +119,7 @@ class QuizViewModel @Inject constructor(
         }
     }
 
-
+    fun selectOptionText(optionText: String) {
+        _selectedOptionText.value = optionText
+    }
 }

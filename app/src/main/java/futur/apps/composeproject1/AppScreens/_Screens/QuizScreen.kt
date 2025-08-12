@@ -25,17 +25,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import futur.apps.composeproject1.DataStore.DataStoreViewModel
 import futur.apps.composeproject1.QuizFiles.QuizViewModel
 
@@ -49,7 +44,7 @@ fun QuizScreen(
     val score by viewModel.score
     val selectedOption by viewModel.selectedOption
     val timeLeft by viewModel.timeLeft
-    var selectedOptionText by remember { mutableStateOf<String?>(null) }
+    val selectedOptionText = viewModel.selectedOptionText
 
     if (questions.isNotEmpty()) {
         val question = questions[index]
@@ -59,10 +54,6 @@ fun QuizScreen(
             modifier = Modifier
                 .padding(12.dp)
                 .fillMaxSize()
-            /*verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.CenterHorizontally*/
-
-
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -94,9 +85,9 @@ fun QuizScreen(
             options.forEachIndexed { index, option ->
                 QuizOption(
                     text = option,
-                    isSelected = selectedOptionText == option,
+                    isSelected = selectedOptionText.value == option,
                     onClick = {
-                        selectedOptionText = option
+                        viewModel.selectOptionText(option)
                         viewModel.selectOption(index)
                     }
                 )
@@ -106,7 +97,9 @@ fun QuizScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
-                onClick = { viewModel.confirmAnswer() },
+                onClick = {
+                    viewModel.stopTimer()
+                    viewModel.confirmAnswer() },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = selectedOption != null
             ) {
