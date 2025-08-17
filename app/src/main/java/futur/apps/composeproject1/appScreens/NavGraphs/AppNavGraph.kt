@@ -1,5 +1,6 @@
 package futur.apps.composeproject1.appScreens.NavGraphs
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.navigation.NavGraphBuilder
@@ -60,7 +61,10 @@ fun AppNavGraph(
                 composable(Screen.QuizPicker.route) {
                     viewModel.setNavigationBarVisibility(true)
                     viewModel.setFabVisibility(true)
+
                     PickerScreen{ categoryName ->
+                        viewModel.setCategory(categoryName)
+                        Log.d("see", "Selected category: ${categoryName.displayName}")
                         navController.navigate(Screen.QuizCategory.route + "/${categoryName.displayName}")
                     }
 
@@ -71,10 +75,11 @@ fun AppNavGraph(
                     )
                 { backStackEntry ->
                     val categoryName = backStackEntry.arguments?.getString("category")
+
                     val category = CategoryName.fromDisplayName(categoryName)
+                    Log.d("see", "category name quiz: ${category?.displayName}")
                     viewModel.setNavigationBarVisibility(false)
                     viewModel.setFabVisibility(false)
-                    viewModel.setCategory(category)
                     QuizScreen(category = category)
                 }
             }

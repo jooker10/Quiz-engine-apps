@@ -1,5 +1,6 @@
 package futur.apps.composeproject1.appScreens._Screens
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -26,6 +27,7 @@ import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,12 +45,14 @@ fun QuizScreen(
     quizViewModel: QuizViewModel = hiltViewModel(),
     effectsViewModel: EffectsViewModel = hiltViewModel(),
 ) {
-    val questions by quizViewModel.questions
+    val questions = quizViewModel.questions.collectAsState()
+    Log.d("see", "quiz questions size: ${questions.value.size}")
     val index by quizViewModel.currentIndex
     val score by quizViewModel.score
     val selectedOption by quizViewModel.selectedOption
     val timeLeft by quizViewModel.timeLeft
     val selectedOptionText by quizViewModel.selectedOptionText
+
 
     LaunchedEffect(Unit) {
         quizViewModel.events.collect { event ->
@@ -66,9 +70,10 @@ fun QuizScreen(
         }
     }
 
-
-    if (questions.isNotEmpty()) {
-        val question = questions[index]
+if(questions.value.isEmpty()) {
+    Log.d("see", "questions is empty")}
+    if (questions.value.isNotEmpty()) {
+        val question = questions.value[index]
         val options = question.options
 
         Column(
@@ -102,7 +107,7 @@ fun QuizScreen(
                     )
                 }
                 Text(
-                    "${index + 1} / ${questions.size}",
+                    "${index + 1} / ${questions.value.size}",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -143,7 +148,7 @@ fun QuizScreen(
                     text =
                         when {
                             !quizViewModel.isAnswerChecked.value -> "Confirm"
-                            index == questions.size - 1 -> "Finish"
+                            index == questions.value.size - 1 -> "Finish"
                             else -> "Next"
                         }
                 )

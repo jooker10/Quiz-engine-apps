@@ -1,5 +1,6 @@
 package futur.apps.composeproject1._Mains
 
+import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,8 +43,8 @@ class QuizViewModel @Inject constructor(
     private val _events = MutableSharedFlow<EffectsEvent>()
     val events = _events
 
-    private val _questions = mutableStateOf<List<Question>>(emptyList())
-    val questions: State<List<Question>> = _questions
+    private val _questions = MutableStateFlow<List<Question>>(emptyList())
+    val questions: StateFlow<List<Question>> = _questions
 
     private val _isAnswerChecked = mutableStateOf(false)
     val isAnswerChecked: State<Boolean> = _isAnswerChecked
@@ -80,7 +81,7 @@ class QuizViewModel @Inject constructor(
     )
 
     init {
-        startNewQuiz(categoryName = _category.value ?: CategoryName.Verbs)
+       // startNewQuiz(categoryName = _category.value ?: CategoryName.Verbs)
     }
 
 
@@ -140,11 +141,14 @@ class QuizViewModel @Inject constructor(
 
     fun setCategory(categoryName: CategoryName?) {
         _category.value = categoryName
-        startNewQuiz(categoryName)
+        Log.d("see", "viewmodel category: ${ _category.value?.displayName}")
+
+        startNewQuiz( _category.value)
     }
     fun startNewQuiz(categoryName: CategoryName?) {
         viewModelScope.launch {
             val items = getCategoryFlow(category = categoryName).first()
+            Log.d("see", "items size: ${items.size}")
            // val allVerbs = repository.getAllVerbs().first()
             val newQuestions = items.map { item ->
                 val otherOptions = items.filter { it.en != item.en }
@@ -160,6 +164,7 @@ class QuizViewModel @Inject constructor(
             }.shuffled()
                 .take(10)    // chose only 10 questions
             _questions.value = newQuestions
+            Log.d("see", "questions size: ${questions.value.size}")
             _currentIndex.value = 0
             _score.value = 0
             _selectedOption.value = null
