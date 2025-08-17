@@ -18,11 +18,14 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import futur.apps.composeproject1.appScreens.TableCard
 import futur.apps.composeproject1.RoomDatabase.DbViewModel
+import futur.apps.composeproject1._Mains.EffectsViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TableScreen(viewModel : DbViewModel = hiltViewModel()) {
+fun TableScreen(
+    dbViewModel : DbViewModel = hiltViewModel(),
+    effectsViewModel: EffectsViewModel = hiltViewModel()) {
     val tabs = listOf(
         "Verbs",
         "Sentences",
@@ -32,22 +35,23 @@ fun TableScreen(viewModel : DbViewModel = hiltViewModel()) {
         "Adverbs",
         "Idioms"
     )
-    val items  = listOf(
-        viewModel.verbs.collectAsState(),
-        viewModel.sentences.collectAsState(),
-        viewModel.phrasalVerbs.collectAsState(),
-        viewModel.nouns.collectAsState(),
-        viewModel.adjectives.collectAsState(),
-        viewModel.adverbs.collectAsState(),
-        viewModel.idioms.collectAsState(),
+    val categories  = listOf(
+        dbViewModel.verbs.collectAsState(),
+        dbViewModel.sentences.collectAsState(),
+        dbViewModel.phrasalVerbs.collectAsState(),
+        dbViewModel.nouns.collectAsState(),
+        dbViewModel.adjectives.collectAsState(),
+        dbViewModel.adverbs.collectAsState(),
+        dbViewModel.idioms.collectAsState(),
     )
 
 
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { tabs.size })
     val scope = rememberCoroutineScope()
 
+
     Column {
-        // شريط التبويبات
+
         ScrollableTabRow(
             selectedTabIndex = pagerState.currentPage,
             containerColor = Color(0xFF1976D2), // لون الخلفية
@@ -79,7 +83,7 @@ fun TableScreen(viewModel : DbViewModel = hiltViewModel()) {
             }
         }
 
-        // الصفحات القابلة للسحب
+
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize()
@@ -93,8 +97,13 @@ fun TableScreen(viewModel : DbViewModel = hiltViewModel()) {
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally,
                     content = {
-                        items(items[page].value) { type ->
-                            TableCard(item = type)
+                        items(categories[page].value) { category ->
+                            TableCard(
+                                category = category,
+                                onSpeakClick = {
+                                    effectsViewModel.speak(category.en)
+                                }
+                            )
 
                         }
 

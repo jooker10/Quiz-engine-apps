@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -27,11 +28,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import futur.apps.composeproject1.R
+import futur.apps.composeproject1.utils.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBar() {
+fun TopBar(navController: NavHostController) {
     val expanded = remember {
         mutableStateOf(false)
     }
@@ -52,8 +56,14 @@ fun TopBar() {
             navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
             actionIconContentColor = MaterialTheme.colorScheme.onSurface
         ),
-        navigationIcon = { IconButton(onClick = {}) {
-            Icon(painter = painterResource(id = R.drawable.outline_menu), contentDescription = "navigation icon")
+        navigationIcon = { IconButton(onClick = {
+            {
+                navController.navigate(Screen.Home.route) {
+                    popUpTo(Screen.Home.route) {inclusive = false}
+                }
+            }
+        }) {
+            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
         } } ,
         actions = {
             IconButton(onClick = {}) {

@@ -4,23 +4,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import futur.apps.composeproject1.appScreens._Screens.TableScreen
 import futur.apps.composeproject1.appScreens._Screens.LoginScreen
-import futur.apps.composeproject1.appScreens._Screens.QuizScreen
 import futur.apps.composeproject1.appScreens._Screens.RegisterScreen
 import futur.apps.composeproject1.appScreens._Screens.SettingsScreen
-import futur.apps.composeproject1.appScreens.Screen
+import futur.apps.composeproject1.utils.Screen
 import futur.apps.composeproject1.appScreens._Screens.HomeScreen
-import futur.apps.composeproject1._Mains.MainViewModel
+import futur.apps.composeproject1._Mains.QuizViewModel
+import futur.apps.composeproject1.appScreens._Screens.PickerScreen
+import futur.apps.composeproject1.appScreens._Screens.QuizScreen
+import futur.apps.composeproject1.utils.CategoryName
 
 
 @Composable
 fun AppNavGraph(
     navController: NavHostController,
-    viewModel: MainViewModel,
+    viewModel: QuizViewModel,
     isUserLoggedIn: Boolean
 ) {
 
@@ -49,11 +53,32 @@ fun AppNavGraph(
                 viewModel.setFabVisibility(true)
                 TableScreen()
             }
-            composable(Screen.Quiz.route) {
-                viewModel.setNavigationBarVisibility(false)
-                viewModel.setFabVisibility(false)
-                QuizScreen()
+            navigation(
+                route = Screen.QuizRoot.route,
+                startDestination = Screen.QuizPicker.route
+            ) {
+                composable(Screen.QuizPicker.route) {
+                    viewModel.setNavigationBarVisibility(true)
+                    viewModel.setFabVisibility(true)
+                    PickerScreen{ categoryName ->
+                        navController.navigate(Screen.QuizCategory.route + "/${categoryName.displayName}")
+                    }
+
+                }
+                composable(
+                    Screen.QuizCategory.route + "/{category}",
+                    arguments = listOf(navArgument("category"){ type = NavType.StringType })
+                    )
+                { backStackEntry ->
+                    val categoryName = backStackEntry.arguments?.getString("category")
+                    val category = CategoryName.fromDisplayName(categoryName)
+                    viewModel.setNavigationBarVisibility(false)
+                    viewModel.setFabVisibility(false)
+                    viewModel.setCategory(category)
+                    QuizScreen(category = category)
+                }
             }
+
             composable(Screen.Settings.route) {
                 viewModel.setNavigationBarVisibility(true)
                 viewModel.setFabVisibility(true)

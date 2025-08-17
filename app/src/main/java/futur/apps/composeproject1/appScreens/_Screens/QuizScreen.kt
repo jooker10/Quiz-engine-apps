@@ -20,10 +20,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,18 +33,39 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import futur.apps.composeproject1._Mains.MainViewModel
+import futur.apps.composeproject1._Mains.EffectsViewModel
+import futur.apps.composeproject1._Mains.QuizViewModel
+import futur.apps.composeproject1.utils.CategoryName
 
 @Composable
 fun QuizScreen(
-    viewModel: MainViewModel = hiltViewModel()
+    category : CategoryName?,
+    quizViewModel: QuizViewModel = hiltViewModel(),
+    effectsViewModel: EffectsViewModel = hiltViewModel(),
 ) {
-    val questions by viewModel.questions.collectAsState()
-    val index by viewModel.currentIndex
-    val score by viewModel.score
-    val selectedOption by viewModel.selectedOption
-    val timeLeft by viewModel.timeLeft
-    val selectedOptionText = viewModel.selectedOptionText
+    val questions by quizViewModel.questions
+    val index by quizViewModel.currentIndex
+    val score by quizViewModel.score
+    val selectedOption by quizViewModel.selectedOption
+    val timeLeft by quizViewModel.timeLeft
+    val selectedOptionText by quizViewModel.selectedOptionText
+
+    LaunchedEffect(Unit) {
+        quizViewModel.events.collect { event ->
+            when(event) {
+                QuizViewModel.EffectsEvent.CorrectAnswer -> {
+                    effectsViewModel.playCorrectSound()
+                    effectsViewModel.speak("CorrectAnswer Answer!")
+                }
+                QuizViewModel.EffectsEvent.WrongAnswer -> {
+                    effectsViewModel.playWrongSound()
+                    effectsViewModel.speak("WrongAnswer Answer!")
+                }
+
+            }
+        }
+    }
+
 
     if (questions.isNotEmpty()) {
         val question = questions[index]
@@ -58,11 +81,26 @@ fun QuizScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Score: $score", style = MaterialTheme.typography.bodyMedium)
-                Text(
-                    text = "${timeLeft}s",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = if (timeLeft <= 5) Color.Red else Color.Unspecified
-                )
+
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(40.dp)
+                ){
+                    CircularProgressIndicator(
+                    progress =  { 1f - (timeLeft.toFloat()/15f) },
+                    modifier = Modifier.fillMaxSize(),
+                    color = if(timeLeft<5) Color.Red else MaterialTheme.colorScheme.primary,
+                    strokeWidth = 4.dp,
+                    trackColor = ProgressIndicatorDefaults.circularIndeterminateTrackColor,
+                    strokeCap = ProgressIndicatorDefaults.CircularDeterminateStrokeCap
+                    )
+                    Text(
+                        text = "${timeLeft}s",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = if (timeLeft <= 5) Color.Red else Color.Unspecified,
+                        textAlign = TextAlign.Center
+                    )
+                }
                 Text(
                     "${index + 1} / ${questions.size}",
                     style = MaterialTheme.typography.bodyMedium
@@ -83,10 +121,10 @@ fun QuizScreen(
             options.forEachIndexed { index, option ->
                 QuizOption(
                     text = option,
-                    isSelected = selectedOptionText.value == option,
+                    isSelected = selectedOptionText == option,
                     onClick = {
-                        viewModel.selectOptionText(option)
-                        viewModel.selectOption(index)
+                        quizViewModel.selectOptionText(option)
+                        quizViewModel.selectOption(index)
                     }
                 )
             }
@@ -96,13 +134,20 @@ fun QuizScreen(
 
             Button(
                 onClick = {
-                    viewModel.stopTimer()
-                    viewModel.confirmAnswer()
+                    quizViewModel.confirmOrNext()
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = selectedOption != null
+                enabled = (selectedOption != null || quizViewModel.isAnswerChecked.value)
             ) {
-                Text("Confirm")
+                Text(
+                    text =
+                        when {
+                            !quizViewModel.isAnswerChecked.value -> "Confirm"
+                            index == questions.size - 1 -> "Finish"
+                            else -> "Next"
+                        }
+                )
+
             }
         }
     } else {

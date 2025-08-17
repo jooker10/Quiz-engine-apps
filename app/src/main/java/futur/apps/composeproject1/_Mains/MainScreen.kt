@@ -13,12 +13,12 @@ import futur.apps.composeproject1.appScreens.Scaffold.FAB
 import futur.apps.composeproject1.appScreens.Scaffold.TopBar
 
 @Composable
-fun MainScreen(mainViewModel: MainViewModel) {
+fun MainScreen(quizViewModel: QuizViewModel) {
     val navController = rememberNavController()
-    val showNavigationBar = mainViewModel.showNavigationBar
-    val showFab = mainViewModel.showFab
+    val showNavigationBar = quizViewModel.showNavigationBar
+    val showFab = quizViewModel.showFab
     Scaffold(
-        topBar = { TopBar() },
+        topBar = { TopBar(navController) },
         bottomBar = {
             if(showNavigationBar) BottomNavigationBar(navController = navController)
                     },
@@ -33,7 +33,7 @@ fun MainScreen(mainViewModel: MainViewModel) {
             {
                 AppNavGraph(
                     navController = navController,
-                    viewModel = mainViewModel,
+                    viewModel = quizViewModel,
                     isUserLoggedIn = true
                 )
             }

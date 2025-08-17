@@ -22,13 +22,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import futur.apps.composeproject1.appScreens.Screen
+import futur.apps.composeproject1.utils.Screen
 import futur.apps.composeproject1.R
 
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
 
-    val items = listOf(Screen.Home, Screen.Table, Screen.Quiz, Screen.Settings)
+    val items = listOf(Screen.Home, Screen.Table, Screen.QuizRoot, Screen.Settings)
     val unselectedIcons =
         listOf(
             painterResource(R.drawable.outline_home),
@@ -82,7 +82,7 @@ fun BottomNavigationBar(navController: NavHostController) {
                 selected = selected,
                 onClick = {
                     navController.navigate(screen.route) {
-                        popUpTo(Screen.Home.route)
+                        popUpTo(0) {inclusive = true}
                         launchSingleTop = true
                     }
 
