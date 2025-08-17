@@ -1,7 +1,5 @@
 package futur.apps.composeproject1._Mains
 
-import android.util.Log
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -12,6 +10,7 @@ import futur.apps.composeproject1.DataStore.DataStoreManager
 import futur.apps.composeproject1.QuizFiles.Question
 import futur.apps.composeproject1.RoomDatabase.DataRepository
 import futur.apps.composeproject1.utils.CategoryName
+import futur.apps.composeproject1.utils.QuizUiState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -21,11 +20,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.collections.map
-import kotlin.collections.plus
-import kotlin.collections.shuffled
 
 @HiltViewModel
 class QuizViewModel @Inject constructor(
@@ -33,38 +30,20 @@ class QuizViewModel @Inject constructor(
     private val repository: DataRepository
 ) : ViewModel() {
 
-    private val _category = MutableStateFlow<CategoryName?>(null)
-    val category: StateFlow<CategoryName?> = _category.asStateFlow()
+    private val _quizUiState = MutableStateFlow(QuizUiState())
+    val quizUiState: StateFlow<QuizUiState> = _quizUiState.asStateFlow()
     var showNavigationBar by mutableStateOf(true)
         private set
+
     var showFab by mutableStateOf(true)
         private set
-
     private val _events = MutableSharedFlow<EffectsEvent>()
+
     val events = _events
 
-    private val _questions = MutableStateFlow<List<Question>>(emptyList())
-    val questions: StateFlow<List<Question>> = _questions
-
-    private val _isAnswerChecked = mutableStateOf(false)
-    val isAnswerChecked: State<Boolean> = _isAnswerChecked
-
-    private val _currentIndex = mutableStateOf(0)
-    val currentIndex: State<Int> = _currentIndex
-
-    private val _score = mutableStateOf(0)
-    val score: State<Int> = _score
-
-    private val _selectedOption = mutableStateOf<Int?>(null)
-    val selectedOption: State<Int?> = _selectedOption
-
-    private val _selectedOptionText = mutableStateOf<String?>(null)
-    val selectedOptionText: State<String?> = _selectedOptionText
-    val maxTime = 15
-    private val _timeLeft = mutableStateOf(maxTime) // 15 secondes for each quiz
-    val timeLeft: State<Int> = _timeLeft
-
     private var timerJob: Job? = null
+    val maxTime = 15
+
 
     // dataStore items
     val isDarkMode: StateFlow<Boolean> = dataStore.isDarkTheme.stateIn(
@@ -79,11 +58,6 @@ class QuizViewModel @Inject constructor(
         viewModelScope,
         SharingStarted.Companion.Eagerly, "User"
     )
-
-    init {
-       // startNewQuiz(categoryName = _category.value ?: CategoryName.Verbs)
-    }
-
 
     fun changeTheme(enabled: Boolean) {
         viewModelScope.launch {
@@ -114,11 +88,10 @@ class QuizViewModel @Inject constructor(
 
     fun startTimer() {
         timerJob?.cancel()
-        _timeLeft.value = maxTime
         timerJob = viewModelScope.launch {
-            while (_timeLeft.value > 0) {
+            while (_quizUiState.value.timeLeft > 0) {
                 delay(1000)
-                _timeLeft.value -= 1
+                _quizUiState.update { it.copy(timeLeft = it.timeLeft - 1) }                //_timeLeft.value -= 1
             }
             onTimeUp()
         }
@@ -129,27 +102,27 @@ class QuizViewModel @Inject constructor(
     }
 
     private fun onTimeUp() {
-        nextQuestion()
+        confirmOrNext()
     }
 
-    fun selectOption(index: Int) {
-        _selectedOption.value = index
-    }
-    fun selectOptionText(optionText: String) {
-        _selectedOptionText.value = optionText
+    fun selectOption(index: Int,text : String) {
+        _quizUiState.update { it.copy(selectedOption = index, selectedOptionText = text) }
     }
 
-    fun setCategory(categoryName: CategoryName?) {
-        _category.value = categoryName
-        Log.d("see", "viewmodel category: ${ _category.value?.displayName}")
 
-        startNewQuiz( _category.value)
+
+    fun setCategory(category: CategoryName?) {
+        _quizUiState.update { it.copy(category = category) }
+        startNewQuiz(category)
+
     }
+
     fun startNewQuiz(categoryName: CategoryName?) {
         viewModelScope.launch {
+            try {
+                _quizUiState.update { it.copy(isLoading = true, error = null) }
+
             val items = getCategoryFlow(category = categoryName).first()
-            Log.d("see", "items size: ${items.size}")
-           // val allVerbs = repository.getAllVerbs().first()
             val newQuestions = items.map { item ->
                 val otherOptions = items.filter { it.en != item.en }
                     .shuffled()
@@ -163,53 +136,66 @@ class QuizViewModel @Inject constructor(
                 )
             }.shuffled()
                 .take(10)    // chose only 10 questions
-            _questions.value = newQuestions
-            Log.d("see", "questions size: ${questions.value.size}")
-            _currentIndex.value = 0
-            _score.value = 0
-            _selectedOption.value = null
-            _selectedOptionText.value = null
-            _isAnswerChecked.value = false
+            _quizUiState.update {
+                it.copy(
+                    isLoading = false,
+                    questions = newQuestions,
+                    currentIndex = 0,
+                    score = 0,
+                    selectedOption = null,
+                    selectedOptionText = null,
+                    isAnswerChecked = false,
+                    timeLeft = maxTime,
+                    isFinished = false
+                )
+            }
             startTimer()
         }
+            catch (e : Exception) {
+                _quizUiState.update { it.copy(isLoading = false, error = e.message) }
+            }
     }
+    }
+
     fun confirmOrNext() {
-        if (!_isAnswerChecked.value) {
-            val question = questions.value[_currentIndex.value]
-            val chosenText = _selectedOptionText.value
+        val state = _quizUiState.value
+        if (!state.isAnswerChecked) {
+            val question = state.questions[state.currentIndex]
+            val chosenText = state.selectedOptionText
             val isCorrect = chosenText == question.correctAnswer
 
-            if (isCorrect) {
-                _score.value += 1
+            _quizUiState.update {
+                it.copy(
+                    isAnswerChecked = true,
+                    score = if (isCorrect) it.score + 1 else it.score,
+                )
             }
+
+
             playEffect(isCorrect = isCorrect)
 
-            _isAnswerChecked.value = true
             stopTimer()
         } else {
-            if (_currentIndex.value < questions.value.size - 1) {
-                _currentIndex.value++
-                _selectedOption.value = null
-                _selectedOptionText.value = null
-                _isAnswerChecked.value = false
+            if (state.currentIndex < state.questions.size-1) {
+                _quizUiState.update {
+                    it.copy(
+                        currentIndex = it.currentIndex + 1,
+                        selectedOption = null,
+                        selectedOptionText = null,
+                        isAnswerChecked = false,
+                        timeLeft = maxTime
+                    )
+                }
                 startTimer()
             } else {
-                timerJob?.cancel()
-                // quiz finished
+                stopTimer()
+                _quizUiState.update {
+                    it.copy(isFinished = true)
+                }
             }
         }
     }
 
-    private fun nextQuestion() {
-        if (_currentIndex.value < questions.value.size - 1) {
-            _currentIndex.value++
-            _selectedOption.value = null
-            startTimer()
-        } else {
-            // Test finished
-            timerJob?.cancel()
-        }
-    }
 
     fun playEffect(isCorrect: Boolean) {
         viewModelScope.launch {
@@ -221,7 +207,7 @@ class QuizViewModel @Inject constructor(
         }
     }
 
-    private fun getCategoryFlow(category: CategoryName?) = when(category) {
+    private fun getCategoryFlow(category: CategoryName?) = when (category) {
         CategoryName.Verbs -> repository.getAllVerbs()
         CategoryName.Sentences -> repository.getAllSentences()
         CategoryName.PhrasalVerbs -> repository.getAllPhrasalVerbs()

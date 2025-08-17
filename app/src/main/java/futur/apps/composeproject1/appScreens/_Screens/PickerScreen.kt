@@ -17,20 +17,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import futur.apps.composeproject1._Mains.QuizViewModel
 import futur.apps.composeproject1.utils.CategoryName
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PickerScreen(
-    initialSelection: String? = null,
+    initialSelection: CategoryName? = null,
     onCategorySelected: (CategoryName) -> Unit = {}
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var selected by remember { mutableStateOf(initialSelection ?: "") }
+    var selected by rememberSaveable { mutableStateOf(initialSelection) }
     val focusManager = LocalFocusManager.current
 
     Column(
@@ -52,7 +55,7 @@ fun PickerScreen(
                 modifier = Modifier.menuAnchor()
                     .fillMaxWidth(),
                 readOnly = true,
-                value = selected.ifEmpty { "Select..." },
+                value = selected?.displayName ?:  "Select...",
                 onValueChange = {},
                 label = {Text(text = "Category")},
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded)}
@@ -65,7 +68,7 @@ fun PickerScreen(
                     DropdownMenuItem(
                         text = {Text(text = option.displayName)},
                         onClick = {
-                            selected = option.displayName
+                            selected = option
                             expanded = false
                             focusManager.clearFocus()
                             onCategorySelected(option)
@@ -74,6 +77,13 @@ fun PickerScreen(
 
                 }
             }
+        }
+
+        selected?.let{
+            AssistChip(
+                onClick = {expanded = true},
+                label = {Text(text = "selected: ${it.displayName}")}
+            )
         }
 
     }

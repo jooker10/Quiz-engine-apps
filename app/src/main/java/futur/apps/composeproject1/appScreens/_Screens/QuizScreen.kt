@@ -41,26 +41,31 @@ import futur.apps.composeproject1.utils.CategoryName
 
 @Composable
 fun QuizScreen(
-    category : CategoryName?,
+    category: CategoryName?,
     quizViewModel: QuizViewModel = hiltViewModel(),
     effectsViewModel: EffectsViewModel = hiltViewModel(),
 ) {
-    val questions = quizViewModel.questions.collectAsState()
-    Log.d("see", "quiz questions size: ${questions.value.size}")
-    val index by quizViewModel.currentIndex
-    val score by quizViewModel.score
-    val selectedOption by quizViewModel.selectedOption
-    val timeLeft by quizViewModel.timeLeft
-    val selectedOptionText by quizViewModel.selectedOptionText
+    val quizUiState by quizViewModel.quizUiState.collectAsState()
 
+    /* val questions by quizViewModel.questions.collectAsState(initial = emptyList())
+     Log.d("see", "quiz questions size: ${questions.size}")
+     val index by quizViewModel.currentIndex
+     val score by quizViewModel.score
+     val selectedOption by quizViewModel.selectedOption
+     val timeLeft by quizViewModel.timeLeft
+     val selectedOptionText by quizViewModel.selectedOptionText*/
 
+    LaunchedEffect(category) {
+        quizViewModel.setCategory(category)
+    }
     LaunchedEffect(Unit) {
         quizViewModel.events.collect { event ->
-            when(event) {
+            when (event) {
                 QuizViewModel.EffectsEvent.CorrectAnswer -> {
                     effectsViewModel.playCorrectSound()
                     effectsViewModel.speak("CorrectAnswer Answer!")
                 }
+
                 QuizViewModel.EffectsEvent.WrongAnswer -> {
                     effectsViewModel.playWrongSound()
                     effectsViewModel.speak("WrongAnswer Answer!")
@@ -69,12 +74,22 @@ fun QuizScreen(
             }
         }
     }
+    if (quizUiState.isLoading) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Loading questions....",
+                modifier = Modifier.fillMaxSize(),
+                textAlign = TextAlign.Center
+            )
+        }
 
-if(questions.value.isEmpty()) {
-    Log.d("see", "questions is empty")}
-    if (questions.value.isNotEmpty()) {
-        val question = questions.value[index]
-        val options = question.options
+    }
+    else if (quizUiState.questions.isNotEmpty()) {
+        val question = quizUiState.questions[quizUiState.currentIndex]
+       // val options = question.options
 
         Column(
             modifier = Modifier
@@ -85,29 +100,29 @@ if(questions.value.isEmpty()) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Score: $score", style = MaterialTheme.typography.bodyMedium)
+                Text("Score: ${quizUiState.score}", style = MaterialTheme.typography.bodyMedium)
 
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.size(40.dp)
-                ){
+                ) {
                     CircularProgressIndicator(
-                    progress =  { 1f - (timeLeft.toFloat()/15f) },
-                    modifier = Modifier.fillMaxSize(),
-                    color = if(timeLeft<5) Color.Red else MaterialTheme.colorScheme.primary,
-                    strokeWidth = 4.dp,
-                    trackColor = ProgressIndicatorDefaults.circularIndeterminateTrackColor,
-                    strokeCap = ProgressIndicatorDefaults.CircularDeterminateStrokeCap
+                        progress = { 1f - (quizUiState.timeLeft.toFloat() / 15f) },
+                        modifier = Modifier.fillMaxSize(),
+                        color = if (quizUiState.timeLeft < 5) Color.Red else MaterialTheme.colorScheme.primary,
+                        strokeWidth = 4.dp,
+                        trackColor = ProgressIndicatorDefaults.circularIndeterminateTrackColor,
+                        strokeCap = ProgressIndicatorDefaults.CircularDeterminateStrokeCap
                     )
                     Text(
-                        text = "${timeLeft}s",
+                        text = "${quizUiState.timeLeft}s",
                         style = MaterialTheme.typography.titleMedium,
-                        color = if (timeLeft <= 5) Color.Red else Color.Unspecified,
+                        color = if (quizUiState.timeLeft <= 5) Color.Red else Color.Unspecified,
                         textAlign = TextAlign.Center
                     )
                 }
                 Text(
-                    "${index + 1} / ${questions.value.size}",
+                    "${quizUiState.currentIndex + 1} / ${quizUiState.questions.size}",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -123,13 +138,13 @@ if(questions.value.isEmpty()) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            options.forEachIndexed { index, option ->
+            question.options.forEachIndexed { index, optionText ->
                 QuizOption(
-                    text = option,
-                    isSelected = selectedOptionText == option,
+                    text = optionText,
+                    isSelected = quizUiState.selectedOptionText == optionText,
                     onClick = {
-                        quizViewModel.selectOptionText(option)
-                        quizViewModel.selectOption(index)
+                        quizViewModel.selectOption(index, optionText)
+
                     }
                 )
             }
@@ -142,25 +157,19 @@ if(questions.value.isEmpty()) {
                     quizViewModel.confirmOrNext()
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = (selectedOption != null || quizViewModel.isAnswerChecked.value)
+                enabled = (quizUiState.selectedOption != null || quizUiState.isAnswerChecked)
             ) {
                 Text(
                     text =
                         when {
-                            !quizViewModel.isAnswerChecked.value -> "Confirm"
-                            index == questions.value.size - 1 -> "Finish"
+                            !quizUiState.isAnswerChecked -> "Confirm"
+                            quizUiState.currentIndex == quizUiState.questions.size - 1 -> "Finish"
                             else -> "Next"
                         }
                 )
 
             }
         }
-    } else {
-        Text(
-            text = "Loading questions....",
-            modifier = Modifier.fillMaxSize(),
-            textAlign = TextAlign.Center
-        )
     }
 }
 

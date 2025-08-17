@@ -33,7 +33,7 @@ fun MainScreen(quizViewModel: QuizViewModel) {
             {
                 AppNavGraph(
                     navController = navController,
-                    viewModel = quizViewModel,
+                    quizViewModel = quizViewModel,
                     isUserLoggedIn = true
                 )
             }
