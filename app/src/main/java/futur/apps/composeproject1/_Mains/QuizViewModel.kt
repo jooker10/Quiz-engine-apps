@@ -30,15 +30,19 @@ class QuizViewModel @Inject constructor(
     private val repository: DataRepository
 ) : ViewModel() {
 
-    private val _quizUiState = MutableStateFlow(QuizUiState())
+    private val zeroScores: Map<CategoryName, Int> = CategoryName.entries.associateWith { 0 }
+    private val _quizUiState =
+        MutableStateFlow(QuizUiState(isLoading = false, scoresByCategory = zeroScores))
     val quizUiState: StateFlow<QuizUiState> = _quizUiState.asStateFlow()
+
+
     var showNavigationBar by mutableStateOf(true)
         private set
 
     var showFab by mutableStateOf(true)
         private set
-    private val _events = MutableSharedFlow<EffectsEvent>()
 
+    private val _events = MutableSharedFlow<EffectsEvent>()
     val events = _events
 
     private var timerJob: Job? = null
@@ -59,6 +63,14 @@ class QuizViewModel @Inject constructor(
         SharingStarted.Companion.Eagerly, "User"
     )
 
+    init {
+        viewModelScope.launch {
+            dataStore.scores.collect { savedScores ->
+                _quizUiState.update { it.copy(scoresByCategory = zeroScores + savedScores) }
+            }
+        }
+    }
+
     fun changeTheme(enabled: Boolean) {
         viewModelScope.launch {
             dataStore.setDarkTheme(enabled)
@@ -73,7 +85,7 @@ class QuizViewModel @Inject constructor(
 
     fun changeUserName(username: String) {
         viewModelScope.launch {
-            dataStore.setLanguage(username)
+            dataStore.setUserName(username)
         }
     }
 
@@ -105,13 +117,16 @@ class QuizViewModel @Inject constructor(
         confirmOrNext()
     }
 
-    fun selectOption(index: Int,text : String) {
-        _quizUiState.update { it.copy(selectedOption = index, selectedOptionText = text) }
+    fun selectOption(text: String) {
+        _quizUiState.update { it.copy(selectedOptionText = text) }
     }
 
 
-
     fun setCategory(category: CategoryName?) {
+        if (category == null) {
+            _quizUiState.update { it.copy(error = "Invalid category") }
+            return
+        }
         _quizUiState.update { it.copy(category = category) }
         startNewQuiz(category)
 
@@ -122,80 +137,92 @@ class QuizViewModel @Inject constructor(
             try {
                 _quizUiState.update { it.copy(isLoading = true, error = null) }
 
-            val items = getCategoryFlow(category = categoryName).first()
-            val newQuestions = items.map { item ->
-                val otherOptions = items.filter { it.en != item.en }
-                    .shuffled()
-                    .take(2)
-                    .map { it.en }
-                val options = (otherOptions + item.en).shuffled()
-                Question(
-                    questionText = item.fr,
-                    options = options,
-                    correctAnswer = item.en
-                )
-            }.shuffled()
-                .take(10)    // chose only 10 questions
-            _quizUiState.update {
-                it.copy(
-                    isLoading = false,
-                    questions = newQuestions,
-                    currentIndex = 0,
-                    score = 0,
-                    selectedOption = null,
-                    selectedOptionText = null,
-                    isAnswerChecked = false,
-                    timeLeft = maxTime,
-                    isFinished = false
-                )
-            }
-            startTimer()
-        }
-            catch (e : Exception) {
+                val items = getCategoryFlow(category = categoryName).first()
+                val newQuestions = items.map { item ->
+                    val otherOptions = items.filter { it.en != item.en }
+                        .shuffled()
+                        .take(2)
+                        .map { it.en }
+                    val options = (otherOptions + item.en).shuffled()
+                    Question(
+                        questionText = item.fr,
+                        options = options,
+                        correctAnswer = item.en
+                    )
+                }.shuffled()
+                    .take(10)    // chose only 10 questions
+                _quizUiState.update {
+                    it.copy(
+                        isLoading = false,
+                        questions = newQuestions,
+                        currentIndex = 0,
+                        score = 0,
+                        selectedOptionText = null,
+                        isAnswerChecked = false,
+                        timeLeft = maxTime,
+                        isFinished = false
+                    )
+                }
+                startTimer()
+            } catch (e: Exception) {
                 _quizUiState.update { it.copy(isLoading = false, error = e.message) }
             }
-    }
+        }
     }
 
     fun confirmOrNext() {
         val state = _quizUiState.value
+        val category = state.category ?: return
         if (!state.isAnswerChecked) {
             val question = state.questions[state.currentIndex]
             val chosenText = state.selectedOptionText
             val isCorrect = chosenText == question.correctAnswer
+            val updatedScores = if(isCorrect) {
+                state.scoresByCategory + (state.category to (state.scoresByCategory[state.category]!! + 1))
+            } else {
+                state.scoresByCategory
+            }
 
             _quizUiState.update {
                 it.copy(
                     isAnswerChecked = true,
                     score = if (isCorrect) it.score + 1 else it.score,
+                    // scoresByCategory = it.scoresByCategory.increment(category, if (isCorrect) 1 else 0)
+                    scoresByCategory = updatedScores
                 )
             }
 
+viewModelScope.launch {
+    dataStore.setScores(updatedScores)
+}
 
             playEffect(isCorrect = isCorrect)
 
             stopTimer()
         } else {
-            if (state.currentIndex < state.questions.size-1) {
-                _quizUiState.update {
-                    it.copy(
-                        currentIndex = it.currentIndex + 1,
-                        selectedOption = null,
-                        selectedOptionText = null,
-                        isAnswerChecked = false,
-                        timeLeft = maxTime
-                    )
-                }
-                startTimer()
-            } else {
-                stopTimer()
-                _quizUiState.update {
-                    it.copy(isFinished = true)
-                }
-            }
+            goToNextQuestion()
         }
     }
 
+    private fun goToNextQuestion() {
+        val state = _quizUiState.value
+        if (state.currentIndex < state.questions.lastIndex) {
+            _quizUiState.update {
+                it.copy(
+                    currentIndex = it.currentIndex + 1,
+                    selectedOptionText = null,
+                    isAnswerChecked = false,
+                    timeLeft = maxTime
+                )
+            }
+            startTimer()
+        } else {
+            stopTimer()
+            _quizUiState.update {
+                it.copy(isFinished = true)
+            }
+        }
+    }
 
     fun playEffect(isCorrect: Boolean) {
         viewModelScope.launch {
@@ -216,6 +243,20 @@ class QuizViewModel @Inject constructor(
         CategoryName.Adverbs -> repository.getAllAdverbs()
         CategoryName.Idioms -> repository.getAllIdioms()
         else -> repository.getAllVerbs()
+    }
+
+
+    fun resetAllScores() {
+        _quizUiState.update { it.copy(scoresByCategory = zeroScores) }
+        viewModelScope.launch {
+            dataStore.setScores(zeroScores)
+        }
+    }
+
+    private fun Map<CategoryName, Int>.increment(key: CategoryName, by: Int = 1):
+            Map<CategoryName, Int> {
+        val current = this[key] ?: 0
+        return this + (key to current + by)
     }
 
     sealed class EffectsEvent {

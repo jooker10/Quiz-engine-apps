@@ -8,7 +8,7 @@ data class QuizUiState(
     val questions: List<Question> = emptyList(),
     val currentIndex: Int = 0,
     val score: Int = 0,
-    val selectedOption: Int? = null,
+    val scoresByCategory : Map<CategoryName,Int> = emptyMap(),
     val selectedOptionText: String? = null,
     val isAnswerChecked: Boolean = false,
     val timeLeft: Int = 15,

@@ -46,14 +46,8 @@ fun QuizScreen(
     effectsViewModel: EffectsViewModel = hiltViewModel(),
 ) {
     val quizUiState by quizViewModel.quizUiState.collectAsState()
-
-    /* val questions by quizViewModel.questions.collectAsState(initial = emptyList())
-     Log.d("see", "quiz questions size: ${questions.size}")
-     val index by quizViewModel.currentIndex
-     val score by quizViewModel.score
-     val selectedOption by quizViewModel.selectedOption
-     val timeLeft by quizViewModel.timeLeft
-     val selectedOptionText by quizViewModel.selectedOptionText*/
+   /* val currentCategoryScore = quizUiState.category?.let {
+        quizUiState.scoresByCategory[it] } ?: 0*/    // should be in HomeScreen for displaying Scores
 
     LaunchedEffect(category) {
         quizViewModel.setCategory(category)
@@ -86,10 +80,9 @@ fun QuizScreen(
             )
         }
 
-    }
-    else if (quizUiState.questions.isNotEmpty()) {
+    } else if (quizUiState.questions.isNotEmpty()) {
         val question = quizUiState.questions[quizUiState.currentIndex]
-       // val options = question.options
+        // val options = question.options
 
         Column(
             modifier = Modifier
@@ -143,7 +136,7 @@ fun QuizScreen(
                     text = optionText,
                     isSelected = quizUiState.selectedOptionText == optionText,
                     onClick = {
-                        quizViewModel.selectOption(index, optionText)
+                        quizViewModel.selectOption(optionText)
 
                     }
                 )
@@ -157,7 +150,7 @@ fun QuizScreen(
                     quizViewModel.confirmOrNext()
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = (quizUiState.selectedOption != null || quizUiState.isAnswerChecked)
+                enabled = (quizUiState.selectedOptionText != null || quizUiState.isAnswerChecked)
             ) {
                 Text(
                     text =
