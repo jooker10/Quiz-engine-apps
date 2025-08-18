@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     id("org.jetbrains.kotlin.kapt")
     id("com.google.dagger.hilt.android")
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.2.10"
 
 }
 
@@ -76,6 +77,8 @@ dependencies {
     kapt("androidx.room:room-compiler:2.7.2")
 
     implementation("androidx.datastore:datastore-preferences:1.1.7")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 
 
 

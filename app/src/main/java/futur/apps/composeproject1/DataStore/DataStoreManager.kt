@@ -10,9 +10,11 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import futur.apps.composeproject1.utils.CategoryName
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.json.Json
 import org.json.JSONStringer
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.collections.emptyMap
 
 val Context.dataStore by preferencesDataStore("app_prefs")
 @Singleton
@@ -23,43 +25,45 @@ class DataStoreManager @Inject constructor(
         private val DARK_THEME_KEY = booleanPreferencesKey("dark_theme")
         private val LANGUAGE_KEY = stringPreferencesKey("language")
         private val USERNAME_KEY = stringPreferencesKey("username")
-        private val SCORES_KEY = stringPreferencesKey("quiz_scores")
+        private val SCORES_KEY = stringPreferencesKey("scores_key")
     }
-    val isDarkTheme : Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[DARK_THEME_KEY] ?: false }
-    val langue : Flow<String> = context.dataStore.data.map { prefs -> prefs[LANGUAGE_KEY] ?: "English" }
-    val username : Flow<String> = context.dataStore.data.map { prefs -> prefs[USERNAME_KEY] ?: "User" }
 
-    suspend fun setScores(scores : Map<CategoryName,Int>) {
-        val str = scores.entries.joinToString(";") {
-            "${it.key.name}:${it.value}"}
-            context.dataStore.edit { prefs ->
-                prefs[SCORES_KEY] = str
-            }
+    val isDarkTheme: Flow<Boolean> =
+        context.dataStore.data.map { prefs -> prefs[DARK_THEME_KEY] ?: false }
+    val langue: Flow<String> =
+        context.dataStore.data.map { prefs -> prefs[LANGUAGE_KEY] ?: "English" }
+    val username: Flow<String> =
+        context.dataStore.data.map { prefs -> prefs[USERNAME_KEY] ?: "User" }
+
+    //for saving scores
+    suspend fun setScores(scores: Map<CategoryName, Int>) {
+        val json = Json.encodeToString(scores)
+        context.dataStore.edit { prefs ->
+            prefs[SCORES_KEY] = json
         }
+    }
 
-    val scores : Flow<Map<CategoryName,Int>> = context.dataStore.data.map { prefs ->
-        prefs[SCORES_KEY]?.split(";")?.mapNotNull { part ->
-            val (key,value) = part.split("=").let {
-                if(it.size == 2) it[0] to it[1] else null to null
-            }
+    // for reading scores
+    val scores: Flow<Map<CategoryName, Int>> = context.dataStore.data.map { prefs ->
+        prefs[SCORES_KEY]?.let { json ->
             try {
-                key?.let { CategoryName.valueOf(it)}?.let{ cat ->
-                    cat to (value?.toIntOrNull() ?: 0)
-                }
+                Json.decodeFromString<Map<CategoryName, Int>>(json)
+            } catch (e: Exception) {
+                emptyMap()
             }
-            catch (e : Exception) {
-                null
-            }
-            }?.toMap() ?: emptyMap()
-        }
+        } ?: emptyMap()
+    }
 
-    suspend fun setDarkTheme(enabled : Boolean) {
+    suspend fun setDarkTheme(enabled: Boolean) {
         context.dataStore.edit { prefs -> prefs[DARK_THEME_KEY] = enabled }
     }
-    suspend fun setLanguage(lang : String) {
+
+    suspend fun setLanguage(lang: String) {
         context.dataStore.edit { prefs -> prefs[LANGUAGE_KEY] = lang }
     }
-    suspend fun setUserName(name : String) {
+
+    suspend fun setUserName(name: String) {
         context.dataStore.edit { prefs -> prefs[USERNAME_KEY] = name }
     }
 }
+
