@@ -15,9 +15,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             val quizViewModel: QuizViewModel = hiltViewModel()
             val isDarkTheme = quizViewModel.isDarkMode.collectAsState()
-        ComposeProject1Theme(isDarkTheme.value) {
-            MainScreen(quizViewModel = quizViewModel)
-        }
+            ComposeProject1Theme(isDarkTheme.value) {
+                MainScreen(quizViewModel = quizViewModel)
+            }
         }
     }
 }

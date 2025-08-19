@@ -17,12 +17,16 @@ fun MainScreen(quizViewModel: QuizViewModel) {
     val navController = rememberNavController()
     val showNavigationBar = quizViewModel.showNavigationBar
     val showFab = quizViewModel.showFab
+
     Scaffold(
         topBar = { TopBar(navController) },
+
         bottomBar = {
-            if(showNavigationBar) BottomNavigationBar(navController = navController)
-                    },
+            if (showNavigationBar) BottomNavigationBar(navController = navController)
+        },
+
         floatingActionButton = { if (showFab) FAB() },
+
         content = { paddingValues ->
             Box(
                 modifier = Modifier

@@ -2,12 +2,7 @@ package futur.apps.composeproject1.appScreens.NavGraphs
 
 import android.util.Log
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -33,13 +28,6 @@ fun AppNavGraph(
     quizViewModel: QuizViewModel,
     isUserLoggedIn: Boolean
 ) {
-
-    val username = quizViewModel.username.collectAsState()
-    val language = quizViewModel.langue.collectAsState()
-    val isDarkTheme = quizViewModel.isDarkMode.collectAsState()
-
-
-
     NavHost(
         navController = navController,
         startDestination = if (isUserLoggedIn) Screen.MainGraph.route else Screen.AuthGraph.route
@@ -50,72 +38,7 @@ fun AppNavGraph(
             startDestination = Screen.Home.route
         )
         {
-            composable(Screen.Home.route) {
-                quizViewModel.setNavigationBarVisibility(true)
-                quizViewModel.setFabVisibility(true)
-                HomeScreen()
-
-            }
-            composable(Screen.Table.route) {
-                quizViewModel.setNavigationBarVisibility(true)
-                quizViewModel.setFabVisibility(true)
-                TableScreen()
-            }
-            // Quiz Navigation
-            navigation(
-                route = Screen.QuizRoot.route,
-                startDestination = Screen.QuizPicker.route
-            ) {
-                composable(Screen.QuizPicker.route) {
-                    quizViewModel.setNavigationBarVisibility(true)
-                    quizViewModel.setFabVisibility(true)
-
-                    PickerScreen{ categoryName ->
-                       quizViewModel.setCategory(categoryName)
-                        navController.navigate(Screen.QuizCategory.route + "/${categoryName.name}")
-                    }
-
-                }
-                composable(
-                    Screen.QuizCategory.route + "/{category}",
-                    arguments = listOf(navArgument("category"){ type = NavType.StringType })
-                    )
-                { backStackEntry ->
-                    val categoryArg = backStackEntry.arguments?.getString("category")
-
-                    val category = try {
-                        categoryArg?.let {
-                            CategoryName.valueOf(it)
-                        }
-                    }
-                    catch (e : IllegalArgumentException) { null }
-                    if(category == null) {
-                        Log.d("see", "category is null")
-                        navController.popBackStack()
-                    }
-                    else {
-                        quizViewModel.setNavigationBarVisibility(false)
-                        quizViewModel.setFabVisibility(false)
-                        QuizScreen(category = category)
-                    }
-
-                }
-            }
-
-            composable(Screen.Settings.route) {
-                quizViewModel.setNavigationBarVisibility(true)
-                quizViewModel.setFabVisibility(true)
-                SettingsScreen(
-                    isDarkTheme = isDarkTheme.value,
-                    language = language.value,
-                    userName = username.value,
-                    onThemeChange = { quizViewModel.changeTheme(it) },
-                    onUserNameChange = { quizViewModel.changeUserName(it) },
-                    onLanguageChange = { quizViewModel.changeLanguage(it) },
-                    onPrivacyClick = {},
-                    onContactClick = {}
-                )
-            }
+            mainNavGraph(navController = navController,quizViewModel = quizViewModel)
         }
 
         navigation(
@@ -130,24 +53,78 @@ fun AppNavGraph(
 
 }
 
-/*fun NavGraphBuilder.mainNavGraph(navController: NavHostController) {
-
+fun NavGraphBuilder.mainNavGraph(
+    navController: NavHostController,
+    quizViewModel: QuizViewModel,
+) {
     composable(Screen.Home.route) {
+        quizViewModel.setNavigationBarVisibility(true)
+        quizViewModel.setFabVisibility(true)
         HomeScreen()
 
     }
     composable(Screen.Table.route) {
-        EnglishTabsWithPager()
+        quizViewModel.setNavigationBarVisibility(true)
+        quizViewModel.setFabVisibility(true)
+        TableScreen()
     }
-    composable(Screen.Quiz.route) {
-        QuizScreen()
+    // Quiz Navigation
+    navigation(
+        route = Screen.QuizRoot.route,
+        startDestination = Screen.QuizPicker.route
+    ) {
+        composable(Screen.QuizPicker.route) {
+            quizViewModel.setNavigationBarVisibility(true)
+            quizViewModel.setFabVisibility(true)
+
+            PickerScreen{ categoryName ->
+                quizViewModel.setCategory(categoryName)
+                navController.navigate(Screen.QuizCategory.route + "/${categoryName.name}")
+            }
+
+        }
+        composable(
+            Screen.QuizCategory.route + "/{category}",
+            arguments = listOf(navArgument("category"){ type = NavType.StringType })
+        )
+        { backStackEntry ->
+            val categoryArg = backStackEntry.arguments?.getString("category")
+
+            val category = try {
+                categoryArg?.let {
+                    CategoryName.valueOf(it)
+                }
+            }
+            catch (e : IllegalArgumentException) { null }
+            if(category == null) {
+                Log.d("see", "category is null")
+                navController.popBackStack()
+            }
+            else {
+                quizViewModel.setNavigationBarVisibility(false)
+                quizViewModel.setFabVisibility(false)
+                QuizScreen(category = category)
+            }
+
+        }
     }
+
     composable(Screen.Settings.route) {
+        quizViewModel.setNavigationBarVisibility(true)
+        quizViewModel.setFabVisibility(true)
         SettingsScreen(
-           isDarkTheme = isDarkTheme.value
+            isDarkTheme = quizViewModel.isDarkMode.collectAsState().value,
+            language = quizViewModel.langue.collectAsState().value,
+            userName = quizViewModel.username.collectAsState().value,
+            onThemeChange = { quizViewModel.changeTheme(it) },
+            onUserNameChange = { quizViewModel.changeUserName(it) },
+            onLanguageChange = { quizViewModel.changeLanguage(it) },
+            onPrivacyClick = {},
+            onContactClick = {}
         )
     }
-}*/
+
+}
 
 fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
 
