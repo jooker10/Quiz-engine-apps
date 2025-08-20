@@ -3,7 +3,6 @@ package futur.apps.composeproject1.appScreens.scaffold
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -14,9 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination
@@ -24,8 +21,8 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import futur.apps.composeproject1.utils.Screen
 import futur.apps.composeproject1.R
+import futur.apps.composeproject1.utils.Screen
 
 
 /**
@@ -86,7 +83,7 @@ fun BottomNavigationBar(navController: NavHostController) {
         tonalElevation = NavigationBarDefaults.Elevation,
         modifier = Modifier
             .padding(horizontal = 8.dp, vertical = 4.dp)
-            .height(64.dp)
+          //  .height(64.dp)
     ) {
         items.forEach { item ->
             val selected = item.isSelected(currentDestination)
