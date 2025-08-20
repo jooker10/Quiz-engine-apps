@@ -37,7 +37,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import futur.apps.composeproject1._Mains.QuizViewModel
+import futur.apps.composeproject1.viewmodels.QuizViewModel
 import futur.apps.composeproject1.utils.CategoryName
 
 @Composable

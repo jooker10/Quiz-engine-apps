@@ -1,4 +1,4 @@
-package futur.apps.composeproject1.appScreens.Scaffold
+package futur.apps.composeproject1.appScreens.scaffold
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape

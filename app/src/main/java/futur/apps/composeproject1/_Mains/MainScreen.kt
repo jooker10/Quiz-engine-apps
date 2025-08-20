@@ -8,10 +8,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import futur.apps.composeproject1.appScreens.NavGraphs.AppNavGraph
-import futur.apps.composeproject1.appScreens.Scaffold.BottomNavigationBar
-import futur.apps.composeproject1.appScreens.Scaffold.FAB
-import futur.apps.composeproject1.appScreens.Scaffold.TopBar
+import futur.apps.composeproject1.appScreens.navGraphs.AppNavGraph
+import futur.apps.composeproject1.appScreens.scaffold.BottomNavigationBar
+import futur.apps.composeproject1.appScreens.scaffold.FAB
+import futur.apps.composeproject1.appScreens.scaffold.TopBar
 import futur.apps.composeproject1.utils.Screen
 
 @Composable
@@ -23,8 +23,9 @@ fun MainScreen(navController: NavHostController) {
     val bottomBarRoutes = listOf(
         Screen.Home.route,
         Screen.Table.route,
-        Screen.QuizPicker.route,
-        Screen.QuizCategory.baseRoute // supports all QuizCategory/{param} routes
+        Screen.Settings.route,
+        Screen.QuizPicker.route
+      //  Screen.QuizCategory.baseRoute // supports all QuizCategory/{param} routes
     )
     val fabRoutes = listOf(Screen.Home.route)
 
@@ -45,37 +46,4 @@ fun MainScreen(navController: NavHostController) {
         }
     }
 }
-/*@Composable
-fun MainScreen(quizViewModel: QuizViewModel) {
-    val navController = rememberNavController()
-    val showNavigationBar = quizViewModel.showNavigationBar
-    val showFab = quizViewModel.showFab
-
-    Scaffold(
-        topBar = { TopBar(navController) },
-
-        bottomBar = {
-            if (showNavigationBar) BottomNavigationBar(navController = navController)
-        },
-
-        floatingActionButton = { if (showFab) FAB() },
-
-        content = { paddingValues ->
-            Box(
-                modifier = Modifier
-                    .padding(paddingValues)
-                    .fillMaxSize()
-            )
-
-            {
-                AppNavGraph(
-                    navController = navController,
-                    quizViewModel = quizViewModel,
-                    isUserLoggedIn = true
-                )
-            }
-        }
-    )
-
-}*/
 

@@ -26,19 +26,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import futur.apps.composeproject1.R
-import futur.apps.composeproject1._Mains.QuizViewModel
+import futur.apps.composeproject1.viewmodels.QuizViewModel
 import futur.apps.composeproject1.utils.CategoryName
 
 @Composable
 fun HomeScreen(quizViewModel: QuizViewModel = hiltViewModel()) {
     val quizState by quizViewModel.quizUiState.collectAsState()
     val username by quizViewModel.username.collectAsState()
-    val isDarkTheme by quizViewModel.isDarkMode.collectAsState()
 
     // Example: default profile image
     val profileImage = remember { R.drawable.ic_launcher_background }

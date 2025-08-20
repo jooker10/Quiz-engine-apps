@@ -1,4 +1,4 @@
-package futur.apps.composeproject1.appScreens.Scaffold
+package futur.apps.composeproject1.appScreens.scaffold
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -26,11 +26,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
-import futur.apps.composeproject1.R
 import futur.apps.composeproject1.utils.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
