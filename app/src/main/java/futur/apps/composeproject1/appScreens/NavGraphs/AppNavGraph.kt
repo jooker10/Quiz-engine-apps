@@ -1,8 +1,6 @@
 package futur.apps.composeproject1.appScreens.NavGraphs
 
-import android.util.Log
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -16,13 +14,67 @@ import futur.apps.composeproject1.appScreens._Screens.RegisterScreen
 import futur.apps.composeproject1.appScreens._Screens.SettingsScreen
 import futur.apps.composeproject1.utils.Screen
 import futur.apps.composeproject1.appScreens._Screens.HomeScreen
-import futur.apps.composeproject1._Mains.QuizViewModel
 import futur.apps.composeproject1.appScreens._Screens.PickerScreen
 import futur.apps.composeproject1.appScreens._Screens.QuizScreen
 import futur.apps.composeproject1.utils.CategoryName
 
-
 @Composable
+fun AppNavGraph(navController: NavHostController, isUserLoggedIn: Boolean) {
+    NavHost(
+        navController = navController,
+        startDestination = if (isUserLoggedIn) Screen.MainGraph.route else Screen.AuthGraph.route
+    ) {
+        // Main feature graph
+        navigation(
+            route = Screen.MainGraph.route,
+            startDestination = Screen.Home.route
+        ) { mainNavGraph(navController) }
+
+        // Authentication graph
+        navigation(
+            route = Screen.AuthGraph.route,
+            startDestination = Screen.Login.route
+        ) { authNavGraph(navController) }
+    }
+}
+
+fun NavGraphBuilder.mainNavGraph(navController: NavHostController) {
+
+    composable(Screen.Home.route) { HomeScreen() }
+
+    composable(Screen.Table.route) { TableScreen() }
+
+    navigation(
+        route = Screen.QuizRoot.route,
+        startDestination = Screen.QuizPicker.route
+    ) {
+        composable(Screen.QuizPicker.route) {
+            PickerScreen { categoryName ->
+                navController.navigate(Screen.QuizCategory.createRoute(categoryName))
+            }
+        }
+        composable(
+            Screen.QuizCategory.route,
+            arguments = listOf(navArgument("category") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val category = backStackEntry.arguments?.getString("category")?.let {
+                try { CategoryName.valueOf(it) } catch (e: IllegalArgumentException) { null }
+            }
+            if (category == null) navController.popBackStack()
+            else QuizScreen(category)
+        }
+    }
+
+    composable(Screen.Settings.route) { /*SettingsScreen()*/ }
+}
+
+fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
+    composable(Screen.Login.route) { LoginScreen() }
+    composable(Screen.Register.route) { RegisterScreen()}
+}
+
+
+/*@Composable
 fun AppNavGraph(
     navController: NavHostController,
     quizViewModel: QuizViewModel,
@@ -135,4 +187,4 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController) {
         RegisterScreen()
     }
 
-}
+}*/

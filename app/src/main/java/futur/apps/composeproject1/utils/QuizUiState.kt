@@ -12,6 +12,7 @@ data class QuizUiState(
     val selectedOptionText: String? = null,
     val isAnswerChecked: Boolean = false,
     val timeLeft: Int = 15,
+    val timeLimit : Int = 10,
     val error: String? = null,
     val isFinished: Boolean = false
 )
