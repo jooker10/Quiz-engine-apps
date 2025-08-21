@@ -30,9 +30,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import futur.apps.composeproject1.RoomDatabase.DbViewModel
-import futur.apps.composeproject1.viewmodels.HomeViewModel
+ import futur.apps.composeproject1.utils.CategoryName
+ import futur.apps.composeproject1.viewmodels.HomeViewModel
 
 
+/*
 // -------------------- HomeScreen --------------------
 @Composable
 fun HomeScreen(
@@ -180,3 +182,140 @@ fun RecentWordsRow(words: List<String>) {
 }
 
 
+*/
+
+
+// -------------------- HomeScreen --------------------
+@Composable
+fun HomeScreen(
+    homeViewModel: HomeViewModel = hiltViewModel(),
+    onQuizClick: () -> Unit = {},
+    onTableClick: () -> Unit = {}
+) {
+    val uiState by homeViewModel.uiState.collectAsState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // Profile Section
+        ProfileSection(
+            username = uiState.username,
+            level = uiState.level,
+            points = uiState.points
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Scores Section
+        Text(text = "Your Scores", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            items(CategoryName.entries) { category ->
+                val score = uiState.scores[category] ?: 0
+                ScoreCard(
+                    categoryName = category.displayName,
+                    score = score,
+                    maxScore = 100, // مؤقتًا
+                    color = category.color
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Quick Actions
+        QuickActionsRow(onQuizClick = onQuizClick, onTableClick = onTableClick)
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Recent Words
+        RecentWordsRow(words = uiState.recentWords)
+    }
+}
+
+// -------------------- Profile --------------------
+@Composable
+fun ProfileSection(username: String, level: Int, points: Int) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column {
+            Text(text = "Hello, $username!", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text(text = "Level: $level", fontSize = 16.sp)
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            Text(text = "Points", fontSize = 14.sp)
+            Text(text = "$points", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+// -------------------- Score Card with Progress --------------------
+@Composable
+fun ScoreCard(categoryName: String, score: Int, maxScore: Int, color: Color) {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.2f))
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = categoryName, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                Text(text = "$score/$maxScore", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            LinearProgressIndicator(
+                progress = (score.toFloat() / maxScore).coerceIn(0f, 1f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp),
+                color = color,
+                trackColor = Color.LightGray.copy(alpha = 0.3f)
+            )
+        }
+    }
+}
+
+// -------------------- Quick Actions --------------------
+@Composable
+fun QuickActionsRow(onQuizClick: () -> Unit, onTableClick: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Button(onClick = onQuizClick, modifier = Modifier.weight(1f)) {
+            Text(text = "Take Quiz")
+        }
+        Button(onClick = onTableClick, modifier = Modifier.weight(1f)) {
+            Text(text = "View Table")
+        }
+    }
+}
+
+// -------------------- Recent Words --------------------
+@Composable
+fun RecentWordsRow(words: List<String>) {
+    Column {
+        Text(text = "Recent Words", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            words.take(5).forEach { word ->
+                Box(
+                    modifier = Modifier
+                        .background(Color(0xFFFFF9C4), shape = RoundedCornerShape(8.dp))
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(text = word, fontSize = 14.sp)
+                }
+            }
+            }
+        }
+}

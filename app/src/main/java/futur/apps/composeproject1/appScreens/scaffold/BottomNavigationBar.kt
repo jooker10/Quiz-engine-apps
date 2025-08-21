@@ -83,7 +83,7 @@ fun BottomNavigationBar(navController: NavHostController) {
         tonalElevation = NavigationBarDefaults.Elevation,
         modifier = Modifier
             .padding(horizontal = 8.dp, vertical = 4.dp)
-          //  .height(64.dp)
+          //t  .height(64.dp)
     ) {
         items.forEach { item ->
             val selected = item.isSelected(currentDestination)
