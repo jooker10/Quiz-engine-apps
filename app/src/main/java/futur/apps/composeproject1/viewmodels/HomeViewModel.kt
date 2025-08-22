@@ -16,32 +16,36 @@ import javax.inject.Inject
 data class HomeUiState(
     val username: String = "Anouar",
     val level: Int = 1,
-    val points: Int = 0,
-    val scores: Map<CategoryName, Int> = emptyMap(),
+    val scores: Map<CategoryName, Int>  = CategoryName.entries.associateWith { 0 },
+    val points: Map<CategoryName, Int>  = CategoryName.entries.associateWith { 0 },
     val recentWords: List<String> = emptyList(),
 )
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val datastore: DataStoreManager) : ViewModel() {
+    private val datastore: DataStoreManager
+) : ViewModel() {
 
-        private val _uiState = MutableStateFlow(HomeUiState())
-        val uiState : StateFlow<HomeUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(HomeUiState())
+    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
             combine(
                 datastore.username,
-                datastore.scores
-            ) {
-                username, scores ->
+                datastore.scores,
+                datastore.points // assuming you added points: Flow<Map<CategoryName, Int>> in DataStore
+            ) { username, scores, points ->
                 HomeUiState(
                     username = username,
-                    scores = scores
+                    scores = CategoryName.entries.associateWith { scores[it] ?: 0 } ,
+                    points = CategoryName.entries.associateWith { points[it] ?: 0 },
+                    // merge scores with points or keep separate
+                    // here we show points as score per category
+                    level = 1,
+                    recentWords = emptyList()
                 )
-            }.collect {
-                _uiState.value = it
+            }.collect { _uiState.value = it }
             }
         }
-    }
 }
