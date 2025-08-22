@@ -1,7 +1,6 @@
 package futur.apps.composeproject1.DataStore
 
 import android.content.Context
-import androidx.datastore.dataStore
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -11,7 +10,6 @@ import futur.apps.composeproject1.utils.CategoryName
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
-import org.json.JSONStringer
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.collections.emptyMap
@@ -27,7 +25,7 @@ class DataStoreManager @Inject constructor(
         private val DARK_THEME_KEY = booleanPreferencesKey("dark_theme")
         private val LANGUAGE_KEY = stringPreferencesKey("language")
         private val USERNAME_KEY = stringPreferencesKey("username")
-        private val SCORES_KEY = stringPreferencesKey("scores_key")
+        private val POINTS_CATEGORIES_KEY = stringPreferencesKey("points_Categories_key")
         private val POINTS_KEY = stringPreferencesKey("points_key")
         private val THRESHOLDS_KEY = stringPreferencesKey("thresholds_key")
     }
@@ -55,14 +53,14 @@ class DataStoreManager @Inject constructor(
     }
 
     // ---------------- Scores ----------------
-    suspend fun setScores(scores: Map<CategoryName, Int>) {
-        val json = Json.encodeToString(scores)
-        context.dataStore.edit { prefs -> prefs[SCORES_KEY] = json }
+    suspend fun setPointSList(points: Map<CategoryName, Int>) {
+        val json = Json.encodeToString(points)
+        context.dataStore.edit { prefs -> prefs[POINTS_CATEGORIES_KEY] = json }
     }
 
-    val scores: Flow<Map<CategoryName, Int>> =
+    val setPointsList: Flow<Map<CategoryName, Int>> =
         context.dataStore.data.map { prefs ->
-            prefs[SCORES_KEY]?.let { json ->
+            prefs[POINTS_CATEGORIES_KEY]?.let { json ->
                 try {
                     Json.decodeFromString<Map<CategoryName, Int>>(json)
                 } catch (e: Exception) {
