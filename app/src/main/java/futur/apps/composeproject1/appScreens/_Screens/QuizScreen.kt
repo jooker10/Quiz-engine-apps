@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import futur.apps.composeproject1.appScreens.ResultSheet
 import futur.apps.composeproject1.utils.Category
+import futur.apps.composeproject1.viewmodels.EffectsViewModel
 import futur.apps.composeproject1.viewmodels.QuizViewModel
 
 /**
@@ -31,6 +32,7 @@ import futur.apps.composeproject1.viewmodels.QuizViewModel
 fun QuizScreen(
     category: Category?,
     quizViewModel: QuizViewModel = hiltViewModel(),
+    effectsViewModel: EffectsViewModel = hiltViewModel(),
 ) {
     val uiState by quizViewModel.quizUiState.collectAsState()
 
@@ -44,10 +46,19 @@ fun QuizScreen(
     LaunchedEffect(Unit) {
         quizViewModel.events.collect { event ->
             when (event) {
-                QuizViewModel.QuizEffect.CorrectAnswer ->
+                QuizViewModel.QuizEffect.CorrectAnswer -> {
                     Toast.makeText(context, "Correct!", Toast.LENGTH_SHORT).show()
-                QuizViewModel.QuizEffect.WrongAnswer ->
+                    effectsViewModel.playCorrectSound()
+                    effectsViewModel.speak("Correct answer!")
+                }
+
+                QuizViewModel.QuizEffect.WrongAnswer -> {
                     Toast.makeText(context, "Wrong!", Toast.LENGTH_SHORT).show()
+                    effectsViewModel.playWrongSound()
+                        effectsViewModel.speak("Wrong answer!")
+
+                }
+
             }
         }
     }
@@ -205,6 +216,6 @@ fun QuizOption(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(text, style = MaterialTheme.typography.bodyLarge)
-            }
         }
+    }
 }
