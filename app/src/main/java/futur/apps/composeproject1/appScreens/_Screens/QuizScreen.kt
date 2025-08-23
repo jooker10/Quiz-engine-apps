@@ -15,7 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -186,37 +185,3 @@ fun QuizOption(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun QuizResultSheet(
-    correct: Int,
-    total: Int,
-    earnedPoints: Int,
-    onRetry: () -> Unit,
-    onHome: () -> Unit
-) {
-    ModalBottomSheet(
-        onDismissRequest = { onHome() },
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(24.dp)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("Quiz Finished 🎉", style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(16.dp))
-            Text("Correct Answers: $correct / $total")
-            Text("Points Earned: $earnedPoints", fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(24.dp))
-            Button(onClick = onRetry, modifier = Modifier.fillMaxWidth()) {
-                Text("Retry Quiz")
-            }
-            Spacer(Modifier.height(12.dp))
-            Button(onClick = onHome, modifier = Modifier.fillMaxWidth()) {
-                Text("Back to Home")
-            }
-            }
-        }
-}
