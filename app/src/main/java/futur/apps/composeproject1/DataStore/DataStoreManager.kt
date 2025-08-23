@@ -25,135 +25,36 @@ class DataStoreManager @Inject constructor(
         private val DARK_THEME_KEY = booleanPreferencesKey("dark_theme")
         private val LANGUAGE_KEY = stringPreferencesKey("language")
         private val USERNAME_KEY = stringPreferencesKey("username")
-        private val POINTS_CATEGORIES_KEY = stringPreferencesKey("points_Categories_key")
         private val POINTS_KEY = stringPreferencesKey("points_key")
-        private val THRESHOLDS_KEY = stringPreferencesKey("thresholds_key")
     }
 
-    // ---------------- Theme / Language / Username ----------------
-    val isDarkTheme: Flow<Boolean> =
-        context.dataStore.data.map { prefs -> prefs[DARK_THEME_KEY] ?: false }
-
-    val langue: Flow<String> =
-        context.dataStore.data.map { prefs -> prefs[LANGUAGE_KEY] ?: "English" }
-
-    val username: Flow<String> =
-        context.dataStore.data.map { prefs -> prefs[USERNAME_KEY] ?: "User" }
-
-    suspend fun setDarkTheme(enabled: Boolean) {
-        context.dataStore.edit { prefs -> prefs[DARK_THEME_KEY] = enabled }
-    }
-
-    suspend fun setLanguage(lang: String) {
-        context.dataStore.edit { prefs -> prefs[LANGUAGE_KEY] = lang }
-    }
-
-    suspend fun setUserName(name: String) {
-        context.dataStore.edit { prefs -> prefs[USERNAME_KEY] = name }
-    }
-
-    // ---------------- Scores ----------------
-    suspend fun setPointSList(points: Map<CategoryName, Int>) {
-        val json = Json.encodeToString(points)
-        context.dataStore.edit { prefs -> prefs[POINTS_CATEGORIES_KEY] = json }
-    }
-
-    val setPointsList: Flow<Map<CategoryName, Int>> =
-        context.dataStore.data.map { prefs ->
-            prefs[POINTS_CATEGORIES_KEY]?.let { json ->
-                try {
-                    Json.decodeFromString<Map<CategoryName, Int>>(json)
-                } catch (e: Exception) {
-                    emptyMap()
-                }
-            } ?: emptyMap()
-        }
-
-    // ---------------- Points ----------------
-    suspend fun setPoints(points: Map<CategoryName, Int>) {
-        val json = Json.encodeToString(points)
-        context.dataStore.edit { prefs -> prefs[POINTS_KEY] = json }
-    }
+    val isDarkTheme: Flow<Boolean> = context.dataStore.data.map { it[DARK_THEME_KEY] ?: false }
+    val langue: Flow<String> = context.dataStore.data.map { it[LANGUAGE_KEY] ?: "English" }
+    val username: Flow<String> = context.dataStore.data.map { it[USERNAME_KEY] ?: "User" }
 
     val points: Flow<Map<CategoryName, Int>> =
         context.dataStore.data.map { prefs ->
             prefs[POINTS_KEY]?.let { json ->
                 try {
                     Json.decodeFromString<Map<CategoryName, Int>>(json)
-                } catch (e: Exception) {
-                    emptyMap()
-                }
+                } catch (e: Exception) { emptyMap() }
             } ?: emptyMap()
         }
-
-    // ---------------- Thresholds ----------------
-    suspend fun setThresholds(thresholds: Map<CategoryName, Int>) {
-        val json = Json.encodeToString(thresholds)
-        context.dataStore.edit { prefs -> prefs[THRESHOLDS_KEY] = json }
-    }
-
-    val thresholds: Flow<Map<CategoryName, Int>> =
-        context.dataStore.data.map { prefs ->
-            prefs[THRESHOLDS_KEY]?.let { json ->
-                try {
-                    Json.decodeFromString<Map<CategoryName, Int>>(json)
-                } catch (e: Exception) {
-                    emptyMap()
-                }
-            } ?: emptyMap()
-            }
-}
-
-/*
-val Context.dataStore by preferencesDataStore("app_prefs")
-@Singleton
-class DataStoreManager @Inject constructor(
-    @ApplicationContext private val context: Context
-) {
-    companion object {
-        private val DARK_THEME_KEY = booleanPreferencesKey("dark_theme")
-        private val LANGUAGE_KEY = stringPreferencesKey("language")
-        private val USERNAME_KEY = stringPreferencesKey("username")
-        private val SCORES_KEY = stringPreferencesKey("scores_key")
-    }
-
-    val isDarkTheme: Flow<Boolean> =
-        context.dataStore.data.map { prefs -> prefs[DARK_THEME_KEY] ?: false }
-    val langue: Flow<String> =
-        context.dataStore.data.map { prefs -> prefs[LANGUAGE_KEY] ?: "English" }
-    val username: Flow<String> =
-        context.dataStore.data.map { prefs -> prefs[USERNAME_KEY] ?: "User" }
-
-    //for saving scores
-    suspend fun setScores(scores: Map<CategoryName, Int>) {
-        val json = Json.encodeToString(scores)
-        context.dataStore.edit { prefs ->
-            prefs[SCORES_KEY] = json
-        }
-    }
-
-    // for reading scores
-    val scores: Flow<Map<CategoryName, Int>> = context.dataStore.data.map { prefs ->
-        prefs[SCORES_KEY]?.let { json ->
-            try {
-                Json.decodeFromString<Map<CategoryName, Int>>(json)
-            } catch (e: Exception) {
-                emptyMap()
-            }
-        } ?: emptyMap()
-    }
 
     suspend fun setDarkTheme(enabled: Boolean) {
-        context.dataStore.edit { prefs -> prefs[DARK_THEME_KEY] = enabled }
+        context.dataStore.edit { it[DARK_THEME_KEY] = enabled }
     }
 
     suspend fun setLanguage(lang: String) {
-        context.dataStore.edit { prefs -> prefs[LANGUAGE_KEY] = lang }
+        context.dataStore.edit { it[LANGUAGE_KEY] = lang }
     }
 
     suspend fun setUserName(name: String) {
-        context.dataStore.edit { prefs -> prefs[USERNAME_KEY] = name }
+        context.dataStore.edit { it[USERNAME_KEY] = name }
     }
-}
-*/
 
+    suspend fun setPoints(points: Map<CategoryName, Int>) {
+        val json = Json.encodeToString(points)
+        context.dataStore.edit { it[POINTS_KEY] = json}
+        }
+}

@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+
 data class QuizUiState(
     val isLoading: Boolean = true,
     val category: CategoryName? = null,
@@ -45,10 +46,10 @@ class QuizViewModel @Inject constructor(
 ) : ViewModel() {
 
     // ---------- UI State ----------
-    private val zeroScores: Map<CategoryName, Int> = CategoryName.entries.associateWith { 0 }
+    private val zeroPoints: Map<CategoryName, Int> = CategoryName.entries.associateWith { 0 }
 
     private val _quizUiState =
-        MutableStateFlow(QuizUiState(isLoading = false, pointsByCategory = zeroScores))
+        MutableStateFlow(QuizUiState(isLoading = false, pointsByCategory = zeroPoints))
     val quizUiState: StateFlow<QuizUiState> = _quizUiState.asStateFlow()
 
     // ---------- Events ----------
@@ -67,10 +68,10 @@ class QuizViewModel @Inject constructor(
     )
 
     init {
-        // Load saved scores
+        // Load saved points from DataStore
         viewModelScope.launch {
-            dataStore.setPointsList.collect { savedScores ->
-                _quizUiState.update { it.copy(pointsByCategory = zeroScores + savedScores) }
+            dataStore.points.collect { savedPoints ->
+                _quizUiState.update { it.copy(pointsByCategory = zeroPoints + savedPoints) }
             }
         }
     }
@@ -88,7 +89,6 @@ class QuizViewModel @Inject constructor(
     fun startNewQuiz(category: CategoryName) {
         viewModelScope.launch {
             _quizUiState.update { it.copy(isLoading = true, error = null) }
-
             try {
                 val items = getCategoryFlow(category).first()
                 val newQuestions = generateQuestions(items)
@@ -139,7 +139,7 @@ class QuizViewModel @Inject constructor(
         val category = state.category ?: return
         val isCorrect = state.selectedOptionText == state.questions[state.currentIndex].correctAnswer
 
-        val updatedScores = if (isCorrect) {
+        val updatedPoints = if (isCorrect) {
             state.pointsByCategory + (category to (state.pointsByCategory[category]!! + 1))
         } else state.pointsByCategory
 
@@ -147,11 +147,11 @@ class QuizViewModel @Inject constructor(
             it.copy(
                 isAnswerChecked = true,
                 score = if (isCorrect) it.score + 1 else it.score,
-                pointsByCategory = updatedScores
+                pointsByCategory = updatedPoints
             )
         }
 
-        viewModelScope.launch { dataStore.setPointSList(updatedScores) }
+        viewModelScope.launch { dataStore.setPoints(updatedPoints) }
         playEffect(isCorrect)
         stopTimer()
     }
@@ -178,7 +178,6 @@ class QuizViewModel @Inject constructor(
         val state = _quizUiState.value
         val category = state.category ?: return
 
-        // حساب النقاط المكتسبة
         val correctAnswers = state.score
         val totalQuestions = state.questions.size
         val percent = if (totalQuestions > 0) (correctAnswers * 100 / totalQuestions) else 0
@@ -190,7 +189,6 @@ class QuizViewModel @Inject constructor(
             else -> 0
         }
 
-        // تحديث الـ UI State لعرض ResultSheet
         _quizUiState.update {
             it.copy(
                 isFinished = true,
@@ -203,7 +201,6 @@ class QuizViewModel @Inject constructor(
             val updatedPoints = currentPoints.toMutableMap()
             updatedPoints[category] = (updatedPoints[category] ?: 0) + earnedPoints
             dataStore.setPoints(updatedPoints)
-           // dataStore.setPointsList(updatedPoints)
         }
     }
 
@@ -246,9 +243,9 @@ class QuizViewModel @Inject constructor(
     }
 
     // ---------- Reset / Retry ----------
-    fun resetAllScores() {
-        _quizUiState.update { it.copy(pointsByCategory = zeroScores) }
-        viewModelScope.launch { dataStore.setPointSList(zeroScores) }
+    fun resetAllPoints() {
+        _quizUiState.update { it.copy(pointsByCategory = zeroPoints) }
+        viewModelScope.launch { dataStore.setPoints(zeroPoints) }
     }
 
     fun retryQuiz() {

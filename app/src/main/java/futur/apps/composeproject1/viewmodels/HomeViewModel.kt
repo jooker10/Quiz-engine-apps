@@ -11,15 +11,14 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+// -------------------- HomeViewModel --------------------
 
 data class HomeUiState(
     val username: String = "Guest",
     val level: Int = 1,
-    val points: Int = 0,
     val pointsList: Map<CategoryName, Int> = emptyMap(),
     val recentWords: List<String> = emptyList()
 )
-
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -29,16 +28,15 @@ class HomeViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState
 
-
     init {
         viewModelScope.launch {
             combine(
                 dataStoreManager.username,
-                dataStoreManager.setPointsList
-            ) { username, scores ->
+                dataStoreManager.points
+            ) { username, pointsMap ->
                 HomeUiState(
                     username = username,
-                    pointsList = scores
+                    pointsList = pointsMap
                 )
             }.collect { state ->
                 _uiState.value = state
@@ -46,11 +44,11 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun updateScore(category: CategoryName, score: Int) {
+    fun updatePoints(category: CategoryName, points: Int) {
         viewModelScope.launch {
-            val currentScores = _uiState.value.pointsList.toMutableMap()
-            currentScores[category] = score.coerceAtMost(category.maxScore)
-            dataStoreManager.setPointSList(currentScores) // حفظ في DataStore
+            val currentPoints = _uiState.value.pointsList.toMutableMap()
+            currentPoints[category] = points.coerceAtMost(category.maxScore)
+            dataStoreManager.setPoints(currentPoints) // حفظ في DataStore
             }
         }
 }
