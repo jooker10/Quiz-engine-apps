@@ -63,37 +63,3 @@ fun MainScreen() {
             }
         }
 }
-
-
-/*@Composable
-fun MainScreen(navController: NavHostController) {
-
-    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
-
-    // List of routes where BottomBar and FAB should appear
-    val bottomBarRoutes = listOf(
-        Screen.Home.route,
-        Screen.Table.route,
-        Screen.Settings.route,
-        Screen.QuizPicker.route
-    )
-    val fabRoutes = listOf(Screen.Home.route)
-
-    val showBottomBar = bottomBarRoutes.any { currentRoute?.startsWith(it) == true }
-    val showFab = fabRoutes.any { currentRoute?.startsWith(it) == true }
-
-    Scaffold(
-        topBar = { TopBar(navController) },
-        bottomBar = { if (showBottomBar) BottomNavigationBar(navController) },
-        floatingActionButton = { if (showFab) FAB() }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
-        ) {
-            AppNavGraph(navController = navController, isUserLoggedIn = true)
-        }
-    }
-}*/
-
