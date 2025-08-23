@@ -3,7 +3,7 @@ package futur.apps.composeproject1.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import futur.apps.composeproject1.dataStore.UserPreferencesManager
+import futur.apps.composeproject1.dataStore.AppDataStore
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -12,7 +12,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ThemeViewModel @Inject constructor(
-    private val dataStore: UserPreferencesManager
+    private val dataStore: AppDataStore
 ) : ViewModel() {
 
     //  StateFlow (UI-Friendly)

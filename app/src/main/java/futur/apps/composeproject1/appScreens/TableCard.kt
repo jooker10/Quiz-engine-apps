@@ -23,19 +23,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import futur.apps.composeproject1.utils.QuizItem
+import futur.apps.composeproject1.utils.Table
 
 
 /**
  * TableCard represents a single item in TableScreen.
  * It shows the main text and provides a speak button.
  *
- * @param category The QuizItem object containing the text to display
+ * @param category The Table object containing the text to display
  * @param onSpeakClick Callback when the speak button is clicked
  */
 @Composable
 fun TableCard(
-    category: QuizItem,
+    category: Table,
     onSpeakClick: () -> Unit
 ) {
     Card(

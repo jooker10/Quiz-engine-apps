@@ -19,6 +19,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -80,8 +81,11 @@ fun HomeScreen(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+
         ActionButtonsRow(onQuizClick = onQuizClick, onTableClick = onTableClick)
+
         Spacer(modifier = Modifier.height(24.dp))
+
         RecentWordsSection(words = homeState.recentWords)
     }
 }
@@ -135,12 +139,13 @@ fun CategoryScoreCard(categoryName: String, score: Int, maxScore: Int, color: Co
             }
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
-                progress = (score.toFloat() / maxScore).coerceIn(0f, 1f),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp),
-                color = if (enabled) color else Color.DarkGray,
-                trackColor = Color.LightGray.copy(alpha = 0.3f)
+            progress = { (score.toFloat() / maxScore).coerceIn(0f, 1f) },
+            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(8.dp),
+            color = if (enabled) color else Color.DarkGray,
+            trackColor = Color.LightGray.copy(alpha = 0.3f),
+            strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
             )
         }
     }

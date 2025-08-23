@@ -3,7 +3,7 @@ package futur.apps.composeproject1.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import futur.apps.composeproject1.dataStore.UserPreferencesManager
+import futur.apps.composeproject1.dataStore.AppDataStore
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -19,7 +19,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val preferencesManager: UserPreferencesManager
+    private val dataStore : AppDataStore
 ) : ViewModel() {
 
     // ---------------------------
@@ -27,21 +27,21 @@ class SettingsViewModel @Inject constructor(
     // ---------------------------
 
     /** Current username displayed in the settings screen */
-    val username: StateFlow<String> = preferencesManager.username.stateIn(
+    val username: StateFlow<String> = dataStore.username.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = "User"
     )
 
     /** Current language selected in the settings screen */
-    val language: StateFlow<String> = preferencesManager.selectedLanguage.stateIn(
+    val language: StateFlow<String> = dataStore.selectedLanguage.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = "English"
     )
 
     /** Whether Dark Theme is enabled or not */
-    val isDarkTheme: StateFlow<Boolean> = preferencesManager.isDarkThemeEnabled.stateIn(
+    val isDarkTheme: StateFlow<Boolean> = dataStore.isDarkThemeEnabled.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = false
@@ -54,21 +54,21 @@ class SettingsViewModel @Inject constructor(
     /** Update the username in DataStore */
     fun changeUserName(newName: String) {
         viewModelScope.launch {
-            preferencesManager.saveUsername(newName)
+            dataStore.saveUsername(newName)
         }
     }
 
     /** Update the language in DataStore */
     fun changeLanguage(newLanguage: String) {
         viewModelScope.launch {
-            preferencesManager.saveLanguagePreference(newLanguage)
+            dataStore.saveLanguagePreference(newLanguage)
         }
     }
 
     /** Enable or disable dark theme in DataStore */
     fun changeTheme(enabled: Boolean) {
         viewModelScope.launch {
-            preferencesManager.saveDarkThemePreference(enabled)
+            dataStore.saveDarkThemePreference(enabled)
             }
         }
 }

@@ -5,9 +5,9 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import futur.apps.composeproject1.QuizFiles.Question
 import futur.apps.composeproject1.RoomDatabase.QuizRepository
-import futur.apps.composeproject1.dataStore.UserPreferencesManager
+import futur.apps.composeproject1.dataStore.AppDataStore
 import futur.apps.composeproject1.utils.Category
-import futur.apps.composeproject1.utils.QuizItem
+import futur.apps.composeproject1.utils.Table
 
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -50,7 +50,7 @@ data class QuizUiState(
  */
 @HiltViewModel
 class QuizViewModel @Inject constructor(
-    private val preferencesManager: UserPreferencesManager,
+    private val preferencesManager: AppDataStore,
     private val repository: QuizRepository,
 ) : ViewModel() {
 
@@ -125,7 +125,7 @@ class QuizViewModel @Inject constructor(
     }
 
     /** Generates a randomized list of multiple-choice questions. */
-    private fun generateQuestions(items: List<QuizItem>): List<Question> {
+    private fun generateQuestions(items: List<Table>): List<Question> {
         return items.shuffled().take(10).map { item ->
             val options = (items.filter { it.en != item.en }.shuffled().take(2)
                 .map { it.en } + item.en).shuffled()

@@ -3,7 +3,7 @@ package futur.apps.composeproject1.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import futur.apps.composeproject1.dataStore.UserPreferencesManager
+import futur.apps.composeproject1.dataStore.AppDataStore
 import futur.apps.composeproject1.utils.Category
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,7 +22,7 @@ data class HomeUiState(
 // -------------------- Home ViewModel --------------------
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val preferencesManager: UserPreferencesManager
+    private val appDataStore : AppDataStore
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -32,12 +32,12 @@ class HomeViewModel @Inject constructor(
         // Combine username and points from DataStore
         viewModelScope.launch {
             combine(
-                preferencesManager.username,     // Flow of username
-                preferencesManager.categoryPoints        // Flow of points by category
-            ) { username, pointsMap ->
+                appDataStore.username,     // Flow of username
+                appDataStore.categoryPoints        // Flow of points by category
+            ) { username, categoryPoints ->
                 HomeUiState(
                     username = username,
-                    pointsByCategory = pointsMap
+                    pointsByCategory = categoryPoints
                 )
             }.collect { state ->
                 _uiState.value = state
@@ -50,7 +50,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             val currentPoints = _uiState.value.pointsByCategory.toMutableMap()
             currentPoints[category] = points.coerceAtMost(category.maxPoints)
-            preferencesManager.saveCategoryPoints(currentPoints) // Save updated points to DataStore
+            appDataStore.saveCategoryPoints(currentPoints) // Save updated points to DataStore
             }
         }
 }

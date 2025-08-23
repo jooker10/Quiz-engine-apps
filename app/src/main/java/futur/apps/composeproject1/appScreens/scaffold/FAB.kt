@@ -13,6 +13,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 
+/**
+ * A composable function that displays a Floating Action Button (FAB).
+ *
+ * The FAB is styled with MaterialTheme colors and has a circular shape.
+ * It uses a default "Add" icon.
+ *
+ * Example usage:
+ * ```
+ * FAB()
+ * ```
+ */
 @Composable
 fun FAB() {
     FloatingActionButton(

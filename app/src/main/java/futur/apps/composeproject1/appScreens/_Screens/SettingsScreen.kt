@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import futur.apps.composeproject1.utils.AvailableLanguages
 import futur.apps.composeproject1.viewmodels.SettingsViewModel
 
 
@@ -52,8 +53,6 @@ fun SettingsScreen(
     var showUsernameDialog by remember { mutableStateOf(false) }
     var tempUsername by remember { mutableStateOf(username) }
     var showLanguageMenu by remember { mutableStateOf(false) }
-
-    val availableLanguages = listOf("English", "French", "Spanish", "Arabic")
 
     LazyColumn(modifier = Modifier.padding(8.dp).fillMaxSize()) {
 
@@ -143,7 +142,7 @@ fun SettingsScreen(
         expanded = showLanguageMenu,
         onDismissRequest = { showLanguageMenu = false }
     ) {
-        availableLanguages.forEach { lang ->
+        AvailableLanguages.languages.forEach { lang ->
             DropdownMenuItem(
                 text = { Text(lang) },
                 onClick = {

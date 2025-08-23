@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import futur.apps.composeproject1.RoomDatabase.QuizRepository
 import futur.apps.composeproject1.utils.Category
-import futur.apps.composeproject1.utils.QuizItem
+import futur.apps.composeproject1.utils.Table
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,11 +28,11 @@ class DatabaseViewModel @Inject constructor(
 ) : ViewModel() {
 
     /**
-     * A map of category -> StateFlow<List<QuizItem>>.
+     * A map of category -> StateFlow<List<Table>>.
      * Each flow automatically stays active while the ViewModel is alive,
      * and replays the latest database state for efficient UI updates.
      */
-    val categoryData: Map<Category, StateFlow<List<QuizItem>>> = mapOf(
+    val categoryData: Map<Category, StateFlow<List<Table>>> = mapOf(
         Category.Verbs to repository.getAllVerbs(),
         Category.Sentences to repository.getAllSentences(),
         Category.PhrasalVerbs to repository.getAllPhrasalVerbs(),

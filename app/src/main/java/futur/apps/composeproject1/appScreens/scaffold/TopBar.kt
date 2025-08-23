@@ -30,6 +30,13 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import futur.apps.composeproject1.utils.Screen
 
+/**
+ * Composable function that represents the top app bar of the application.
+ *
+ * This top bar typically includes a navigation icon, a title, and action icons.
+ *
+ * @param navController The navigation controller used for handling navigation events.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBar(navController: NavHostController) {

@@ -26,10 +26,13 @@ import futur.apps.composeproject1.utils.Screen
 
 
 /**
- * Professional BottomNavigationBar
- * - Correct selection even for nested graphs (QuizRoot)
- * - Safe navigation (singleTop + restoreState)
- * - Clean API with labels & icons
+ * Data class representing an item in the [BottomNavigationBar].
+ *
+ * @param label The text label for the navigation item.
+ * @param navigateRoute The route to navigate to when this item is clicked. This should be a specific destination route.
+ * @param isSelected A predicate to determine if this item should be considered selected based on the current [NavDestination].
+ * @param iconUnselected The resource ID for the icon when the item is not selected.
+ * @param iconSelected The resource ID for the icon when the item is selected.
  */
 data class NavItem(
     val label: String,
@@ -41,6 +44,15 @@ data class NavItem(
     val iconSelected: Int
 )
 
+/**
+ * A composable function that displays a bottom navigation bar.
+ *
+ * This bottom navigation bar is designed to work correctly with nested navigation graphs,
+ * ensures safe navigation using `singleTop` and `restoreState`, and provides a
+ * clean API for defining navigation items with labels and icons.
+ *
+ * @param navController The [NavHostController] used for navigation.
+ */
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
 

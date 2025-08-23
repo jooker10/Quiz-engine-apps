@@ -1,7 +1,7 @@
 package futur.apps.composeproject1.utils
 
 /**
- * Interface representing a generic quiz item (word, sentence, idiom, etc.).
+ * Interface representing a generic table in the database. item (Verbs, sentence, Nouns, etc.).
  *
  * Each item supports multiple languages, which makes the quiz multilingual:
  * - English (en)
@@ -12,7 +12,7 @@ package futur.apps.composeproject1.utils
  * Classes representing specific categories (e.g., VerbEntity, NounEntity)
  * should implement this interface.
  */
-interface QuizItem {
+interface Table {
     var id: Int
     var en: String
     var fr: String

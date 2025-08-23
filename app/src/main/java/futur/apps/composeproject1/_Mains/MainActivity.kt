@@ -23,7 +23,6 @@ class MainActivity : ComponentActivity() {
             // Retrieve the current theme from the ThemeViewModel (Dark / Light)
             val themeViewModel: ThemeViewModel = hiltViewModel()
             val isDarkTheme by themeViewModel.isDarkTheme.collectAsState()
-            themeViewModel.toggleTheme(isDarkTheme)
 
             // Apply the app theme and load the main screen
             ComposeProject1Theme(isDarkTheme) {

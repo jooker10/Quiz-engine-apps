@@ -17,14 +17,46 @@ import futur.apps.composeproject1.RoomDatabase.Entities.PhrasalVerb
 import futur.apps.composeproject1.RoomDatabase.Entities.Sentence
 import futur.apps.composeproject1.RoomDatabase.Entities.Verb
 
+/**
+ * Main database class for the application.
+ *
+ * This class defines the database configuration and provides access to the DAOs.
+ */
 @Database(entities = [Verb::class, Sentence ::class, PhrasalVerb::class, Noun::class, Adjective::class, Adverb::class, Idiom::class], version = 1, exportSchema = false )
 abstract class MyDataBase  : RoomDatabase() {
 
+    /**
+     * Returns the DAO for [Verb] entities.
+     */
     abstract fun verbDao() : VerbDao
+
+    /**
+     * Returns the DAO for [Sentence] entities.
+     */
     abstract fun sentenceDao() : SentenceDao
+
+    /**
+     * Returns the DAO for [PhrasalVerb] entities.
+     */
     abstract fun phrasalVerbDao() : PhrasalVerbDao
+
+    /**
+     * Returns the DAO for [Noun] entities.
+     */
     abstract fun nounDao() : NounDao
+
+    /**
+     * Returns the DAO for [Adjective] entities.
+     */
     abstract fun adjectiveDao() : AdjectiveDao
+
+    /**
+     * Returns the DAO for [Adverb] entities.
+     */
     abstract fun adverbDao() : AdverbDao
+
+    /**
+     * Returns the DAO for [Idiom] entities.
+     */
     abstract fun idiomDao() : IdiomDao
 }

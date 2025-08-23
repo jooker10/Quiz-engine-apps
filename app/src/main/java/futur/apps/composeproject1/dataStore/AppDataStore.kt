@@ -33,7 +33,7 @@ val Context.dataStore by preferencesDataStore("app_prefs")
  * instance is shared across the entire application.
  */
 @Singleton
-class UserPreferencesManager @Inject constructor(
+class AppDataStore @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     companion object {
