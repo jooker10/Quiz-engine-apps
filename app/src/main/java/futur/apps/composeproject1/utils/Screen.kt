@@ -10,7 +10,7 @@ package futur.apps.composeproject1.utils
         // Quiz
         object QuizPicker : Screen("quiz_picker")
         object QuizCategory : Screen("quiz_category/{category}") {
-            fun createRoute(category: CategoryName): String = "quiz_category/${category.name}"
+            fun createRoute(category: Category): String = "quiz_category/${category.name}"
             val baseRoute: String = "quiz_category"
         }
 

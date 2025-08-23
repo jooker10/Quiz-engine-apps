@@ -1,4 +1,4 @@
-package futur.apps.composeproject1.DataStore
+package futur.apps.composeproject1.dataStore
 
 import kotlinx.serialization.Serializable
 

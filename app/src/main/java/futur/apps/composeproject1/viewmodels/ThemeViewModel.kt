@@ -3,7 +3,7 @@ package futur.apps.composeproject1.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import futur.apps.composeproject1.DataStore.DataStoreManager
+import futur.apps.composeproject1.dataStore.UserPreferencesManager
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -12,11 +12,11 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ThemeViewModel @Inject constructor(
-    private val dataStore: DataStoreManager
+    private val dataStore: UserPreferencesManager
 ) : ViewModel() {
 
     //  StateFlow (UI-Friendly)
-    val isDarkTheme: StateFlow<Boolean> = dataStore.isDarkTheme.stateIn(
+    val isDarkTheme: StateFlow<Boolean> = dataStore.isDarkThemeEnabled.stateIn(
         viewModelScope,
         SharingStarted.Eagerly,
         false // default value
@@ -25,7 +25,7 @@ class ThemeViewModel @Inject constructor(
     //  DataStore
     fun toggleTheme(enabled: Boolean) {
         viewModelScope.launch {
-            dataStore.setDarkTheme(enabled)
+            dataStore.saveDarkThemePreference(enabled)
             }
         }
 }

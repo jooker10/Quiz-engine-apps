@@ -3,7 +3,7 @@ package futur.apps.composeproject1.RoomDatabase.Entities
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import futur.apps.composeproject1.utils.CategoryType
+import futur.apps.composeproject1.utils.QuizItem
 
 
 @Entity(tableName = "verbs")
@@ -21,4 +21,4 @@ data class Verb(
     override var ar : String,
     @ColumnInfo(name = "ex")
     val ex : String
-    ) : CategoryType
+    ) : QuizItem

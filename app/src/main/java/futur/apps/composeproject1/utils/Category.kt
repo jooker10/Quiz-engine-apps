@@ -2,10 +2,18 @@ package futur.apps.composeproject1.utils
 
 import androidx.compose.ui.graphics.Color
 
-enum class CategoryName(
+/**
+ * Enum class representing all quiz categories.
+ *
+ * Each category has:
+ * - A display name (used in the UI)
+ * - A color (used for styling)
+ * - A maximum score (points required to unlock the next category)
+ */
+enum class Category(
     val displayName: String,
-    val color: Color,
-    val maxScore: Int = 20
+    val themeColor: Color,
+    val maxPoints: Int = 20 // Default maximum points per category
 ) {
     Verbs("Verbs", Color(0xFF81D4FA)),
     Sentences("Sentences", Color(0xFF90CAF9)),
@@ -14,4 +22,6 @@ enum class CategoryName(
     Adjectives("Adjectives", Color(0xFFFFCC80)),
     Adverbs("Adverbs", Color(0xFFFFC107)),
     Idioms("Idioms", Color(0xFFFF8A65))
+
+
 }
