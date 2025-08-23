@@ -25,9 +25,9 @@ import futur.apps.composeproject1.viewmodels.QuizViewModel
 @Composable
 fun QuizScreen(
     category: CategoryName?,
-    quizViewModel: QuizViewModel = hiltViewModel()
-   // onBackToHome: () -> Unit
-) {
+    quizViewModel: QuizViewModel = hiltViewModel(),
+
+    ) {
     val uiState by quizViewModel.quizUiState.collectAsState()
 
     // Load questions when category changes
@@ -40,6 +40,7 @@ fun QuizScreen(
             when (event) {
                 QuizViewModel.EffectsEvent.CorrectAnswer ->
                     Toast.makeText(context, "Correct!", Toast.LENGTH_SHORT).show()
+
                 QuizViewModel.EffectsEvent.WrongAnswer ->
                     Toast.makeText(context, "Wrong!", Toast.LENGTH_SHORT).show()
             }
@@ -139,7 +140,7 @@ fun QuizOption(
     isSelected: Boolean,
     isCorrect: Boolean = false,
     isWrong: Boolean = false,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     val borderColor = when {
         isCorrect -> Color(0xFF4CAF50)
