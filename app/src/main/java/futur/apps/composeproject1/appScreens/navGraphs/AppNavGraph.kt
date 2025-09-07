@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import com.anouar.myscreens.home.HomeScreen2
 import futur.apps.composeproject1.appScreens._Screens.HomeScreen
 import futur.apps.composeproject1.appScreens._Screens.LoginScreen
 import futur.apps.composeproject1.appScreens._Screens.PickerScreen
@@ -61,7 +62,7 @@ fun AppNavGraph(
 fun NavGraphBuilder.addMainGraph(navController: NavHostController) {
 
     // -------- Home Screen --------
-    composable(Screen.Home.route) { HomeScreen() }
+    composable(Screen.Home.route) { HomeScreen2() }
 
     // -------- Table Screen --------
     composable(Screen.Table.route) { TableScreen() }

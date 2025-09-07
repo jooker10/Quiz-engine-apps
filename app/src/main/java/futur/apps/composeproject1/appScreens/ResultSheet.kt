@@ -12,7 +12,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import futur.apps.composeproject1.viewmodels.QuizUiState
-import futur.apps.composeproject1.viewmodels.QuizViewModel
 
 @Composable
 fun ResultSheet(
@@ -23,7 +22,7 @@ fun ResultSheet(
 
     // حساب النسبة المئوية
     val totalQuestions = quizUiState.questions.size
-    val correctAnswers = quizUiState.score
+    val correctAnswers = quizUiState.correctScore
     val percent = if (totalQuestions > 0) (correctAnswers * 100 / totalQuestions) else 0
 
     Box(

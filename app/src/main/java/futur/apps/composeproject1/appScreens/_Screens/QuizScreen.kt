@@ -1,5 +1,6 @@
 package futur.apps.composeproject1.appScreens._Screens
 
+import android.app.Activity
 import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
@@ -7,20 +8,25 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import futur.apps.composeproject1.appScreens.ResultSheet
+import futur.apps.composeproject1.QuizFiles.Question
+import futur.apps.composeproject1.ResultDialogQuiz
+import futur.apps.composeproject1.ui.theme.lightGreen
 import futur.apps.composeproject1.utils.Category
 import futur.apps.composeproject1.viewmodels.EffectsViewModel
+import futur.apps.composeproject1.viewmodels.QuizUiState
 import futur.apps.composeproject1.viewmodels.QuizViewModel
 
 /**
@@ -35,13 +41,20 @@ fun QuizScreen(
     effectsViewModel: EffectsViewModel = hiltViewModel(),
 ) {
     val uiState by quizViewModel.quizUiState.collectAsState()
+    val context = LocalContext.current
+    val activity = context as Activity
 
     // Load questions when category changes
     LaunchedEffect(category) {
-        quizViewModel.setCategory(category)
+        quizViewModel.setCategory(activity = activity, category = category)
     }
 
-    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        quizViewModel.confirmOrNextEvent.collect {
+            quizViewModel.confirmOrNext(activity)
+        }
+    }
+
     // Listen to quiz events (Correct/Wrong)
     LaunchedEffect(Unit) {
         quizViewModel.events.collect { event ->
@@ -73,9 +86,11 @@ fun QuizScreen(
 
     // Display Result Sheet if quiz is finished
     if (uiState.isFinished) {
-        ResultSheet(
-            quizUiState = uiState,
-            onRetry = { quizViewModel.retryQuiz() }
+        ResultDialogQuiz(
+            completion = if (uiState.questions.isNotEmpty()) (uiState.correctScore * 100 / uiState.questions.size) else 0,
+            totalQuestions = uiState.questions.size,
+            correctAnswers = uiState.correctScore,
+            wrongAnswers = uiState.questions.size - uiState.correctScore
         )
         return
     }
@@ -85,22 +100,19 @@ fun QuizScreen(
     Column(
         modifier = Modifier
             .padding(16.dp)
-            .fillMaxSize()
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.SpaceBetween,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Top Row: Score, Timer, Question number
-        QuizTopBar(uiState)
+        Box(contentAlignment = Alignment.Center) {
 
-        Spacer(modifier = Modifier.height(24.dp))
+            QuizHeader()
+            HeaderQuestionSection(uiState = uiState, currentQuestion = currentQuestion)
+        }
 
-        // Display the current question
-        Text(
-            text = currentQuestion.questionText,
-            style = MaterialTheme.typography.headlineSmall,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
-        )
+        Spacer(modifier = Modifier.height(80.dp))
 
-        Spacer(modifier = Modifier.height(16.dp))
 
         // Quiz options list
         currentQuestion.options.forEach { option ->
@@ -113,55 +125,45 @@ fun QuizScreen(
                         option != currentQuestion.correctAnswer
             ) { quizViewModel.selectOption(option) }
         }
-
         Spacer(modifier = Modifier.weight(1f))
 
-        // Confirm / Next / Finish Button
-        Button(
-            onClick = { quizViewModel.confirmOrNext() },
-            enabled = (uiState.selectedOptionText != null || uiState.isAnswerChecked),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = when {
-                    !uiState.isAnswerChecked -> "Confirm"
-                    uiState.currentIndex == uiState.questions.size - 1 -> "Finish"
-                    else -> "Next"
-                }
-            )
-        }
+        ConfirmNextButton(
+            quizViewModel = quizViewModel,
+            uiState = uiState,
+            activity = activity
+        )
+    }
+
+    }
+
+
+
+@Composable
+fun ConfirmNextButton(
+    quizViewModel : QuizViewModel = hiltViewModel(),
+    uiState : QuizUiState,
+    activity: Activity
+) {
+    // Confirm / Next / Finish Button
+    Button(
+        onClick = { quizViewModel.confirmOrNext(activity = activity) },
+        enabled = (uiState.selectedOptionText != null || uiState.isAnswerChecked),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = when {
+                !uiState.isAnswerChecked -> "Confirm"
+                uiState.currentIndex == uiState.questions.size - 1 -> "Finish"
+                else -> "Next"
+            }
+        )
     }
 }
+
 
 /**
  * Top Bar for Quiz Screen showing Score, Timer, and Question number.
  */
-@Composable
-fun QuizTopBar(uiState: futur.apps.composeproject1.viewmodels.QuizUiState) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Current Score
-        Text(text = "Score: ${uiState.score}")
-
-        // Timer Indicator
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(40.dp)) {
-            CircularProgressIndicator(
-                progress = 1f - (uiState.timeLeft.toFloat() / uiState.timeLimit.toFloat()),
-                color = if (uiState.timeLeft <= 5) Color.Red else MaterialTheme.colorScheme.primary,
-                strokeWidth = 4.dp,
-                trackColor = ProgressIndicatorDefaults.circularIndeterminateTrackColor,
-                strokeCap = ProgressIndicatorDefaults.CircularDeterminateStrokeCap,
-            )
-            Text("${uiState.timeLeft}s", textAlign = TextAlign.Center)
-        }
-
-        // Current Question Index
-        Text("${uiState.currentIndex + 1}/${uiState.questions.size}")
-    }
-}
 
 /**
  * Single Quiz Option composable with selection and correctness feedback.
@@ -218,4 +220,20 @@ fun QuizOption(
             Text(text, style = MaterialTheme.typography.bodyLarge)
         }
     }
+}
+
+@Composable
+fun QuizHeader() {
+    // Implementation of the top bar
+    Box(
+        modifier = Modifier
+            .padding(4.dp)
+            .fillMaxWidth()
+            .height(180.dp)
+            .background(
+                Brush.horizontalGradient(
+                    colors = listOf(lightGreen.copy(alpha = 0.5f), lightGreen)
+                )
+            )
+    )
 }

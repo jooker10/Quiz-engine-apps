@@ -80,6 +80,8 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 
+    implementation("com.google.android.gms:play-services-ads:24.5.0")
+
 
 
 }

@@ -6,7 +6,9 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.android.gms.ads.MobileAds
 import dagger.hilt.android.AndroidEntryPoint
+import futur.apps.composeproject1.ads.AdsManager
 import futur.apps.composeproject1.ui.theme.ComposeProject1Theme
 import futur.apps.composeproject1.viewmodels.ThemeViewModel
 
@@ -19,6 +21,8 @@ import futur.apps.composeproject1.viewmodels.ThemeViewModel
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Initialize ads if not already done
+        AdsManager().initializeAds(this)
         setContent {
             // Retrieve the current theme from the ThemeViewModel (Dark / Light)
             val themeViewModel: ThemeViewModel = hiltViewModel()

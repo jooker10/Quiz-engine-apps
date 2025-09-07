@@ -47,7 +47,7 @@ fun TopBar(navController: NavHostController) {
         modifier = Modifier
             .padding(2.dp)
             .clip(RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp))
-            .height(48.dp),
+            .height(56.dp),
         title = {Text(
             "MyApp",
             color = MaterialTheme.colorScheme.onSurface,

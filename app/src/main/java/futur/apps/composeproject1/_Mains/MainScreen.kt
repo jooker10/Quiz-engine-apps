@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.anouar.myscreens.CustomComposable.bottomBar.YoutubeStyleBottomAppBar
 import futur.apps.composeproject1.appScreens.navGraphs.AppNavGraph
 import futur.apps.composeproject1.appScreens.scaffold.BottomNavigationBar
 import futur.apps.composeproject1.appScreens.scaffold.FAB
@@ -50,8 +51,7 @@ fun MainScreen() {
     // Scaffold is the main UI container with slots for TopBar, BottomBar, FAB and content
     Scaffold(
         topBar = { TopBar(navController) },
-        bottomBar = { if (showBottomBar) BottomNavigationBar(navController) },
-        floatingActionButton = { if (showFab) FAB() }
+        bottomBar = { if (showBottomBar) YoutubeStyleBottomAppBar(navController,{}) }
     ) { paddingValues ->
         Box(
             modifier = Modifier
