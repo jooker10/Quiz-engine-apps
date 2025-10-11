@@ -1,26 +1,13 @@
 package futur.apps.composeproject1.appScreens.scaffold
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -28,77 +15,90 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import futur.apps.composeproject1.utils.Screen
+import futur.apps.composeproject1.utils.Category
 
-/**
- * Composable function that represents the top app bar of the application.
- *
- * This top bar typically includes a navigation icon, a title, and action icons.
- *
- * @param navController The navigation controller used for handling navigation events.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBar(navController: NavHostController) {
-    val expanded = remember {
-        mutableStateOf(false)
+    val expanded = remember { mutableStateOf(false) }
+
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = backStackEntry?.destination?.route
+
+    // Determine title dynamically
+    val title = when {
+        currentRoute == Screen.Home.route -> "Home"
+        currentRoute == Screen.Stats.route -> "Statistics"
+        currentRoute == Screen.Settings.route -> "Settings"
+        currentRoute == Screen.About.route -> "About"
+        currentRoute?.startsWith("quiz/") == true -> {
+            // Extract category from route
+            val categoryName = backStackEntry?.arguments?.getString("category") ?: ""
+            "$categoryName Quiz"
+        }
+        else -> "Home"
     }
+
+    // Show back arrow only on Quiz screen
+    val showBackArrow = currentRoute?.startsWith("quiz/") == true
+
     TopAppBar(
         modifier = Modifier
-            .padding(2.dp)
-            .clip(RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp))
-            .height(56.dp),
-        title = {Text(
-            "MyApp",
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.fillMaxHeight()
-                .wrapContentHeight(align = Alignment.CenterVertically)
-        )},
+            .fillMaxWidth()
+            .padding(vertical = 4.dp, horizontal = 8.dp)
+            .windowInsetsPadding(WindowInsets.statusBars)
+            .clip(RoundedCornerShape(12.dp)),
+        title = {
+            Box(
+                Modifier.fillMaxWidth(),
+                contentAlignment = if (showBackArrow) Alignment.Center else Alignment.CenterStart
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        },
+        navigationIcon = {
+            if (showBackArrow) {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(
+                        Icons.Default.ArrowBackIosNew,
+                        contentDescription = "Back"
+                    )
+                }
+            }
+        },
+        actions = {
+            Box {
+                IconButton(onClick = { expanded.value = true }) {
+                    Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                }
+                DropdownMenu(
+                    expanded = expanded.value,
+                    onDismissRequest = { expanded.value = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Refresh") },
+                        onClick = { expanded.value = false /* TODO */ }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Build") },
+                        onClick = { expanded.value = false /* TODO */ }
+                    )
+                }
+            }
+        },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.surface,
             titleContentColor = MaterialTheme.colorScheme.onSurface,
             navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
             actionIconContentColor = MaterialTheme.colorScheme.onSurface
         ),
-        navigationIcon = { IconButton(onClick = {
-            {
-                navController.navigate(Screen.Home.route) {
-                    popUpTo(Screen.Home.route) {inclusive = false}
-                }
-            }
-        }) {
-            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-        } } ,
-        actions = {
-            IconButton(onClick = {}) {
-                Icon(Icons.Default.Settings, contentDescription = "Settings")
-            }
-            IconButton(onClick = {} ) {
-                Icon(Icons.Default.Search, contentDescription = "Search")
-            }
-
-            Box {
-                IconButton(onClick = {expanded.value = true}) {
-                    Icon(Icons.Default.MoreVert,"more")
-                }
-                DropdownMenu(
-                    expanded = expanded.value,
-                    onDismissRequest =  {expanded.value = false}
-                )
-                {
-                    DropdownMenuItem(
-                        text = {Text("Refresh")},
-                        onClick = {}
-                        )
-                    DropdownMenuItem(
-                        text = {Text("Build")},
-                        onClick = {}
-                    )
-                }
-            }
-
-        }
-
-
+        scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
+        windowInsets = WindowInsets(0.dp) // avoid double padding
     )
 }

@@ -1,0 +1,31 @@
+<resources>
+    <!-- App General Labels -->
+    <string name="app_name">Système Quiz</string>
+    <string name="action_confirm">Confirmer</string>
+    <string name="action_finish">Terminer</string>
+    <string name="action_next">Suivant</string>
+
+    <!-- Quiz UI Labels -->
+    <string name="quiz_question_count">Question : %1$d / %2$d</string>
+    <string name="quiz_review_answers">Revoir les réponses</string>
+
+    <!-- Text-to-Speech Feedback -->
+    <string name="tts_correct_answer">Bonne réponse</string>
+    <string name="tts_wrong_answer">Mauvaise réponse</string>
+
+    <!-- Result Messages -->
+    <string name="result_message_perfect">🎉 Parfait !</string>
+    <string name="result_message_excellent">🎉 Excellent !</string>
+    <string name="result_message_good_try">🙂 Bien essayé !</string>
+    <string name="result_message_keep_practicing">😅 Continue à pratiquer !</string>
+
+    <!-- Result Stats Labels -->
+    <string name="stat_total_questions">Total Qs</string>
+    <string name="stat_correct">Correct</string>
+    <string name="stat_points">Points</string>
+
+    <!-- Result Actions -->
+    <string name="action_retry">Réessayer</string>
+    <string name="action_home">Accueil</string>
+    <string name="action_share">Partager</string>
+</resources>

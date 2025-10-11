@@ -18,7 +18,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import futur.apps.composeproject1.viewmodels.DatabaseViewModel
 import futur.apps.composeproject1.appScreens.TableCard
-import futur.apps.composeproject1.viewmodels.EffectsViewModel
+import futur.apps.composeproject1.quizsystem.core.QuizConfig
+import futur.apps.composeproject1.quizsystem.viewmodels.EffectsViewModel
 import futur.apps.composeproject1.utils.Category
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -119,7 +120,7 @@ fun TableScreen(
                     items(items) { quizItem ->
                         TableCard(
                             category = quizItem,
-                            onSpeakClick = { effectsViewModel.speak(quizItem.en) }
+                            onSpeakClick = { effectsViewModel.speak(quizItem.en, QuizConfig.ENABLE_TTS) }
                         )
                     }
                 }

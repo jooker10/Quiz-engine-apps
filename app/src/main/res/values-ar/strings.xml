@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">نظام الاختبارات</string>
+    <string name="action_confirm">تأكيد</string>
+    <string name="action_finish">إنهاء</string>
+    <string name="action_next">التالي</string>
+
+    <string name="quiz_question_count">السؤال: %1$d / %2$d</string>
+    <string name="quiz_review_answers">مراجعة الإجابات</string>
+
+    <string name="tts_correct_answer">إجابة صحيحة</string>
+    <string name="tts_wrong_answer">إجابة خاطئة</string>
+
+    <string name="result_message_perfect">🎉 ممتاز!</string>
+    <string name="result_message_excellent">🎉 رائع!</string>
+    <string name="result_message_good_try">🙂 محاولة جيدة!</string>
+    <string name="result_message_keep_practicing">😅 استمر بالممارسة!</string>
+
+    <string name="stat_total_questions">إجمالي الأسئلة</string>
+    <string name="stat_correct">صحيح</string>
+    <string name="stat_points">نقاط</string>
+
+    <string name="action_retry">إعادة المحاولة</string>
+    <string name="action_home">الرئيسية</string>
+    <string name="action_share">مشاركة</string>
+</resources>

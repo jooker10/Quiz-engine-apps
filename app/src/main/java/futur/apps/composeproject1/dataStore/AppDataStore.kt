@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
+import futur.apps.composeproject1.quizsystem.viewmodels.StatsUiState
 import futur.apps.composeproject1.utils.Category
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -42,6 +43,8 @@ class AppDataStore @Inject constructor(
         private val LANGUAGE_KEY = stringPreferencesKey("language")
         private val USERNAME_KEY = stringPreferencesKey("username")
         private val CATEGORY_POINTS_KEY = stringPreferencesKey("category_points")
+        private val STATS_KEY = stringPreferencesKey("quiz_stats")
+
     }
 
     /**
@@ -80,6 +83,17 @@ class AppDataStore @Inject constructor(
             } ?: emptyMap()
         }
 
+    val statsFlow: Flow<StatsUiState> =
+        context.dataStore.data.map { prefs ->
+            prefs[STATS_KEY]?.let { json ->
+                try {
+                    Json.decodeFromString<StatsUiState>(json)
+                } catch (e: Exception) {
+                    StatsUiState() // fallback if corrupted
+                }
+            } ?: StatsUiState()
+        }
+
     // ---------------- Save Methods ----------------
 
     /** Save dark theme preference (true = dark mode enabled). */
@@ -98,8 +112,33 @@ class AppDataStore @Inject constructor(
     }
 
     /** Save or update category points (per category). */
-    suspend fun saveCategoryPoints(points: Map<Category, Int>) {
+  /*  suspend fun saveCategoryPoints(points: Map<Category, Int>) {
         val json = Json.encodeToString(points)
         context.dataStore.edit { prefs -> prefs[CATEGORY_POINTS_KEY] = json}
+        }*/
+    suspend fun saveStats(stats: StatsUiState) {
+        val json = Json.encodeToString(stats)
+        context.dataStore.edit { prefs ->
+            prefs[STATS_KEY] = json
         }
+    }
+    suspend fun resetStats() {
+        context.dataStore.edit { prefs ->
+            prefs.remove(STATS_KEY)
+        }
+    }
+
+    suspend fun saveCategoryPoints(points: Map<Category, Int>) {
+        val json = Json.encodeToString(points)
+        context.dataStore.edit { prefs -> prefs[CATEGORY_POINTS_KEY] = json }
+    }
+
+    /** Reset all saved category points to zero (empty map). */
+    suspend fun resetAllCategoryPoints() {
+        context.dataStore.edit { prefs ->
+            prefs.remove(CATEGORY_POINTS_KEY)
+        }
+    }
+
+
 }

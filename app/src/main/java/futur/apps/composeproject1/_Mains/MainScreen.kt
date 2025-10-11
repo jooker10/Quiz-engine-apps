@@ -6,60 +6,62 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.anouar.myscreens.CustomComposable.bottomBar.YoutubeStyleBottomAppBar
 import futur.apps.composeproject1.appScreens.navGraphs.AppNavGraph
-import futur.apps.composeproject1.appScreens.scaffold.BottomNavigationBar
-import futur.apps.composeproject1.appScreens.scaffold.FAB
+import futur.apps.composeproject1.appScreens.scaffold.MainNavigation
 import futur.apps.composeproject1.appScreens.scaffold.TopBar
 import futur.apps.composeproject1.utils.Screen
 
+// Define routes that control bottom bar and top bar visibility
+private val BottomBarRoutes = listOf(
+    Screen.Home.route,
+    Screen.Stats.route,
+    Screen.Settings.route,
+    Screen.About.route
+)
+
+private val TopBarRoutes = listOf(
+    Screen.Home.route,
+    Screen.Settings.route,
+    Screen.Stats.route,
+    Screen.About.route
+)
+
 /**
- * MainScreen is the root Composable that controls:
- * - Top AppBar
- * - Bottom Navigation Bar (only visible on specific routes)
- * - Floating Action Button (FAB) on selected routes
- * - Navigation Graph that defines all screen transitions
+ * MainScreen is the root composable hosting:
+ * - Top App Bar (optional)
+ * - Bottom Navigation Bar (optional)
+ * - Navigation Graph with all app destinations
  */
 @Composable
 fun MainScreen() {
-
-    // Setup Navigation Controller
     val navController = rememberNavController()
-
-    // Get current route from navigation state
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
-    // Routes where BottomNavigationBar should be displayed
-    val bottomBarRoutes = listOf(
-        Screen.Home.route,
-        Screen.Table.route,
-        Screen.Settings.route,
-        Screen.QuizPicker.route
-        // Example: to support dynamic routes you can use baseRoute
-        // Screen.QuizCategory.baseRoute
-    )
+    val showBottomBar = BottomBarRoutes.any { currentRoute?.startsWith(it) == true }
+    val showTopBar = TopBarRoutes.any { currentRoute?.startsWith(it) == true }
 
-    // Routes where FAB should be displayed
-    val fabRoutes = listOf(Screen.Home.route)
-
-    val showBottomBar = bottomBarRoutes.any { currentRoute?.startsWith(it) == true }
-    val showFab = fabRoutes.any { currentRoute?.startsWith(it) == true }
-
-    // Scaffold is the main UI container with slots for TopBar, BottomBar, FAB and content
     Scaffold(
-        topBar = { TopBar(navController) },
-        bottomBar = { if (showBottomBar) YoutubeStyleBottomAppBar(navController,{}) }
+        topBar = { TopBar(navController = navController) },
+        bottomBar = {
+            if (showBottomBar) {
+                MainNavigation(navController = navController)
+              /*  BottomAppBar(navController) {
+                    // Handle FAB action here if needed later
+                }*/
+            }
+        }
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
         ) {
-            // Load the navigation graph (all app destinations are defined here)
-            AppNavGraph(navController = navController, isUserLoggedIn = true)
-            }
+            AppNavGraph(
+                navController = navController,
+                isUserLoggedIn = true
+            )
         }
+    }
 }

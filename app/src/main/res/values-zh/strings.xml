@@ -1,0 +1,31 @@
+<resources>
+    <!-- App General Labels -->
+    <string name="app_name">测验系统</string>
+    <string name="action_confirm">确认</string>
+    <string name="action_finish">完成</string>
+    <string name="action_next">下一题</string>
+
+    <!-- Quiz UI Labels -->
+    <string name="quiz_question_count">问题: %1$d / %2$d</string>
+    <string name="quiz_review_answers">查看答案</string>
+
+    <!-- Text-to-Speech Feedback -->
+    <string name="tts_correct_answer">回答正确</string>
+    <string name="tts_wrong_answer">回答错误</string>
+
+    <!-- Result Messages -->
+    <string name="result_message_perfect">🎉 完美！</string>
+    <string name="result_message_excellent">🎉 优秀！</string>
+    <string name="result_message_good_try">🙂 尝试不错！</string>
+    <string name="result_message_keep_practicing">😅 继续练习！</string>
+
+    <!-- Result Stats Labels -->
+    <string name="stat_total_questions">总题数</string>
+    <string name="stat_correct">正确</string>
+    <string name="stat_points">分数</string>
+
+    <!-- Result Actions -->
+    <string name="action_retry">重试</string>
+    <string name="action_home">首页</string>
+    <string name="action_share">分享</string>
+</resources>

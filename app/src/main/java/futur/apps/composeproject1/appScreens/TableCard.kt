@@ -30,7 +30,7 @@ import futur.apps.composeproject1.utils.Table
  * TableCard represents a single item in TableScreen.
  * It shows the main text and provides a speak button.
  *
- * @param category The Table object containing the text to display
+ * @param category The Stats object containing the text to display
  * @param onSpeakClick Callback when the speak button is clicked
  */
 @Composable

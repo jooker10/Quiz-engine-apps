@@ -24,11 +24,11 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class DatabaseViewModel @Inject constructor(
-    private val repository: QuizRepository,
+      repository: QuizRepository,
 ) : ViewModel() {
 
     /**
-     * A map of category -> StateFlow<List<Table>>.
+     * A map of category -> StateFlow<List<Stats>>.
      * Each flow automatically stays active while the ViewModel is alive,
      * and replays the latest database state for efficient UI updates.
      */

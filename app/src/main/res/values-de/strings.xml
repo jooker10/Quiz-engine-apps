@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">Quiz System</string>
+    <string name="action_confirm">Bestätigen</string>
+    <string name="action_finish">Beenden</string>
+    <string name="action_next">Weiter</string>
+
+    <string name="quiz_question_count">Frage: %1$d / %2$d</string>
+    <string name="quiz_review_answers">Antworten prüfen</string>
+
+    <string name="tts_correct_answer">Richtige Antwort</string>
+    <string name="tts_wrong_answer">Falsche Antwort</string>
+
+    <string name="result_message_perfect">🎉 Perfekt!</string>
+    <string name="result_message_excellent">🎉 Ausgezeichnet!</string>
+    <string name="result_message_good_try">🙂 Guter Versuch!</string>
+    <string name="result_message_keep_practicing">😅 Weiter üben!</string>
+
+    <string name="stat_total_questions">Gesamtfragen</string>
+    <string name="stat_correct">Richtig</string>
+    <string name="stat_points">Punkte</string>
+
+    <string name="action_retry">Erneut versuchen</string>
+    <string name="action_home">Start</string>
+    <string name="action_share">Teilen</string>
+</resources>

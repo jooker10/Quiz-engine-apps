@@ -32,11 +32,11 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import futur.apps.composeproject1.QuizFiles.Question
-import futur.apps.composeproject1.viewmodels.QuizUiState
+import futur.apps.composeproject1.utils.Question
+import futur.apps.composeproject1.quizsystem.viewmodels.QuizUiState
 
 @Composable
-fun HeaderQuestionSection(uiState : QuizUiState , currentQuestion: Question) {
+fun HeaderQuestionSection(uiState : QuizUiState, currentQuestion: Question) {
 
     Box(
         modifier = Modifier
