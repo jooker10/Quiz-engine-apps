@@ -24,8 +24,8 @@ import futur.apps.composeproject1.quizsystem.core.QuizEffectHandler
 import futur.apps.composeproject1.quizsystem.ui.components.QuizActionButton
 import futur.apps.composeproject1.quizsystem.ui.components.QuizHeaderSection
 import futur.apps.composeproject1.quizsystem.ui.components.QuizOptionsSection
-import futur.apps.composeproject1.quizsystem.viewmodels.EffectsViewModel
-import futur.apps.composeproject1.quizsystem.viewmodels.QuizUiState
+import futur.apps.composeproject1.viewmodels.EffectsViewModel
+import futur.apps.composeproject1.viewmodels.QuizUiState
 import futur.apps.composeproject1.viewmodels.QuizEvent
 import futur.apps.composeproject1.viewmodels.QuizViewModel
 
@@ -262,9 +262,9 @@ import futur.apps.composeproject1.quizsystem.core.QuizEffectHandler
 import futur.apps.composeproject1.quizsystem.ui.components.QuizActionButton
 import futur.apps.composeproject1.quizsystem.ui.components.QuizHeaderSection
 import futur.apps.composeproject1.quizsystem.ui.components.QuizOptionsSection
-import futur.apps.composeproject1.quizsystem.viewmodels.EffectsViewModel
+import futur.apps.composeproject1.viewmodels.EffectsViewModel
 import futur.apps.composeproject1.quizsystem.viewmodels.QuizEvent
-import futur.apps.composeproject1.quizsystem.viewmodels.QuizUiState
+import futur.apps.composeproject1.viewmodels.QuizUiState
 import futur.apps.composeproject1.quizsystem.viewmodels.QuizViewModel
 
 */

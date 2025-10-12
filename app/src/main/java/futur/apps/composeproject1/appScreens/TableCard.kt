@@ -23,7 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import futur.apps.composeproject1.utils.Table
+import futur.apps.composeproject1.utils.DataEntity
 
 
 /**
@@ -35,7 +35,7 @@ import futur.apps.composeproject1.utils.Table
  */
 @Composable
 fun TableCard(
-    category: Table,
+    category: DataEntity,
     onSpeakClick: () -> Unit
 ) {
     Card(

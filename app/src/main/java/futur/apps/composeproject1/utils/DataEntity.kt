@@ -12,7 +12,7 @@ package futur.apps.composeproject1.utils
  * Classes representing specific categories (e.g., VerbEntity, NounEntity)
  * should implement this interface.
  */
-interface Table {
+interface DataEntity {
     var id: Int
     var en: String
     var fr: String

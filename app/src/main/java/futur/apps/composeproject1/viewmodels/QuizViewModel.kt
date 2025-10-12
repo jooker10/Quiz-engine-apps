@@ -13,11 +13,9 @@ import futur.apps.composeproject1.dataStore.AppDataStore
 import futur.apps.composeproject1.quizsystem.core.QuizConfig
 import futur.apps.composeproject1.quizsystem.core.QuizEngine
 import futur.apps.composeproject1.quizsystem.ui.components.ReviewAnswer
-import futur.apps.composeproject1.quizsystem.viewmodels.QuizTimer
-import futur.apps.composeproject1.quizsystem.viewmodels.QuizUiState
-import futur.apps.composeproject1.quizsystem.viewmodels.StatsUiState
+import futur.apps.composeproject1.viewmodels.StatsUiState
 import futur.apps.composeproject1.utils.Category
-import futur.apps.composeproject1.utils.Table
+import futur.apps.composeproject1.utils.DataEntity
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -473,7 +471,7 @@ class QuizViewModel @Inject constructor(
         Category.Idioms -> repository.getAllIdioms()
         else -> repository.getAllVerbs()
     }
-    private fun <T : Table> generateQuestions(items: List<T>): List<Question> {
+    private fun <T : DataEntity> generateQuestions(items: List<T>): List<Question> {
         return items.shuffled().take(quizUiState.value.maxQuestions).map { item ->
             val options = (items.filter { it.en != item.en }
                 .shuffled()

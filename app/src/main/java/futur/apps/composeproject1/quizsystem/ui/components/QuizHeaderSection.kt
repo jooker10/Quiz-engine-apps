@@ -20,7 +20,7 @@ import futur.apps.composeproject1.utils.Question
 import futur.apps.composeproject1.quizsystem.core.QuizConfig
 import futur.apps.composeproject1.quizsystem.ui.theme.correctAnswerColor
 import futur.apps.composeproject1.quizsystem.ui.theme.wrongAnswerColor
-import futur.apps.composeproject1.quizsystem.viewmodels.QuizUiState
+import futur.apps.composeproject1.viewmodels.QuizUiState
 import futur.apps.composeproject1.R
 
 /**

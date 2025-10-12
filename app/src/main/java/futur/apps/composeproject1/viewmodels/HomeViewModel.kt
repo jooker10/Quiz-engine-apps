@@ -74,8 +74,8 @@ data class HomeUiState(
     val username: String = "Guest",                      // User name
     val level: Int = 1,                                  // Optional: user level system
     val totalPoints: Int = 0,                            // Total points (sum of all categories)
-    val pointsByCategory: Map<Category, Int> = emptyMap(), // Individual category points
-    val recentWords: List<String> = emptyList()          // Recently viewed words
+    val pointsByCategory: Map<Category, Int> = emptyMap() // Individual category points
+
 )
 
 // -------------------- Home ViewModel --------------------
@@ -98,7 +98,8 @@ class HomeViewModel @Inject constructor(
                 HomeUiState(
                     username = username,
                     pointsByCategory = categoryPoints,
-                    totalPoints = totalPoints
+                    totalPoints = 30
+                  //  totalPoints = totalPoints
                 )
             }.collect { state ->
                 _uiState.value = state

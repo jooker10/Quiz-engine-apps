@@ -12,48 +12,70 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
-import androidx.core.view.WindowCompat
 
 /**
- * ================================================
+ * =====================================================
  * QuizSystemTheme.kt
  *
- * 🔹 Defines Light and Dark color schemes for the app.
- * 🔹 Applies Material3 theme to the app.
- * 🔹 Sets up modern edge-to-edge system bars (status/navigation)
- *   using ComponentActivity.enableEdgeToEdge() and SystemBarStyle.
- *
- * Buyer Notes:
- * - Customize your color schemes by modifying LightColorScheme and DarkColorScheme.
- * - No need to manually set window.statusBarColor/navigationBarColor; edge-to-edge handles it.
- * - Works automatically with darkTheme flag and system preference.
- * - Ensures a consistent modern look on Android 12+.
- * ================================================
+ * Central theme setup for the Quiz System app.
+ * - Material3 color schemes (Light / Dark)
+ * - Blue-based design with accent tertiary tones
+ * - Automatic dark mode and system bar styling
+ * =====================================================
  */
 
 // -------------------------- LIGHT THEME --------------------------
 val LightColorScheme = lightColorScheme(
-    primary = PrimaryLight,          // main primary color
-    onPrimary = Color.White,         // text/icons on primary
-    background = BackgroundLight,    // app background color
+    primary = PrimaryLight,
+    onPrimary = Color.White,
 
-    // ... add other colors (secondary, background, surface, error, etc.)
-    surface = SurfaceLight
+    secondary = SecondaryLight,
+    onSecondary = Color.White,
+
+    tertiary = TertiaryLight,
+    onTertiary = Color.White,
+
+    background = BackgroundLight,
+    onBackground = Color.Black,
+
+    surface = SurfaceLight,
+    onSurface = Color.Black,
+
+    error = ErrorLight,
+    onError = Color.White,
+
+    outline = OutlineLight,
+    inversePrimary = InversePrimaryLight
 )
 
 // -------------------------- DARK THEME --------------------------
 val DarkColorScheme = darkColorScheme(
     primary = PrimaryDark,
     onPrimary = Color.Black,
+
+    secondary = SecondaryDark,
+    onSecondary = Color.Black,
+
+    tertiary = TertiaryDark,
+    onTertiary = Color.Black,
+
     background = BackgroundDark,
-    // ... add other colors
-    surface = SurfaceDark
+    onBackground = Color.White,
+
+    surface = SurfaceDark,
+    onSurface = Color.White,
+
+    error = ErrorDark,
+    onError = Color.Black,
+
+    outline = OutlineDark,
+    inversePrimary = InversePrimaryDark
 )
 
 // -------------------------- THEME SETUP --------------------------
 @Composable
 fun QuizSystemTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),  // auto-detect system dark mode
+    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
@@ -61,13 +83,8 @@ fun QuizSystemTheme(
 
     if (!view.isInEditMode) {
         SideEffect {
-            // Get the hosting activity
             val activity = view.context as? ComponentActivity ?: return@SideEffect
 
-            // Make layout draw behind system bars (edge-to-edge)
-        //    WindowCompat.setDecorFitsSystemWindows(activity.window, false)
-
-            // Apply system bar colors dynamically using SystemBarStyle
             activity.enableEdgeToEdge(
                 statusBarStyle = if (darkTheme) {
                     SystemBarStyle.dark(colorScheme.background.toArgb())
@@ -89,10 +106,9 @@ fun QuizSystemTheme(
         }
     }
 
-    // Apply Material3 theme to content
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,   // typography defined elsewhere
+        typography = Typography,
         content = content
     )
 }

@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import futur.apps.composeproject1.quizsystem.core.QuizConfig
 import futur.apps.composeproject1.quizsystem.ui.components.ReviewAnswersRow
 import futur.apps.composeproject1.quizsystem.ui.theme.progressResultColor
-import futur.apps.composeproject1.quizsystem.viewmodels.QuizUiState
+import futur.apps.composeproject1.viewmodels.QuizUiState
 import futur.apps.composeproject1.R
 
 

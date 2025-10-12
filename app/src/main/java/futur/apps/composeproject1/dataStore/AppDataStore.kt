@@ -6,7 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
-import futur.apps.composeproject1.quizsystem.viewmodels.StatsUiState
+import futur.apps.composeproject1.viewmodels.StatsUiState
 import futur.apps.composeproject1.utils.Category
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

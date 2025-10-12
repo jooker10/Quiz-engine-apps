@@ -16,7 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import futur.apps.composeproject1.utils.Question
 import futur.apps.composeproject1.quizsystem.ui.theme.correctAnswerColor
-import futur.apps.composeproject1.quizsystem.viewmodels.QuizUiState
+import futur.apps.composeproject1.viewmodels.QuizUiState
 import futur.apps.composeproject1.viewmodels.QuizEvent
 
 /**

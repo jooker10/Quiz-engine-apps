@@ -1,303 +1,31 @@
-/*
-package futur.apps.composeproject1.home
-
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
-import futur.apps.composeproject1.R
-import futur.apps.composeproject1.ui.theme.lightGreen
-import futur.apps.composeproject1.ui.theme.lightOrange
-import futur.apps.composeproject1.utils.Category
-import futur.apps.composeproject1.viewmodels.QuizViewModel
-import futur.apps.composeproject1.utils.Screen
-
-@Composable
-fun HomeScreen(
-    navController: NavController,
-    quizViewModel: QuizViewModel = hiltViewModel()
-) {
-    val uiState by quizViewModel.quizUiState.collectAsState()
-    val totalPoints = quizViewModel.getTotalPoints()
-
-    Column(modifier = Modifier.padding(4.dp)) {
-        InfoSection(quizViewModel)
-        CategoryScoreSection(
-            totalPoints = totalPoints,
-            navController = navController
-        )
-    }
-}
-
-@Composable
-fun InfoSection(quizViewModel: QuizViewModel) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp)
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // Ranking
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(getGradientColor(lightOrange, lightOrange))
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("YOUR RANKING", color = Color.White, fontSize = 12.sp)
-                        Text("100", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-
-            // Coins (Total Points)
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(getGradientColor(lightGreen, lightGreen))
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("COINS EARNED", color = Color.White, fontSize = 12.sp)
-                        Text(
-                            quizViewModel.getTotalPoints().toString(),
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-        }
-
-        // Profile Card
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight()
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surface)
-            ) {
-                Column(
-                    modifier = Modifier.padding(12.dp),
-                    verticalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        "YOUR PROFILE",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(0.5f)
-                    )
-                    Spacer(Modifier.height(8.dp))
-
-                    Image(
-                        painter = painterResource(id = R.drawable.app_icon),
-                        contentDescription = "Profile Image",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(60.dp)
-                            .clip(CircleShape)
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        "Anouar",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        "User",
-                        color = Color.Gray,
-                        fontSize = 14.sp,
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun CategoryScoreSection(
-    totalPoints: Int,
-    navController: NavController
-) {
-    val categories = Category.values()
-
-    Column {
-        Text(
-            text = "Quiz Categories",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = Color.Gray.copy(0.7f),
-            modifier = Modifier.padding(8.dp)
-        )
-
-        Box(
-            modifier = Modifier
-                .padding(horizontal = 12.dp)
-                .fillMaxWidth(),
-        ) {
-            LazyColumn {
-                itemsIndexed(categories) { index, category ->
-                    val unlockThreshold = index * category.maxPoints
-                    val isUnlocked = totalPoints >= unlockThreshold
-                    val progress =
-                        ((totalPoints - unlockThreshold).coerceIn(0, category.maxPoints)
-                            .toFloat() / category.maxPoints)
-
-                    CardScoreHome(
-                        index = index,
-                        score = progress,
-                        isActive = isUnlocked,
-                        onClick = {
-                            if (isUnlocked) {
-                                navController.navigate(Screen.Quiz.createRoute(category))
-                            }
-                        }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun CardScoreHome(index: Int, score: Float, isActive: Boolean, onClick: () -> Unit) {
-    val category = Category.entries[index]
-
-    val cardBackground = if (isActive) Color.White else Color(0xFFF5F5F5)
-    val cardElevation = if (isActive) 8.dp else 2.dp
-    val titleColor = if (isActive) Color(0xFF37474F) else Color(0xFF90A4AE)
-    val subtitleColor = if (isActive) Color(0xFF607D8B) else Color(0xFFB0BEC5)
-    val iconColor = if (isActive) Color(0xFF546E7A) else Color(0xFFB0BEC5)
-    val progressGradientEnd = if (isActive) category.themeColor else Color(0xFFCFD8DC)
-    val progressTrackColor = if (isActive) Color(0xFFE3F2FD) else Color(0xFFF0F0F0)
-
-    Card(
-        modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 6.dp)
-            .alpha(if (isActive) 1f else 0.6f)
-            .clickable(enabled = isActive) { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.elevatedCardElevation(cardElevation),
-        colors = CardDefaults.cardColors(containerColor = cardBackground)
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(
-                    progress = score.coerceIn(0f, 1f),
-                    modifier = Modifier.size(50.dp),
-                    color = progressGradientEnd,
-                    strokeWidth = 5.dp,
-                    trackColor = progressTrackColor
-                )
-                Text(
-                    text = "${(score * 100).toInt()}%",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = progressGradientEnd
-                )
-            }
-
-            Column(modifier = Modifier.padding(start = 16.dp)) {
-                Text(
-                    text = category.displayName,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = titleColor
-                )
-                Text(
-                    text = if (isActive) "Tap to start" else "Locked - reach ${(index * 20)} pts",
-                    fontSize = 12.sp,
-                    color = subtitleColor
-                )
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            Icon(
-                imageVector = Icons.Filled.ArrowForward,
-                contentDescription = "Go",
-                tint = iconColor
-            )
-        }
-    }
-}
-
-fun getGradientColor(startColor: Color, endColor: Color): Brush {
-    return Brush.horizontalGradient(listOf(startColor, endColor))
-}
-
-*/
 package futur.apps.composeproject1.appScreens._Screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -310,14 +38,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import futur.apps.composeproject1.R
-
+import futur.apps.composeproject1.quizsystem.ui.theme.progressResultColor
 import futur.apps.composeproject1.utils.Category
 import futur.apps.composeproject1.utils.Screen
+import futur.apps.composeproject1.viewmodels.HomeUiState
 import futur.apps.composeproject1.viewmodels.HomeViewModel
 
 @Composable
@@ -328,8 +58,8 @@ fun HomeScreen(
     val uiState by homeViewModel.uiState.collectAsState()
 
     Column(modifier = Modifier.padding(4.dp)) {
-        InfoSection(homeViewModel)
-        CategoryScoreSection(
+        QuizOverviewSection(uiState = uiState)
+        QuizCategorySection(
             totalPoints = uiState.totalPoints,
             navController = navController
         )
@@ -337,143 +67,157 @@ fun HomeScreen(
 }
 
 @Composable
-fun InfoSection(homeViewModel: HomeViewModel) {
-    val uiState by homeViewModel.uiState.collectAsState()
-    val totalPoints = uiState.totalPoints // already computed
-    val level = totalPoints / 20 + 1 // Example: every 20 points = 1 level
+fun QuizOverviewSection(uiState: HomeUiState)
+{
+
+    val totalPoints = uiState.totalPoints
+    val level = totalPoints / 20 + 1
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(200.dp)
-            .padding(16.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Left Column: Level & Total Points
+        // ---------------- Left Column: Level & Points ----------------
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Level Card
+
+            // LEVEL CARD
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                shape = RoundedCornerShape(20.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(getGradientColor(MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.secondary.copy(0.5f)))
+                        .background(
+                            getGradientColor(
+                                MaterialTheme.colorScheme.primary,
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                            )
+                        )
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                        verticalArrangement = Arrangement.SpaceEvenly
                     ) {
                         Text(
-                            "LEVEL",
-                            color = Color.White,
-                            fontSize = 12.sp
+                            text = "LEVEL",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = Color.White.copy(alpha = 0.9f),
+                                letterSpacing = 1.sp
+                            )
                         )
                         Text(
-                            "$level",
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
+                            text = "$level",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                color = Color.White,
+                                fontSize = 30.sp
+                            )
                         )
                     }
                 }
             }
 
-            // Total Points Card
+            // TOTAL POINTS CARD
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                shape = RoundedCornerShape(20.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(getGradientColor(MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.tertiary.copy(0.5f)))
+                        .background(
+                            getGradientColor(
+                                MaterialTheme.colorScheme.tertiary,
+                                MaterialTheme.colorScheme.tertiary.copy(alpha = 0.6f)
+                            )
+                        )
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                        verticalArrangement = Arrangement.SpaceEvenly
                     ) {
                         Text(
-                            "TOTAL POINTS",
-                            color = Color.White,
-                            fontSize = 12.sp
+                            text = "TOTAL POINTS",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = Color.White.copy(alpha = 0.9f),
+                                letterSpacing = 1.sp
+                            )
                         )
                         Text(
-                            "$totalPoints XP",
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
+                            text = "$totalPoints XP",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                color = Color.White,
+                                fontSize = 24.sp
+                            )
                         )
                     }
                 }
             }
         }
 
-        // Profile Card
+        // ---------------- Right Column: Profile ----------------
         Card(
-            shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
             modifier = Modifier
                 .weight(1f)
-                .fillMaxHeight()
+                .fillMaxHeight(),
+            shape = RoundedCornerShape(20.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(vertical = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceEvenly
             ) {
-                Column(
-                    modifier = Modifier.padding(12.dp),
-                    verticalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        "YOUR PROFILE",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(0.5f)
+                Text(
+                    text = "YOUR PROFILE",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        letterSpacing = 0.5.sp
                     )
-                    Spacer(Modifier.height(8.dp))
+                )
 
-                    Image(
-                        painter = painterResource(id = R.drawable.app_icon),
-                        contentDescription = "Profile Image",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(60.dp)
-                            .clip(CircleShape)
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        uiState.username,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
+                Image(
+                    painter = painterResource(id = R.drawable.app_icon),
+                    contentDescription = "Profile Image",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(65.dp)
+                        .clip(CircleShape)
+                )
+
+                Text(
+                    text = uiState.username,
+                    style = MaterialTheme.typography.titleMedium.copy(
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Text(
-                        "User",
-                        color = Color.Gray,
-                        fontSize = 14.sp,
-                    )
-                }
+                )
             }
         }
     }
 }
-
 @Composable
-fun CategoryScoreSection(
+fun QuizCategorySection(
     totalPoints: Int,
     navController: NavController
 ) {
@@ -482,80 +226,93 @@ fun CategoryScoreSection(
     Column {
         Text(
             text = "Quiz Categories",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = Color.Gray.copy(0.7f),
-            modifier = Modifier.padding(8.dp)
+            style = MaterialTheme.typography.titleMedium.copy(
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+            ),
+            modifier = Modifier.padding(12.dp)
         )
 
-        Box(
-            modifier = Modifier
-                .padding(horizontal = 12.dp)
-                .fillMaxWidth(),
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth()
         ) {
-            LazyColumn {
-                itemsIndexed(categories) { index, category ->
-                    val unlockThreshold = index * category.maxPoints
-                    val isUnlocked = totalPoints >= unlockThreshold
-                    val progress =
-                        ((totalPoints - unlockThreshold).coerceIn(0, category.maxPoints)
-                            .toFloat() / category.maxPoints)
+            itemsIndexed(categories) { index, category ->
 
-                    CardScoreHome(
-                        index = index,
-                        score = progress,
-                        isActive = isUnlocked,
-                        onClick = {
-                            if (isUnlocked) {
-                                navController.navigate(Screen.Quiz.createRoute(category))
-                            }
+                val unlockThreshold = index * category.maxPoints
+                val isUnlocked = totalPoints >= unlockThreshold
+                val progress =
+                    ((totalPoints - unlockThreshold).coerceIn(0, category.maxPoints).toFloat()
+                            / category.maxPoints)
+
+                val isCompleted = progress >= 1f
+
+                QuizCategoryCard(
+                    index = index,
+                    score = progress,
+                    isActive = isUnlocked,
+                    isCompleted = isCompleted, // pass completed flag
+                    onClick = {
+                        if (isUnlocked) {
+                            navController.navigate(Screen.Quiz.createRoute(category))
                         }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
+                    }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
 }
 
 @Composable
-fun CardScoreHome(index: Int, score: Float, isActive: Boolean, onClick: () -> Unit) {
+fun QuizCategoryCard(
+    index: Int,
+    score: Float,
+    isActive: Boolean,
+    isCompleted: Boolean = false, // optional flag if you track completion
+    onClick: () -> Unit
+) {
     val category = Category.entries[index]
 
-    val cardBackground = if (isActive) Color.White else Color(0xFFF5F5F5)
-    val cardElevation = if (isActive) 8.dp else 2.dp
-    val titleColor = if (isActive) Color(0xFF37474F) else Color(0xFF90A4AE)
-    val subtitleColor = if (isActive) Color(0xFF607D8B) else Color(0xFFB0BEC5)
-    val iconColor = if (isActive) Color(0xFF546E7A) else Color(0xFFB0BEC5)
-    val progressGradientEnd = if (isActive) category.themeColor else Color(0xFFCFD8DC)
-    val progressTrackColor = if (isActive) Color(0xFFE3F2FD) else Color(0xFFF0F0F0)
-
+    // Card container
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp, vertical = 6.dp)
-            .alpha(if (isActive) 1f else 0.6f)
-            .clickable(enabled = isActive) { onClick() },
+            .clickable(enabled = isActive) { onClick() }
+            .alpha(if (isActive) 1f else 0.6f),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.elevatedCardElevation(cardElevation),
-        colors = CardDefaults.cardColors(containerColor = cardBackground)
+        elevation = CardDefaults.elevatedCardElevation(if (isActive) 4.dp else 1.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = if (isActive) MaterialTheme.colorScheme.onSurface else Color.Gray
+        )
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier
+                .clip(RoundedCornerShape(16.dp))
+                .background(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.surface,
+                            MaterialTheme.colorScheme.surface.copy(alpha = 0.1f)
+                        )
+                    )
+                )
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Circular progress indicator
             Box(contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(
                     progress = score.coerceIn(0f, 1f),
                     modifier = Modifier.size(50.dp),
-                    color = progressGradientEnd,
+                    color = progressResultColor(score * 100),
                     strokeWidth = 5.dp,
-                    trackColor = progressTrackColor
+                    trackColor = Color.LightGray.copy(alpha = 0.3f)
                 )
                 Text(
                     text = "${(score * 100).toInt()}%",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = progressGradientEnd
+                    color = if (isActive) MaterialTheme.colorScheme.onSurface else Color.Gray
                 )
             }
 
@@ -564,12 +321,25 @@ fun CardScoreHome(index: Int, score: Float, isActive: Boolean, onClick: () -> Un
                     text = category.displayName,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium,
-                    color = titleColor
+                    color = if (isActive) MaterialTheme.colorScheme.onSurface else Color(0xFF37474F)
                 )
+
+                val statusText = when {
+                    isCompleted -> "Completed ✅"
+                    !isActive -> "Locked - reach ${(index * 20)} pts"
+                    else -> "Tap to start"
+                }
+
+                val statusColor = when {
+                    isCompleted -> Color(0xFF4CAF50) // green for completed
+                    !isActive -> Color(0xFFB0BEC5)   // gray for locked
+                    else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f) // active
+                }
+
                 Text(
-                    text = if (isActive) "Tap to start" else "Locked - reach ${(index * 20)} pts",
+                    text = statusText,
                     fontSize = 12.sp,
-                    color = subtitleColor
+                    color = statusColor
                 )
             }
 
@@ -578,12 +348,31 @@ fun CardScoreHome(index: Int, score: Float, isActive: Boolean, onClick: () -> Un
             Icon(
                 imageVector = Icons.Filled.ArrowForward,
                 contentDescription = "Go",
-                tint = iconColor
+                tint = if (isActive) MaterialTheme.colorScheme.onSurface else Color.Gray
             )
         }
     }
 }
 
+
 fun getGradientColor(startColor: Color, endColor: Color): Brush {
     return Brush.horizontalGradient(listOf(startColor, endColor))
 }
+
+
+@Preview(showBackground = true)
+@Composable
+fun QuizCategoryCardPreview(){
+    QuizCategoryCard(
+        index = 1,
+        score = 0.5f,
+        isActive = false,
+        isCompleted = false,
+        onClick = {}
+
+
+    )
+}
+
+
+

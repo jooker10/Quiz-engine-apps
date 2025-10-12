@@ -3,7 +3,6 @@ package futur.apps.composeproject1.RoomDatabase.Entities
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import futur.apps.composeproject1.utils.Table
 
 /**
  * Represents an adverb entity in the database.
@@ -30,4 +29,4 @@ data class Adverb(
     override var ar : String,
     @ColumnInfo(name = "ex")
     val ex : String
-    ) : Table
+    ) : futur.apps.composeproject1.utils.DataEntity

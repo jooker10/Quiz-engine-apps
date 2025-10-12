@@ -1,4 +1,4 @@
-package futur.apps.composeproject1.quizsystem.viewmodels
+package futur.apps.composeproject1.viewmodels
 
 import android.content.Context
 import android.media.MediaPlayer

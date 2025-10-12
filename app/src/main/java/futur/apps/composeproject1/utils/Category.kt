@@ -13,7 +13,7 @@ import androidx.compose.ui.graphics.Color
 enum class Category(
     val displayName: String,
     val themeColor: Color,
-    val maxPoints: Int = 20 // Default maximum points per category
+    val maxPoints: Int = 20
 ) {
     Verbs("Verbs", Color(0xFF81D4FA)),
     Sentences("Sentences", Color(0xFF90CAF9)),
@@ -22,6 +22,4 @@ enum class Category(
     Adjectives("Adjectives", Color(0xFFFFCC80)),
     Adverbs("Adverbs", Color(0xFFFFC107)),
     Idioms("Idioms", Color(0xFFFF8A65))
-
-
 }

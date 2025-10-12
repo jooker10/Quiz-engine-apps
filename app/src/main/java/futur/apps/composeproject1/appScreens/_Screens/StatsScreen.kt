@@ -19,8 +19,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import futur.apps.composeproject1.quizsystem.viewmodels.StatsUiState
+import futur.apps.composeproject1.viewmodels.StatsUiState
 import futur.apps.composeproject1.viewmodels.QuizViewModel
+import me.bytebeats.views.charts.bar.BarChart
+import me.bytebeats.views.charts.bar.BarChartData
+import me.bytebeats.views.charts.bar.render.bar.SimpleBarDrawer
+import me.bytebeats.views.charts.bar.render.label.SimpleLabelDrawer
+import me.bytebeats.views.charts.bar.render.xaxis.SimpleXAxisDrawer
+import me.bytebeats.views.charts.bar.render.yaxis.SimpleYAxisDrawer
+import me.bytebeats.views.charts.simpleChartAnimation
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -56,14 +63,14 @@ fun StatsScreen(
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            // ---------- TITLE ----------
+        /*    // ---------- TITLE ----------
             Text(
                 text = "Statistics",
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))*/
 
             // ---------- GENERAL STATS ----------
             GeneralStatsGrid(stats, accuracy)
@@ -84,7 +91,7 @@ fun StatsScreen(
                 label = "Tab Switch Animation"
             ) { tab ->
                 when (tab) {
-                    0 -> StatsBarChartWithLibrary(stats)
+                    0 -> StatsBarChart(stats)
                     1 -> CategoryStatsList(stats)
                 }
             }
@@ -225,5 +232,51 @@ private fun ActionsSection(
             OutlinedButton(onClick = { onGoHome?.invoke() }) { Text("Home") }
             OutlinedButton(onClick = { onGoToQuiz?.invoke() }) { Text("Quiz") }
         }
+    }
+}
+
+@Composable
+fun StatsBarChart(
+    stats: StatsUiState,
+    modifier: Modifier = Modifier
+) {
+    if (stats.quizzesPerCategory.isEmpty()) {
+        // placeholder
+        Box(modifier = modifier.height(200.dp), contentAlignment = Alignment.Center) {
+            Text("No data yet — start playing quizzes!", color = Color.Gray)
+        }
+        return
+    }
+
+
+    // build bars (accuracy percentage per category)
+    val bars = stats.quizzesPerCategory.keys.map { category ->
+        val correct = stats.correctPerCategory[category] ?:0
+        val wrong = stats.wrongPerCategory[category] ?: 0
+        val total = (correct + wrong).coerceAtLeast(1)
+        val acc = correct.toFloat() / total * 100f
+        BarChartData.Bar(
+            label = category,
+            value = acc,
+            color = when {
+                acc >= 80f -> Color(0xFF4CAF50)
+                acc >= 50f -> Color(0xFFFFC107)
+                else -> Color(0xFFF44336)
+            }
+        )
+    }
+
+    val chartData = BarChartData(bars = bars)
+
+    Box(modifier = modifier.fillMaxWidth().height(260.dp)) {
+        BarChart(
+            barChartData = chartData,
+            modifier = Modifier.fillMaxSize(),
+            animation = simpleChartAnimation(),
+            barDrawer = SimpleBarDrawer(),
+            xAxisDrawer = SimpleXAxisDrawer(),
+            yAxisDrawer = SimpleYAxisDrawer(),
+            labelDrawer = SimpleLabelDrawer()
+        )
     }
 }

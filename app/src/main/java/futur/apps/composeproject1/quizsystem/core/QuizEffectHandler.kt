@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.flow.collectLatest
-import futur.apps.composeproject1.quizsystem.viewmodels.EffectsViewModel
+import futur.apps.composeproject1.viewmodels.EffectsViewModel
 import futur.apps.composeproject1.viewmodels.QuizUiEffect
 import futur.apps.composeproject1.viewmodels.QuizViewModel
 
