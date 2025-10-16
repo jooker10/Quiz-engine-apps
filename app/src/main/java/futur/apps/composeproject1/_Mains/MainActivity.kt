@@ -8,7 +8,9 @@ import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import futur.apps.composeproject1.ads.AdsManager
-import futur.apps.composeproject1.quizsystem.ui.theme.QuizSystemTheme
+import futur.apps.composeproject1.appScreens._Screens.LoadingScreen
+import futur.apps.composeproject1.quizsystem.ui.theme.DynamicTheme
+import futur.apps.composeproject1.viewmodels.SettingsViewModel
 import futur.apps.composeproject1.viewmodels.ThemeViewModel
 
 /**
@@ -23,15 +25,20 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Initialize Ads
         adsManager.initializeAds(this)
 
         setContent {
             val themeViewModel: ThemeViewModel = hiltViewModel()
-            val isDarkTheme by themeViewModel.isDarkTheme.collectAsState()
+            val isLoaded by themeViewModel.isLoaded.collectAsState()
+            val isDark by themeViewModel.isDarkTheme.collectAsState()
+            val selectedPalette by themeViewModel.selectedPaletteName.collectAsState()
 
-            QuizSystemTheme(isDarkTheme) {
-                MainScreen()
+            if (!isLoaded) {
+                LoadingScreen()
+            } else {
+                DynamicTheme(themeViewModel) {
+                    MainScreen()
+                }
             }
         }
     }

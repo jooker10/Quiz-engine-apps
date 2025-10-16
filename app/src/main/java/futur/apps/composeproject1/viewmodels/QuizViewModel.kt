@@ -5,7 +5,6 @@ import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import futur.apps.composeproject1.utils.Question
 import futur.apps.composeproject1.R
 import futur.apps.composeproject1.RoomDatabase.QuizRepository
 import futur.apps.composeproject1.ads.AdsManager
@@ -13,9 +12,9 @@ import futur.apps.composeproject1.dataStore.AppDataStore
 import futur.apps.composeproject1.quizsystem.core.QuizConfig
 import futur.apps.composeproject1.quizsystem.core.QuizEngine
 import futur.apps.composeproject1.quizsystem.ui.components.ReviewAnswer
-import futur.apps.composeproject1.viewmodels.StatsUiState
 import futur.apps.composeproject1.utils.Category
 import futur.apps.composeproject1.utils.DataEntity
+import futur.apps.composeproject1.utils.Question
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -68,6 +67,11 @@ class QuizViewModel @Inject constructor(
     private val _quizUiState = MutableStateFlow(QuizUiState())
     val quizUiState: StateFlow<QuizUiState> = _quizUiState.asStateFlow()
 
+    // Add this inside QuizViewModel
+    private val _settingsUiState = MutableStateFlow(SettingsUiState())
+    val settingsUiState: StateFlow<SettingsUiState> = _settingsUiState.asStateFlow()
+
+
     // -------------------- Stats State --------------------
     private val _statsUiState = MutableStateFlow(StatsUiState())
     val statsUiState: StateFlow<StatsUiState> = _statsUiState.asStateFlow()
@@ -97,7 +101,7 @@ class QuizViewModel @Inject constructor(
             _quizUiState.update { it.copy(timeLeft = newTime) }
 
             // Handle ticking sound effects (normal or urgent)
-            val enableSounds = _quizUiState.value.enableSounds
+            val enableSounds = _settingsUiState.value.soundEnabled
             if (enableSounds) {
                 if (newTime <= QuizConfig.TIMER_CRITICAL_THRESHOLD) {
                     emitEffect(QuizUiEffect.PlayTimerUrgent)
@@ -117,28 +121,79 @@ class QuizViewModel @Inject constructor(
     // ---------------------------------------------------------
     // 🧠 Load existing category points from DataStore
     // ---------------------------------------------------------
-    init {
-        viewModelScope.launch {
-            preferencesManager.categoryPoints.collect { savedPoints ->
-                _quizUiState.update { it.copy(pointsByCategory = savedPoints) }
-            }
-        }
 
-        viewModelScope.launch {
-            preferencesManager.statsFlow.collect { savedStats ->
-                _statsUiState.value = savedStats
-            }
-        }
 
-    }
-  /*  init {
-        viewModelScope.launch {
-            preferencesManager.categoryPoints.collect { savedPoints ->
-                // your existing code
-            }
-        }
+        // ✅ Observe settings from DataStore
+            init {
+                // -------------------- Category Points --------------------
+                viewModelScope.launch {
+                    preferencesManager.categoryPoints.collect { savedPoints ->
+                        _quizUiState.update { it.copy(pointsByCategory = savedPoints) }
+                    }
+                }
 
-    }*/
+                // -------------------- Stats --------------------
+            viewModelScope.launch {
+                preferencesManager.statsFlow.collect { savedStats ->
+                    _statsUiState.value = savedStats.copy(isLoading = false)
+                }
+            }
+
+            /*  viewModelScope.launch {
+                  preferencesManager.statsFlow.collect { savedStats ->
+                      _statsUiState.value = savedStats
+                  }
+              }*/
+
+                // -------------------- Dark Mode --------------------
+                viewModelScope.launch {
+                    preferencesManager.isDarkThemeEnabled.collect { dark ->
+                        _settingsUiState.update { it.copy(isDarkMode = dark) }
+                    }
+                }
+
+                // -------------------- Language --------------------
+                viewModelScope.launch {
+                    preferencesManager.selectedLanguage.collect { lang ->
+                        _settingsUiState.update { it.copy(language = lang) }
+                    }
+                }
+
+                // -------------------- Palette --------------------
+                viewModelScope.launch {
+                    preferencesManager.selectedPaletteName.collect { palette ->
+                        _settingsUiState.update { it.copy(selectedPalette = palette) }
+                    }
+                }
+
+                // -------------------- Auto Next --------------------
+                viewModelScope.launch {
+                    preferencesManager.autoNext.collect { autoNext ->
+                        _settingsUiState.update { it.copy(autoNext = autoNext) }
+                    }
+                }
+
+                // -------------------- Sound --------------------
+                viewModelScope.launch {
+                    preferencesManager.enableSounds.collect { sound ->
+                        _settingsUiState.update { it.copy(soundEnabled = sound) }
+                    }
+                }
+
+                // -------------------- TTS --------------------
+                viewModelScope.launch {
+                    preferencesManager.enableTTS.collect { tts ->
+                        _settingsUiState.update { it.copy(ttsEnabled = tts) }
+                    }
+                }
+
+                // -------------------- Max Questions --------------------
+                viewModelScope.launch {
+                    preferencesManager.maxQuestions.collect { maxQ ->
+                        _settingsUiState.update { it.copy(maxQuestions = maxQ) }
+                    }
+                }
+        }
 
 
     // -------------------- Event handler (public) --------------------
@@ -199,13 +254,13 @@ class QuizViewModel @Inject constructor(
                 }
 
                 // limit questions
-                questions = questions.take(_quizUiState.value.maxQuestions)
+                questions = questions.take(_settingsUiState.value.maxQuestions)
 
                 // init quiz engine
                 quizEngine = QuizEngine(
                     questions = questions,
                     enableNegativeScoring = _quizUiState.value.enableNegativeScoring,
-                    enableSounds = _quizUiState.value.enableSounds
+                    enableSounds = _settingsUiState.value.soundEnabled
                 )
 
                 // update full UI state for new quiz (stop loading)
@@ -277,7 +332,7 @@ class QuizViewModel @Inject constructor(
 
                 // TTS: If triggered by timeout and no answer selected, optionally speak a "no answer" message
                 if (triggeredByTimeout && state.selectedOptionText == null &&
-                    state.enableTTS && state.enableTTSOnTimeOut
+                    _settingsUiState.value.ttsEnabled && state.enableTTSOnTimeOut
                 ) {
                     // replace R.string.tts_no_answer with your actual string resource
                     emitEffect(QuizUiEffect.SpeakTextRes(android.R.string.unknownName))
@@ -309,7 +364,7 @@ class QuizViewModel @Inject constructor(
         val state = _quizUiState.value
         if (state.isAnswerChecked || state.isFinished) return
 
-        if (state.enableTTSOnTimeOut && state.enableTTS) {
+        if (state.enableTTSOnTimeOut && _settingsUiState.value.ttsEnabled) {
             // replace with your actual string resource id for "time up"
             emitEffect(QuizUiEffect.SpeakTextRes(R.string.tts_no_answer))
         }
@@ -318,7 +373,7 @@ class QuizViewModel @Inject constructor(
         confirmOrNext(triggeredByTimeout = true)
 
         // Auto-move to next question after delay if enabled
-        if (state.autoNextOnTimeout) {
+        if (_settingsUiState.value.autoNext) {
             autoNextJob?.cancel()
             val scheduledQuestion = _quizUiState.value.currentQuestion
             autoNextJob = viewModelScope.launch {
@@ -414,6 +469,7 @@ class QuizViewModel @Inject constructor(
             adsManager.initializeAds(activity)
         }
     }
+
   /*  private fun finishQuiz(activity: Activity?) {
         emitEffect(QuizUiEffect.StopTimerSounds)
         stopTimer()
@@ -472,7 +528,7 @@ class QuizViewModel @Inject constructor(
         else -> repository.getAllVerbs()
     }
     private fun <T : DataEntity> generateQuestions(items: List<T>): List<Question> {
-        return items.shuffled().take(quizUiState.value.maxQuestions).map { item ->
+        return items.shuffled().take(_settingsUiState.value.maxQuestions).map { item ->
             val options = (items.filter { it.en != item.en }
                 .shuffled()
                 .take(QuizConfig.CHOICE_COUNT - 1)

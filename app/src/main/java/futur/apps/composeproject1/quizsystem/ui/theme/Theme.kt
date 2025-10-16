@@ -76,8 +76,48 @@ val DarkColorScheme = darkColorScheme(
 @Composable
 fun QuizSystemTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    palette: AppPalette = BluePalette, // default
     content: @Composable () -> Unit
 ) {
+    val colorScheme = if (darkTheme) palette.darkColors else palette.lightColors
+    val view = LocalView.current
+
+    if (!view.isInEditMode) {
+        SideEffect {
+            val activity = view.context as? ComponentActivity ?: return@SideEffect
+            activity.enableEdgeToEdge(
+                statusBarStyle = if (darkTheme)
+                    SystemBarStyle.dark(colorScheme.background.toArgb())
+                else
+                    SystemBarStyle.light(
+                        scrim = colorScheme.surface.toArgb(),
+                        darkScrim = colorScheme.surface.toArgb()
+                    ),
+                navigationBarStyle = if (darkTheme)
+                    SystemBarStyle.dark(colorScheme.background.toArgb())
+                else
+                    SystemBarStyle.light(
+                        scrim = colorScheme.surface.toArgb(),
+                        darkScrim = colorScheme.surface.toArgb()
+                    )
+            )
+        }
+    }
+
+    MaterialTheme(
+        colorScheme = colorScheme,
+        typography = Typography,
+        content = content
+    )
+}
+
+/*
+@Composable
+fun QuizSystemTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit
+)
+{
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
     val view = LocalView.current
 
@@ -112,3 +152,4 @@ fun QuizSystemTheme(
         content = content
     )
 }
+*/

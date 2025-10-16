@@ -28,11 +28,13 @@ import futur.apps.composeproject1.viewmodels.EffectsViewModel
 import futur.apps.composeproject1.viewmodels.QuizUiState
 import futur.apps.composeproject1.viewmodels.QuizEvent
 import futur.apps.composeproject1.viewmodels.QuizViewModel
+import futur.apps.composeproject1.viewmodels.SettingsViewModel
 
 @Composable
-fun QuizMainScreen(
+fun QuizScreen(
     quizViewModel: QuizViewModel = hiltViewModel(),
-    effectsViewModel: EffectsViewModel = viewModel()
+    effectsViewModel: EffectsViewModel = viewModel(),
+    settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by quizViewModel.quizUiState.collectAsState()
     val context = LocalContext.current
@@ -63,7 +65,8 @@ fun QuizMainScreen(
     // Effect handler (TTS, sounds)
     QuizEffectHandler(
         quizViewModel = quizViewModel,
-        effectsViewModel = effectsViewModel
+        effectsViewModel = effectsViewModel,
+        settingsViewModel = settingsViewModel
     )
 
     // Debug log (optional)

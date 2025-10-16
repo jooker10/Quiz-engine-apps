@@ -1,156 +1,333 @@
 package futur.apps.composeproject1.appScreens._Screens
 
-import futur.apps.composeproject1.R
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
-import futur.apps.composeproject1.utils.AvailableLanguages
+import futur.apps.composeproject1.quizsystem.ui.theme.AllPalettes
 import futur.apps.composeproject1.viewmodels.SettingsViewModel
 
-
-/**
- * SettingsScreen allows the user to update username, select app language,
- * toggle dark theme, and access Privacy Policy / Contact options.
- */
 @Composable
 fun SettingsScreen(
-    settingsViewModel: SettingsViewModel = hiltViewModel(),
-    onPrivacyClick: () -> Unit,
-    onContactClick: () -> Unit
+    viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    // Collect state from ViewModel
-    val username by settingsViewModel.username.collectAsState()
-    val language by settingsViewModel.language.collectAsState()
-    val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
 
-    // Local UI state for dialogs and dropdowns
-    var showUsernameDialog by remember { mutableStateOf(false) }
-    var tempUsername by remember { mutableStateOf(username) }
-    var showLanguageMenu by remember { mutableStateOf(false) }
+    var expandedLang by remember { mutableStateOf(false) }
+    var expandedMaxQuestions by remember { mutableStateOf(false) }
+    var showPaletteDialog by remember { mutableStateOf(false) }
 
-    LazyColumn(modifier = Modifier.padding(8.dp).fillMaxSize()) {
+    val languages = listOf("English", "French", "Arabic")
+    val questionOptions = listOf(10, 15, 20)
 
-        // -------------------- Username --------------------
+    if(uiState.isLoading){
+        LoadingScreen()
+        return
+    }
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // ---------------- Appearance ----------------
         item {
-            ListItem(
-                headlineContent = { Text("Username") },
-                supportingContent = { Text(username) },
-                leadingContent = { Icon(Icons.Default.Person, contentDescription = null) },
-                modifier = Modifier.clickable {
-                    tempUsername = username
-                    showUsernameDialog = true
-                }
-            )
-        }
+            SectionHeader(title = "Appearance")
 
-        // -------------------- Language --------------------
-        item {
-            ListItem(
-                headlineContent = { Text("Language") },
-                supportingContent = { Text(language) },
-                leadingContent = { Icon(painterResource(R.drawable.outline_language), contentDescription = null) },
-                trailingContent = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) },
-                modifier = Modifier.clickable { showLanguageMenu = true }
-            )
-        }
+            SettingCard(
+                icon = Icons.Default.DarkMode,
+                title = "Dark Mode",
+                description = "Switch between light and dark themes"
+            ) {
+                Switch(
+                    checked = uiState.isDarkMode,
+                    onCheckedChange = { viewModel.updateDarkMode(it) }
+                )
+            }
 
-        // -------------------- Theme --------------------
-        item {
-            ListItem(
-                headlineContent = { Text("Dark Theme") },
-                leadingContent = { Icon(painterResource(R.drawable.outline_theme), contentDescription = null) },
-                trailingContent = {
-                    Switch(
-                        checked = isDarkTheme,
-                        onCheckedChange = { settingsViewModel.changeTheme(it) }
+            // Palette Selector
+            SettingCard(
+                icon = Icons.Default.Palette,
+                title = "App Colors",
+                description = "Choose a professional color palette"
+            ) {
+                Box(
+                    modifier = Modifier
+                        .clip(MaterialTheme.shapes.small)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.primary,
+                            shape = MaterialTheme.shapes.small
+                        )
+                        .clickable { showPaletteDialog = true }
+                        .padding(horizontal = 6.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = uiState.selectedPalette,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 14.sp
                     )
                 }
-            )
+            }
         }
 
-        // -------------------- Privacy & Contact --------------------
+        // ---------------- Language ----------------
         item {
-            OutlinedButton(
-                onClick = onPrivacyClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            ) { Text("Privacy Policy") }
-        }
-        item {
-            ElevatedButton(
-                onClick = onContactClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            ) { Text("Contact Us") }
-        }
-    }
-
-    // -------------------- Username Change Dialog --------------------
-    if (showUsernameDialog) {
-        AlertDialog(
-            onDismissRequest = { showUsernameDialog = false },
-            title = { Text("Change Username") },
-            text = {
-                TextField(
-                    value = tempUsername,
-                    onValueChange = { tempUsername = it },
-                    label = { Text("Username") }
+            SettingCard(
+                icon = Icons.Default.Language,
+                title = "Language",
+                description = "Choose app language"
+            ) {
+                Text(
+                    text = uiState.language,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable { expandedLang = !expandedLang }
                 )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    settingsViewModel.changeUserName(tempUsername)
-                    showUsernameDialog = false
-                }) { Text("Save") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showUsernameDialog = false }) { Text("Cancel") }
             }
-        )
-    }
 
-    // -------------------- Language Selection Dropdown --------------------
-    DropdownMenu(
-        expanded = showLanguageMenu,
-        onDismissRequest = { showLanguageMenu = false }
-    ) {
-        AvailableLanguages.languages.forEach { lang ->
-            DropdownMenuItem(
-                text = { Text(lang) },
-                onClick = {
-                    settingsViewModel.changeLanguage(lang)
-                    showLanguageMenu = false
+            if (expandedLang) {
+                Column(modifier = Modifier.padding(start = 48.dp, top = 4.dp)) {
+                    languages.forEach { lang ->
+                        Text(
+                            text = lang,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    expandedLang = false
+                                    viewModel.updateLanguage(lang)
+                                }
+                                .padding(vertical = 6.dp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
-            )
             }
         }
+
+        // ---------------- General ----------------
+        item {
+            SectionHeader(title = "General")
+
+            SettingCard(
+                icon = Icons.Default.Notifications,
+                title = "Notifications",
+                description = "Daily quiz reminders"
+            ) {
+                Switch(
+                    checked = true, // Placeholder — add later if you persist notifications
+                    onCheckedChange = { /* TODO */ }
+                )
+            }
+        }
+
+        // ---------------- Quiz Configuration ----------------
+        item {
+            SectionHeader(title = "Quiz Configuration")
+
+            SettingCard(
+                icon = Icons.Default.PlayCircle,
+                title = "Auto-Next",
+                description = "Automatically move to next question"
+            ) {
+                Switch(
+                    checked = uiState.autoNext,
+                    onCheckedChange = { viewModel.updateAutoNext(it) }
+                )
+            }
+
+            SettingCard(
+                icon = Icons.Default.Audiotrack,
+                title = "Sound Effects",
+                description = "Enable quiz sounds"
+            ) {
+                Switch(
+                    checked = uiState.soundEnabled,
+                    onCheckedChange = { viewModel.updateSound(it) }
+                )
+            }
+
+            SettingCard(
+                icon = Icons.Default.RecordVoiceOver,
+                title = "Text-to-Speech",
+                description = "Read questions aloud"
+            ) {
+                Switch(
+                    checked = uiState.ttsEnabled,
+                    onCheckedChange = { viewModel.updateTTS(it) }
+                )
+            }
+
+            SettingCard(
+                icon = Icons.Default.Tune,
+                title = "Max Questions",
+                description = "Questions per quiz session"
+            ) {
+                Text(
+                    text = "${uiState.maxQuestions}",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.clickable { expandedMaxQuestions = !expandedMaxQuestions }
+                )
+            }
+
+            if (expandedMaxQuestions) {
+                Column(modifier = Modifier.padding(start = 48.dp, top = 4.dp)) {
+                    questionOptions.forEach { count ->
+                        Text(
+                            text = "$count questions",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    expandedMaxQuestions = false
+                                    viewModel.updateMaxQuestions(count)
+                                }
+                                .padding(vertical = 6.dp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // ---------------- Palette Dialog ----------------
+    if (showPaletteDialog) {
+        Dialog(onDismissRequest = { showPaletteDialog = false }) {
+            Surface(
+                tonalElevation = 8.dp,
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text("Select Color Palette", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(5),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 250.dp)
+                    ) {
+                        items(AllPalettes) { palette ->
+                            val colors = listOf(
+                                palette.lightColors.primary,
+                                palette.lightColors.secondary,
+                                palette.lightColors.tertiary
+                            )
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                colors.forEach { color ->
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(MaterialTheme.shapes.small)
+                                            .background(color)
+                                            .border(
+                                                width = 2.dp,
+                                                color = MaterialTheme.colorScheme.primary,
+                                                shape = MaterialTheme.shapes.small
+                                            )
+                                            .clickable {
+                                                viewModel.updatePalette(palette.name)
+                                                showPaletteDialog = false
+                                            }
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                }
+                                Text(palette.name, fontSize = 12.sp)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { showPaletteDialog = false },
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text("Close")
+                    }
+                }
+            }
+        }
+    }
 }
+
+@Composable
+private fun SectionHeader(title: String) {
+    Text(
+        text = title,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 15.sp,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp, start = 2.dp)
+    )
+}
+
+@Composable
+private fun SettingCard(
+    icon: ImageVector,
+    title: String,
+    description: String,
+    action: @Composable () -> Unit
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 2.dp,
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(26.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(title, fontWeight = FontWeight.Medium, fontSize = 15.sp)
+                    Text(
+                        description,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            action()
+        }
+    }
+}
+
 

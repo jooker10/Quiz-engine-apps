@@ -55,15 +55,22 @@ class EffectsViewModel : ViewModel() {
      * Speak the given text if TTS is enabled.
      */
     fun speak(text: String, enableTTS: Boolean) {
-        if (!enableTTS || textToSpeech == null) return
+        if (!enableTTS) {
+            // If TTS was on but now disabled, stop any ongoing speech
+            textToSpeech?.stop()
+            return
+        }
+
+        if (textToSpeech == null) return
 
         textToSpeech?.speak(
             text,
-            TextToSpeech.QUEUE_FLUSH,   // Replace previous speech
+            TextToSpeech.QUEUE_FLUSH, // Replace any previous speech immediately
             null,
             System.currentTimeMillis().toString()
         )
     }
+
 
     // --------------------------------------------------------------------
     // Sound Effects
@@ -93,9 +100,16 @@ class EffectsViewModel : ViewModel() {
 
     /**
      * Play looping ticking sound (normal timer countdown).
+     * Stops immediately if sound is disabled.
      */
     fun playTimerTick(enable: Boolean, context: Context) {
-        if (!enable) return
+        if (!enable) {
+            tickPlayer?.stop()
+            tickPlayer?.release()
+            tickPlayer = null
+            return
+        }
+
         if (tickPlayer?.isPlaying == true) return
 
         stopTimerSounds() // Ensure no overlap
@@ -107,9 +121,16 @@ class EffectsViewModel : ViewModel() {
 
     /**
      * Play looping urgent ticking sound (last seconds of timer).
+     * Stops immediately if sound is disabled.
      */
     fun playTimerUrgent(enable: Boolean, context: Context) {
-        if (!enable) return
+        if (!enable) {
+            urgentPlayer?.stop()
+            urgentPlayer?.release()
+            urgentPlayer = null
+            return
+        }
+
         if (urgentPlayer?.isPlaying == true) return
 
         stopTimerSounds() // Ensure no overlap
@@ -118,6 +139,7 @@ class EffectsViewModel : ViewModel() {
             start()
         }
     }
+
 
     /**
      * Stop and release all timer sounds (tick + urgent).

@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class StatsUiState(
+    val isLoading: Boolean = true,
     val totalQuizzes: Int = 0,
     val totalCorrectAnswers: Int = 0,
     val totalWrongAnswers: Int = 0,

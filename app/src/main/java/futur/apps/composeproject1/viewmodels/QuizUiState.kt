@@ -62,7 +62,6 @@ data class QuizUiState(
     val maxTime: Int = QuizConfig.QUESTION_TIME_LIMIT,      // Initial countdown value
     val showTimer: Boolean = QuizConfig.SHOW_TIMER,         // Show/hide timer
     val timerTickInterval: Long = QuizConfig.TIMER_TICK_INTERVAL,
-    val autoNextOnTimeout: Boolean = QuizConfig.AUTO_NEXT_ON_TIMEOUT, // Auto-move after timeout
     val autoNextDelay: Long = QuizConfig.AUTO_NEXT_DELAY,             // Delay before auto-move
     val timerCriticalThreshold: Int = QuizConfig.TIMER_CRITICAL_THRESHOLD, // Red alert threshold
 
@@ -76,12 +75,10 @@ data class QuizUiState(
     // ---------------------------------------------------------
     // 🔊 Sounds & Effects
     // ---------------------------------------------------------
-    val enableSounds: Boolean = QuizConfig.ENABLE_SOUNDS,
     val soundCorrect: Int = QuizConfig.SOUND_CORRECT,
     val soundWrong: Int = QuizConfig.SOUND_WRONG,
     val soundTimerTick: Int = QuizConfig.SOUND_TIMER_TICK,
     val soundTimerUrgent: Int = QuizConfig.SOUND_TIMER_URGENT,
-    val enableTTS: Boolean = QuizConfig.ENABLE_TTS,
     val enableTTSOnTimeOut: Boolean = QuizConfig.ENABLE_TTS_ON_TIMEOUT,
 
     // ---------------------------------------------------------
@@ -89,7 +86,6 @@ data class QuizUiState(
     // ---------------------------------------------------------
     val shuffleQuestions: Boolean = QuizConfig.SHUFFLE_QUESTIONS,
     val shuffleOptions: Boolean = QuizConfig.SHUFFLE_OPTIONS,
-    val maxQuestions: Int = QuizConfig.MAX_QUESTIONS_PER_QUIZ,
 
     // ---------------------------------------------------------
     // 📊 Result Screen Config

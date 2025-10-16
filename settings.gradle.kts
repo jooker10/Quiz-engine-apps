@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Compose Project 1"
+rootProject.name = "Full Quiz System"
 include(":app")

@@ -17,7 +17,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import futur.apps.composeproject1.utils.Screen
-import futur.apps.composeproject1.utils.Category
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,7 +31,7 @@ fun TopBar(navController: NavHostController) {
         currentRoute == Screen.Home.route -> "Home"
         currentRoute == Screen.Stats.route -> "Statistics"
         currentRoute == Screen.Settings.route -> "Settings"
-        currentRoute == Screen.About.route -> "About"
+        currentRoute == Screen.UserCategory.route -> "UserCategory"
         currentRoute?.startsWith("quiz/") == true -> {
             // Extract category from route
             val categoryName = backStackEntry?.arguments?.getString("category") ?: ""

@@ -61,9 +61,9 @@ fun BottomAppBar(
             iconSelected = R.drawable.filled_settings
         ),
         NavItem(
-            label = "About",
+            label = "UserCategory",
             navigateRoute = Screen.QuizPicker.route,
-            isSelected = { dest -> dest?.hierarchy?.any { it.route == Screen.About.route } == true },
+            isSelected = { dest -> dest?.hierarchy?.any { it.route == Screen.UserCategory.route } == true },
             iconUnselected = R.drawable.about_outline,
             iconSelected = R.drawable.about_filled
         )

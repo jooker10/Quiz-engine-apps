@@ -18,14 +18,14 @@ private val BottomBarRoutes = listOf(
     Screen.Home.route,
     Screen.Stats.route,
     Screen.Settings.route,
-    Screen.About.route
+    Screen.UserCategory.route
 )
 
 private val TopBarRoutes = listOf(
     Screen.Home.route,
     Screen.Settings.route,
     Screen.Stats.route,
-    Screen.About.route
+    Screen.UserCategory.route
 )
 
 /**

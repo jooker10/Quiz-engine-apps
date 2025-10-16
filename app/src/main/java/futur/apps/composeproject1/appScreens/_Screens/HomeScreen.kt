@@ -50,7 +50,7 @@ import futur.apps.composeproject1.utils.Screen
 import futur.apps.composeproject1.viewmodels.HomeUiState
 import futur.apps.composeproject1.viewmodels.HomeViewModel
 
-@Composable
+/*@Composable
 fun HomeScreen(
     navController: NavController,
     homeViewModel: HomeViewModel = hiltViewModel()
@@ -64,7 +64,27 @@ fun HomeScreen(
             navController = navController
         )
     }
+}*/
+@Composable
+fun HomeScreen(
+    navController: NavController,
+    homeViewModel: HomeViewModel = hiltViewModel()
+) {
+    val uiState by homeViewModel.uiState.collectAsState()
+
+    if (uiState.isLoading) {
+        LoadingScreen() // 👈 your reusable composable
+    } else {
+        Column(modifier = Modifier.padding(4.dp)) {
+            QuizOverviewSection(uiState = uiState)
+            QuizCategorySection(
+                totalPoints = uiState.totalPoints,
+                navController = navController
+            )
+        }
+    }
 }
+
 
 @Composable
 fun QuizOverviewSection(uiState: HomeUiState)
@@ -79,7 +99,8 @@ fun QuizOverviewSection(uiState: HomeUiState)
             .height(200.dp)
             .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+    )
+    {
         // ---------------- Left Column: Level & Points ----------------
         Column(
             modifier = Modifier.weight(1f),
