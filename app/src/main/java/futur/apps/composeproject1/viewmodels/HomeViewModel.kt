@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import futur.apps.composeproject1.dataStore.AppDataStore
-import futur.apps.composeproject1.utils.Category
+import futur.apps.composeproject1.utils.BuildInCategory
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -16,7 +16,7 @@ import javax.inject.Inject
 data class HomeUiState(
     val username: String = "Guest",                     // Username of the user
     val level: Int = 1,                                 // User level (optional feature)
-    val pointsByCategory: Map<Category, Int> = emptyMap(), // Points for each category
+    val pointsByCategory: Map<BuildInCategory, Int> = emptyMap(), // Points for each category
     val recentWords: List<String> = emptyList()        // Recently viewed words
 )
 
@@ -47,7 +47,7 @@ class HomeViewModel @Inject constructor(
     }
 
     // -------------------- Update Points --------------------
-    fun updatePoints(category: Category, points: Int) {
+    fun updatePoints(category: BuildInCategory, points: Int) {
         viewModelScope.launch {
             val currentPoints = _uiState.value.pointsByCategory.toMutableMap()
             currentPoints[category] = points.coerceAtMost(category.maxPoints)
@@ -62,7 +62,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import futur.apps.composeproject1.dataStore.AppDataStore
-import futur.apps.composeproject1.utils.Category
+import futur.apps.composeproject1.utils.BuildInCategory
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -75,7 +75,7 @@ data class HomeUiState(
     val username: String = "Guest",                      // User name
     val level: Int = 1,                                  // Optional: user level system
     val totalPoints: Int = 0,                            // Total points (sum of all categories)
-    val pointsByCategory: Map<Category, Int> = emptyMap() // Individual category points
+    val pointsByCategory: Map<BuildInCategory, Int> = emptyMap() // Individual category points
 
 )
 
@@ -109,8 +109,8 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    // -------------------- Update Points for a Category --------------------
-    fun updatePoints(category: Category, newPoints: Int) {
+    // -------------------- Update Points for a BuildInCategory --------------------
+    fun updatePoints(category: BuildInCategory, newPoints: Int) {
         viewModelScope.launch {
             val currentPoints = _uiState.value.pointsByCategory.toMutableMap()
             val updatedPoints = newPoints.coerceAtMost(category.maxPoints) // Limit to max allowed

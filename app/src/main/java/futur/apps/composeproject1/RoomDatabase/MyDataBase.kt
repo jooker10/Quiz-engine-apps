@@ -2,6 +2,7 @@ package futur.apps.composeproject1.RoomDatabase
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import futur.apps.composeproject1.RoomDatabase.Daos.AdjectiveDao
 import futur.apps.composeproject1.RoomDatabase.Daos.AdverbDao
 import futur.apps.composeproject1.RoomDatabase.Daos.IdiomDao
@@ -16,13 +17,27 @@ import futur.apps.composeproject1.RoomDatabase.Entities.Noun
 import futur.apps.composeproject1.RoomDatabase.Entities.PhrasalVerb
 import futur.apps.composeproject1.RoomDatabase.Entities.Sentence
 import futur.apps.composeproject1.RoomDatabase.Entities.Verb
+import futur.apps.composeproject1.RoomDatabase.userroom.Converters
+import futur.apps.composeproject1.RoomDatabase.userroom.UserCategoryEntity
+import futur.apps.composeproject1.RoomDatabase.userroom.UserQuestionEntity
+import futur.apps.composeproject1.RoomDatabase.userroom.UserQuizDao
 
 /**
  * Main database class for the application.
  *
  * This class defines the database configuration and provides access to the DAOs.
  */
-@Database(entities = [Verb::class, Sentence ::class, PhrasalVerb::class, Noun::class, Adjective::class, Adverb::class, Idiom::class], version = 1, exportSchema = false )
+@Database(entities = [
+    Verb::class,
+    Sentence ::class,
+    PhrasalVerb::class,
+    Noun::class,
+    Adjective::class,
+    Adverb::class,
+    Idiom::class],
+    version = 3,
+    exportSchema = false )
+
 abstract class MyDataBase  : RoomDatabase() {
 
     /**
@@ -59,4 +74,5 @@ abstract class MyDataBase  : RoomDatabase() {
      * Returns the DAO for [Idiom] entities.
      */
     abstract fun idiomDao() : IdiomDao
+
 }

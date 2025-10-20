@@ -1,19 +1,19 @@
 package futur.apps.composeproject1.appScreens._Screens
 
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,9 +28,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import futur.apps.composeproject1.RoomDatabase.userroom.UserCategoryEntity
+import futur.apps.composeproject1.RoomDatabase.userroom.UserQuestionEntity
+import futur.apps.composeproject1.RoomDatabase.userroom.UserQuizViewModel
 import futur.apps.composeproject1.quizsystem.ui.theme.progressResultColor
-import futur.apps.composeproject1.viewmodels.StatsUiState
+import futur.apps.composeproject1.utils.QuizMode
 import futur.apps.composeproject1.viewmodels.QuizViewModel
+import futur.apps.composeproject1.viewmodels.StatsUiState
 import me.bytebeats.views.charts.bar.BarChart
 import me.bytebeats.views.charts.bar.BarChartData
 import me.bytebeats.views.charts.bar.render.bar.SimpleBarDrawer
@@ -44,35 +48,67 @@ import kotlin.math.roundToInt
 @Composable
 fun StatsScreen(
     quizViewModel: QuizViewModel = hiltViewModel(),
+    userQuizViewModel: UserQuizViewModel = hiltViewModel(),
     onGoHome: (() -> Unit)? = null,
     onGoToQuiz: (() -> Unit)? = null
 ) {
-    val stats by quizViewModel.statsUiState.collectAsState()
-    val totalAnswers = stats.totalCorrectAnswers + stats.totalWrongAnswers
-    val accuracy = if (totalAnswers > 0)
-        (stats.totalCorrectAnswers.toFloat() / totalAnswers * 100).roundToInt()
-    else 0
+    val builtInStats by quizViewModel.statsUiState.collectAsState()
+    val userCategories by userQuizViewModel.categories.collectAsState(initial = emptyList())
+    val userQuestionsMap by remember { mutableStateOf(mutableMapOf<Int, List<UserQuestionEntity>>()) }
 
+    // 🟢 Convert User data to StatsUiState
+    val userStats by remember(userCategories, userQuestionsMap) {
+        derivedStateOf {
+            userCategoriesToStats(userCategories, userQuestionsMap)
+        }
+    }
+
+    var selectedDataSource by remember { mutableStateOf(0) } // 0 = Built-in, 1 = User
     var selectedTab by remember { mutableIntStateOf(0) }
 
-  if(stats.isLoading) {
-      LoadingScreen()
-      return
-  }
+    val stats = if (selectedDataSource == 0) builtInStats else userStats
+    val totalAnswers = stats.totalCorrectAnswers + stats.totalWrongAnswers
+    val accuracy = if (totalAnswers > 0) (stats.totalCorrectAnswers.toFloat() / totalAnswers * 100).roundToInt() else 0
+
+    if (stats.isLoading) {
+        LoadingScreen()
+        return
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceEvenly
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // ---------- DATA SOURCE CHIPS ----------
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            FilterChip(
+                selected = selectedDataSource == 0,
+                onClick = { selectedDataSource = 0 },
+                label = { Text("Built-in") }
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            FilterChip(
+                selected = selectedDataSource == 1,
+                onClick = { selectedDataSource = 1 },
+                label = { Text("User") }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
         // ---------- GENERAL STATS ----------
         GeneralStatsGrid(stats, accuracy)
 
         Spacer(modifier = Modifier.height(24.dp))
 
         // ---------- TABS ----------
-
         StatsTabs(selectedTab) { selectedTab = it }
 
         AnimatedContent(
@@ -82,14 +118,22 @@ fun StatsScreen(
         ) { tab ->
             when (tab) {
                 0 -> StatsBarChart(stats)
-                1 -> CategoryStatsList(stats)
+                1 -> CategoryStatsList(
+                    stats = stats,
+                    currentMode = if (selectedDataSource == 0) QuizMode.BUILT_IN else QuizMode.USER_CREATED
+                )
+
             }
         }
 
-
         // ---------- ACTION BUTTONS ----------
         ActionsSection(
-            onReset = { quizViewModel.resetStats() },
+            onReset = {
+                if (selectedDataSource == 0) quizViewModel.resetStats()
+                else {
+                    // Reset User stats logic if exists
+                }
+            },
             onGoHome = onGoHome,
             onGoToQuiz = onGoToQuiz
         )
@@ -98,15 +142,91 @@ fun StatsScreen(
     }
 }
 
+
+
+@Composable
+fun ModeHeader(currentMode: QuizMode, onModeChange: (QuizMode) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp, horizontal = 16.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        ModeChip(
+            text = "Default categories",
+            selected = currentMode == QuizMode.BUILT_IN,
+            onClick = { onModeChange(QuizMode.BUILT_IN) }
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        ModeChip(
+            text = "My Categories",
+            selected = currentMode == QuizMode.USER_CREATED,
+            onClick = { onModeChange(QuizMode.USER_CREATED) }
+        )
+    }
+}
+
+@Composable
+fun ModeChip(text: String, selected: Boolean, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .clip(CircleShape)
+            .clickable { onClick() },
+        color = if (selected)
+            MaterialTheme.colorScheme.primaryContainer
+        else
+            MaterialTheme.colorScheme.surfaceVariant,
+        tonalElevation = if (selected) 4.dp else 0.dp,
+        shadowElevation = if (selected) 3.dp else 0.dp
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+            color = if (selected)
+                MaterialTheme.colorScheme.onPrimaryContainer
+            else
+                MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            fontSize = 15.sp
+        )
+    }
+}
+
+
+@Composable
+fun QuizModeButton(text: String, selected: Boolean, onClick: () -> Unit) {
+    val bgColor = if (selected)
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+    else Color.Transparent
+
+    val textColor = if (selected)
+        MaterialTheme.colorScheme.primary
+    else MaterialTheme.colorScheme.onSurfaceVariant
+
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(bgColor)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable { onClick() }
+    ) {
+        Text(
+            text = text,
+            color = textColor,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+        )
+    }
+}
+
 // ---------------- GENERAL STATS ----------------
 @Composable
 private fun GeneralStatsGrid(stats: StatsUiState, accuracy: Int) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(70.dp), // Smaller height like HomeScreen cards
+                .height(70.dp),
             horizontalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             StatCard(
@@ -122,10 +242,7 @@ private fun GeneralStatsGrid(stats: StatsUiState, accuracy: Int) {
             StatCard(
                 title = "Correct",
                 value = stats.totalCorrectAnswers.toString(),
-                gradient = getGradientColor(
-                    Color(0xFF4CAF50),
-                    Color(0xFF66BB6A)
-                ),
+                gradient = getGradientColor(Color(0xFF4CAF50), Color(0xFF66BB6A)),
                 modifier = Modifier.weight(1f)
             )
         }
@@ -139,20 +256,14 @@ private fun GeneralStatsGrid(stats: StatsUiState, accuracy: Int) {
             StatCard(
                 title = "Wrong",
                 value = stats.totalWrongAnswers.toString(),
-                gradient = getGradientColor(
-                    Color(0xFFD32F2F),
-                    Color(0xFFE57373)
-                ),
+                gradient = getGradientColor(Color(0xFFD32F2F), Color(0xFFE57373)),
                 modifier = Modifier.weight(1f)
             )
 
             StatCard(
                 title = "Accuracy",
                 value = "$accuracy%",
-                gradient = getGradientColor(
-                    Color(0xFF1976D2),
-                    Color(0xFF64B5F6)
-                ),
+                gradient = getGradientColor(Color(0xFF1976D2), Color(0xFF64B5F6)),
                 modifier = Modifier.weight(1f)
             )
         }
@@ -205,9 +316,92 @@ private fun StatCard(
     }
 }
 
-// ---------------- DETAILS SECTION ----------------
 
+// ---------------- DETAILS SECTION ----------------
 @Composable
+private fun CategoryStatsList(
+    stats: StatsUiState,
+    currentMode: QuizMode,
+    userQuizViewModel: UserQuizViewModel = hiltViewModel(),
+    onGoToAddCategory: (() -> Unit)? = null
+) {
+    if (currentMode == QuizMode.USER_CREATED) {
+        val userCategories by userQuizViewModel.categories.collectAsState(initial = emptyList())
+
+        if (userCategories.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "🚧 No category yet.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ElevatedButton(
+                        onClick = { onGoToAddCategory?.invoke() },
+                        shape = RoundedCornerShape(50)
+                    ) {
+                        Text("Add Category")
+                    }
+                }
+            }
+            return
+        }
+
+        // Show User Categories Stats
+        Column(
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.padding(horizontal = 8.dp)
+        ) {
+            userCategories.forEach { category ->
+                val questions = userQuizViewModel.getQuestions(category.id)
+                    .collectAsState(initial = emptyList()).value
+                val total = questions.size
+                val correct = stats.correctPerCategory[category.name] ?: 0
+                val wrong = stats.wrongPerCategory[category.name] ?: 0
+                val acc = if (total > 0) (correct.toFloat() / total * 100).roundToInt() else 0
+
+                CategoryStatCard(category.name, total, correct, wrong, acc)
+            }
+        }
+
+    } else {
+        // Default Built-in categories
+        if (stats.quizzesPerCategory.isEmpty()) {
+            Text(
+                text = "No data available yet.",
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.padding(horizontal = 8.dp)
+            ) {
+                stats.quizzesPerCategory.keys.forEach { category ->
+                    val quizzes = stats.quizzesPerCategory[category] ?: 0
+                    val correct = stats.correctPerCategory[category] ?: 0
+                    val wrong = stats.wrongPerCategory[category] ?: 0
+                    val total = correct + wrong
+                    val acc = if (total > 0) (correct.toFloat() / total * 100).roundToInt() else 0
+                    CategoryStatCard(category, quizzes, correct, wrong, acc)
+                }
+            }
+        }
+    }
+}
+
+/*@Composable
 private fun CategoryStatsList(stats: StatsUiState) {
     if (stats.quizzesPerCategory.isEmpty()) {
         Text(
@@ -234,7 +428,7 @@ private fun CategoryStatsList(stats: StatsUiState) {
             }
         }
     }
-}
+}*/
 
 @Composable
 private fun CategoryStatCard(
@@ -492,9 +686,9 @@ fun StatsScreenPreview() {
             totalQuizzes = 10,
             totalCorrectAnswers = 8,
             totalWrongAnswers = 2,
-            quizzesPerCategory = mapOf("Category 1" to 5, "Category 2" to 3),
-            correctPerCategory = mapOf("Category 1" to 4, "Category 2" to 2),
-            wrongPerCategory = mapOf("Category 1" to 1, "Category 2" to 1)
+            quizzesPerCategory = mapOf("BuildInCategory 1" to 5, "BuildInCategory 2" to 3),
+            correctPerCategory = mapOf("BuildInCategory 1" to 4, "BuildInCategory 2" to 2),
+            wrongPerCategory = mapOf("BuildInCategory 1" to 1, "BuildInCategory 2" to 1)
         ),
         accuracy = 75
     )
@@ -510,6 +704,43 @@ fun ActionButtonsPreview() {
     )
 }
 
+fun userCategoriesToStats(
+    categories: List<UserCategoryEntity>,
+    questionsMap: Map<Int, List<UserQuestionEntity>>
+): StatsUiState {
+    var totalQuizzes = 0
+    var totalCorrectAnswers = 0
+    var totalWrongAnswers = 0
+
+    val quizzesPerCategory = mutableMapOf<String, Int>()
+    val correctPerCategory = mutableMapOf<String, Int>()
+    val wrongPerCategory = mutableMapOf<String, Int>()
+
+    categories.forEach { category ->
+        val questions = questionsMap[category.id] ?: emptyList()
+        val quizzes = questions.size
+        val correct = questions.count { /* replace with actual user answer correctness */ true } // Placeholder
+        val wrong = quizzes - correct
+
+        quizzesPerCategory[category.name] = quizzes
+        correctPerCategory[category.name] = correct
+        wrongPerCategory[category.name] = wrong
+
+        totalQuizzes += quizzes
+        totalCorrectAnswers += correct
+        totalWrongAnswers += wrong
+    }
+
+    return StatsUiState(
+        isLoading = false,
+        totalQuizzes = totalQuizzes,
+        totalCorrectAnswers = totalCorrectAnswers,
+        totalWrongAnswers = totalWrongAnswers,
+        quizzesPerCategory = quizzesPerCategory,
+        correctPerCategory = correctPerCategory,
+        wrongPerCategory = wrongPerCategory
+    )
+}
 
 
 

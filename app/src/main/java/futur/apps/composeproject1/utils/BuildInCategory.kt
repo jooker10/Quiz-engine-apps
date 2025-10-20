@@ -10,7 +10,7 @@ import androidx.compose.ui.graphics.Color
  * - A color (used for styling)
  * - A maximum score (points required to unlock the next category)
  */
-enum class Category(
+enum class BuildInCategory(
     val displayName: String,
     val themeColor: Color,
     val maxPoints: Int = 20

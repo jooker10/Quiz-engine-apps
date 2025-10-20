@@ -1,86 +1,132 @@
 package futur.apps.composeproject1.quizCreator
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import futur.apps.composeproject1.utils.Question
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddQuestionScreen(
     viewModel: QuizCreatorViewModel,
     selectedCategory: String,
+    existingQuestion: Question? = null, // If null => Add, else => Edit
     onQuestionSaved: () -> Unit
 ) {
-    var questionText by remember { mutableStateOf("") }
-    var options by remember { mutableStateOf(mutableListOf("", "")) }
-    var correctAnswer by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf(selectedCategory) }
-
     val categories by viewModel.categories.collectAsState()
+    val focusManager = LocalFocusManager.current
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        TextField(
-            value = questionText,
-            onValueChange = { questionText = it },
-            placeholder = { Text("Question Text") },
-            modifier = Modifier.fillMaxWidth()
+    var questionText by remember { mutableStateOf(existingQuestion?.questionText ?: "") }
+    var options by remember { mutableStateOf(existingQuestion?.options ?: listOf("", "")) }
+    var correctAnswer by remember { mutableStateOf(existingQuestion?.correctAnswer ?: "") }
+    var category by remember { mutableStateOf(selectedCategory) }
+    var expandedCategory by remember { mutableStateOf(false) }
+    var expandedAnswer by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .imePadding()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = if (existingQuestion == null) "Add New Question" else "Edit Question",
+            style = MaterialTheme.typography.headlineSmall
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        // Question Text
+        OutlinedTextField(
+            value = questionText,
+            onValueChange = { questionText = it },
+            label = { Text("Question Text") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = false,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            maxLines = 3
+        )
 
-        // Dropdown to select category
-        var expanded by remember { mutableStateOf(false) }
-        Box {
-            OutlinedButton(onClick = { expanded = true }) {
-                Text("Category: $category")
-            }
-            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        // BuildInCategory Selector
+        ExposedDropdownMenuBox(
+            expanded = expandedCategory,
+            onExpandedChange = { expandedCategory = !expandedCategory }
+        ) {
+            OutlinedTextField(
+                value = category,
+                onValueChange = {},
+                label = { Text("Select BuildInCategory") },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth(),
+                readOnly = true,
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCategory)
+                }
+            )
+            ExposedDropdownMenu(
+                expanded = expandedCategory,
+                onDismissRequest = { expandedCategory = false }
+            ) {
                 categories.forEach { cat ->
                     DropdownMenuItem(
                         text = { Text(cat.name) },
                         onClick = {
                             category = cat.name
-                            expanded = false
+                            expandedCategory = false
                         }
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        // Options
         Text("Options", style = MaterialTheme.typography.titleMedium)
-
-        LazyColumn {
-            items(options.size) { index ->
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                    Text("${index + 1}.", modifier = Modifier.width(24.dp))
-                    TextField(
-                        value = options[index],
-                        onValueChange = { options[index] = it },
-                        placeholder = { Text("Option ${index + 1}") },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
+        options.forEachIndexed { index, opt ->
+            OutlinedTextField(
+                value = opt,
+                onValueChange = { newValue ->
+                    options = options.toMutableList().also { it[index] = newValue }
+                },
+                label = { Text("Option ${index + 1}") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+            )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = { options.add("") }) { Text("Add Option") }
+        TextButton(onClick = { options = options + "" }) {
+            Text("➕ Add Option")
+        }
 
-        Spacer(modifier = Modifier.height(8.dp))
-        // Correct answer dropdown
-        var expandedAnswer by remember { mutableStateOf(false) }
-        Box {
-            OutlinedButton(onClick = { expandedAnswer = true }) {
-                Text("Correct Answer: ${correctAnswer.ifBlank { "Select" }}")
-            }
-            DropdownMenu(expanded = expandedAnswer, onDismissRequest = { expandedAnswer = false }) {
+        // Correct Answer Selector
+        ExposedDropdownMenuBox(
+            expanded = expandedAnswer,
+            onExpandedChange = { expandedAnswer = !expandedAnswer }
+        ) {
+            OutlinedTextField(
+                value = correctAnswer,
+                onValueChange = {},
+                label = { Text("Correct Answer") },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth(),
+                readOnly = true,
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedAnswer)
+                }
+            )
+            ExposedDropdownMenu(
+                expanded = expandedAnswer,
+                onDismissRequest = { expandedAnswer = false }
+            ) {
                 options.forEach { opt ->
                     DropdownMenuItem(
                         text = { Text(opt.ifBlank { "(empty)" }) },
@@ -93,14 +139,25 @@ fun AddQuestionScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = {
-            if (questionText.isNotBlank() && correctAnswer.isNotBlank() && options.size >= 2) {
-                viewModel.addQuestion(category, Question(questionText, options.toList(), correctAnswer))
-                onQuestionSaved()
-            }
-        }) {
-            Text("Save Question")
+        // Save Question Button
+        Button(
+            onClick = {
+                focusManager.clearFocus()
+                if (questionText.isNotBlank() && correctAnswer.isNotBlank() && options.size >= 2) {
+                    val newQuestion = Question(questionText, options, correctAnswer)
+                    if (existingQuestion == null) {
+                        viewModel.addQuestion(category, newQuestion)
+                    } else {
+                        // Remove old question and add updated one
+                        viewModel.removeQuestion(category, existingQuestion)
+                        viewModel.addQuestion(category, newQuestion)
+                    }
+                    onQuestionSaved()
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(if (existingQuestion == null) "💾 Save Question" else "💾 Update Question")
         }
     }
 }

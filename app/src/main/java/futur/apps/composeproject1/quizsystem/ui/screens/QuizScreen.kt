@@ -19,6 +19,228 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import futur.apps.composeproject1.quizsystem.core.QuizEffectHandler
+import futur.apps.composeproject1.quizsystem.ui.components.QuizActionButton
+import futur.apps.composeproject1.quizsystem.ui.components.QuizHeaderSection
+import futur.apps.composeproject1.quizsystem.ui.components.QuizOptionsSection
+import futur.apps.composeproject1.utils.Question
+import futur.apps.composeproject1.viewmodels.EffectsViewModel
+import futur.apps.composeproject1.viewmodels.QuizCategory
+import futur.apps.composeproject1.viewmodels.QuizEvent
+import futur.apps.composeproject1.viewmodels.QuizUiState
+import futur.apps.composeproject1.viewmodels.QuizViewModel
+import futur.apps.composeproject1.viewmodels.SettingsViewModel
+
+/**
+ * ================================================
+ * Updated Quiz Screen (supports BuiltIn & User quizzes)
+ * ================================================
+ */
+@Composable
+fun QuizScreen(
+    quizViewModel: QuizViewModel = hiltViewModel(),
+    effectsViewModel: EffectsViewModel = viewModel(),
+    settingsViewModel: SettingsViewModel = hiltViewModel()
+) {
+    val uiState by quizViewModel.quizUiState.collectAsState()
+    val context = LocalContext.current
+    val activity = context as? Activity
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+    // Initialize quiz (only once)
+    LaunchedEffect(Unit) {
+        val category = uiState.category
+        if (category != null && activity != null) {
+            quizViewModel.setCategory(activity, category)
+        }
+    }
+
+    // Handle effects (sounds / TTS)
+    QuizEffectHandler(
+        quizViewModel = quizViewModel,
+        effectsViewModel = effectsViewModel,
+        settingsViewModel = settingsViewModel
+    )
+
+    // Debug
+    Log.d("QuizScreen", "Current question: ${uiState.currentQuestion}")
+
+    // Render UI
+    when {
+        uiState.isLoading -> QuizLoadingScreen()
+
+        uiState.isFinished -> QuizResultScreen(
+            isLandscape = isLandscape,
+            uiState = uiState,
+            score = uiState.correctScore,
+            total = uiState.totalQuestions,
+            onRetry = {
+                val category = uiState.category
+                if (category != null && activity != null) {
+                    quizViewModel.setCategory(activity, category)
+                }
+            },
+            onHome = { /* TODO: Navigate home */ },
+            onShare = { /* TODO: Share results */ }
+        )
+
+        uiState.currentQuestion != null -> {
+            val question = uiState.currentQuestion!!
+            if (isLandscape) {
+                QuizScreenLandscape(
+                    uiState = uiState,
+                    question = question,
+                    onEvent = quizViewModel::onEvent
+                )
+            } else {
+                QuizScreenPortrait(
+                    uiState = uiState,
+                    question = question,
+                    onEvent = quizViewModel::onEvent
+                )
+            }
+        }
+
+        else -> QuizLoadingScreen()
+    }
+
+    // Lifecycle observer (pause/resume)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> {
+                    effectsViewModel.stopTimerSounds()
+                    quizViewModel.pauseTimer()
+                }
+                Lifecycle.Event.ON_RESUME -> quizViewModel.resumeTimer()
+                Lifecycle.Event.ON_STOP -> effectsViewModel.stopTimerSounds()
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+}
+
+@Composable
+private fun QuizScreenPortrait(
+    uiState: QuizUiState,
+    question: Question,
+    onEvent: (QuizEvent) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .padding(16.dp)
+            .background(MaterialTheme.colorScheme.background)
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.SpaceAround,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(modifier = Modifier.height(60.dp))
+        QuizHeaderSection(uiState = uiState, question = question)
+        Spacer(modifier = Modifier.height(80.dp))
+        QuizOptionsSection(
+            isLandscape = false,
+            uiState = uiState,
+            question = question,
+            onEvent = onEvent
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        QuizActionButton(uiState = uiState, onEvent = onEvent)
+    }
+}
+
+@Composable
+private fun QuizScreenLandscape(
+    uiState: QuizUiState,
+    question: Question,
+    onEvent: (QuizEvent) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .padding(16.dp)
+            .background(MaterialTheme.colorScheme.background)
+            .fillMaxSize(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceAround
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth(0.5f)
+                .fillMaxHeight(),
+            verticalArrangement = Arrangement.SpaceEvenly
+        ) {
+            QuizHeaderSection(uiState = uiState, question = question)
+            Spacer(modifier = Modifier.height(80.dp))
+            QuizActionButton(uiState = uiState, onEvent = onEvent)
+        }
+
+        Spacer(modifier = Modifier.width(24.dp))
+
+        QuizOptionsSection(
+            isLandscape = true,
+            uiState = uiState,
+            question = question,
+            onEvent = onEvent
+        )
+    }
+}
+
+@Composable
+fun QuizLoadingScreen() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun QuizScreenPreview() {
+    val fakeQuestion = Question(
+        questionText = "What is the capital of France?",
+        options = listOf("Paris", "London", "Berlin", "Madrid"),
+        correctAnswer = "Paris"
+    )
+    val fakeUiState = QuizUiState(
+        questions = listOf(fakeQuestion),
+        currentIndex = 0,
+        correctScore = 1,
+        wrongScore = 0,
+        timeLeft = 8,
+        maxTime = 10,
+        category = QuizCategory.BuiltIn(futur.apps.composeproject1.utils.BuildInCategory.Verbs)
+    )
+    QuizScreenPortrait(uiState = fakeUiState, question = fakeQuestion, onEvent = {})
+}
+
+
+/*
+package futur.apps.composeproject1.quizsystem.ui.screens
+
+import android.app.Activity
+import android.content.res.Configuration
+import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 import futur.apps.composeproject1.utils.Question
 import futur.apps.composeproject1.quizsystem.core.QuizEffectHandler
 import futur.apps.composeproject1.quizsystem.ui.components.QuizActionButton
@@ -54,13 +276,15 @@ fun QuizScreen(
     }
 
 
-    /*  LaunchedEffect(activity) {
+    */
+/*  LaunchedEffect(activity) {
           activity?.let { act ->
               // If a category already exists in uiState we keep it; otherwise default to Verbs
-              val categoryToUse = uiState.category ?: Category.Verbs
+              val categoryToUse = uiState.category ?: BuildInCategory.Verbs
              // quizViewModel.setCategory(act, categoryToUse)
           }
-      }*/
+      }*//*
+
 
     // Effect handler (TTS, sounds)
     QuizEffectHandler(
@@ -85,12 +309,18 @@ fun QuizScreen(
             // Retry should restart quiz with same category; we pass activity because your original
             // start flow requires it.
             onRetry = {
-               /* activity?.let { act ->
-                    quizViewModel.setCategory(act, uiState.category ?: Category.Verbs)
-                }*/
+               */
+/* activity?.let { act ->
+                    quizViewModel.setCategory(act, uiState.category ?: BuildInCategory.Verbs)
+                }*//*
+
             },
-            onHome = { /* TODO: implement navigation to Home */ },
-            onShare = { /* TODO: implement share functionality */ }
+            onHome = { */
+/* TODO: implement navigation to Home *//*
+ },
+            onShare = { */
+/* TODO: implement share functionality *//*
+ }
         )
 
         // Active quiz → show question UI if available
@@ -233,6 +463,7 @@ fun QuizScreenLandscapePreview() {
     QuizScreenLandscape(uiState = fakeUiState, question = fakeQuestion, onEvent = {})
 }
 
+*/
 /*
 package futur.apps.composeproject1.quizsystem.ui.screens
 
@@ -270,6 +501,8 @@ import futur.apps.composeproject1.quizsystem.viewmodels.QuizEvent
 import futur.apps.composeproject1.viewmodels.QuizUiState
 import futur.apps.composeproject1.quizsystem.viewmodels.QuizViewModel
 
+*//*
+
 */
 /**
  * ================================================
@@ -286,6 +519,8 @@ import futur.apps.composeproject1.quizsystem.viewmodels.QuizViewModel
  * @param effectsViewModel Handles sound effects & TTS
  * ================================================
  *//*
+*/
+/*
 
 @Composable
 fun QuizMainScreen(
@@ -330,11 +565,19 @@ fun QuizMainScreen(
             score = uiState.correctScore,
             total = uiState.totalQuestions,
             onRetry = { quizViewModel.startQuiz(uiState.category!!) }, // restart quiz on retry
-            onHome = { */
+            onHome = { *//*
+
+*/
 /* TODO: implement navigation to Home *//*
+*/
+/*
  },
-            onShare = { */
+            onShare = { *//*
+
+*/
 /* TODO: implement share functionality *//*
+*/
+/*
  }
         )
 
@@ -368,6 +611,8 @@ fun QuizMainScreen(
     )
 }
 
+*//*
+
 */
 /**
  * ================================================
@@ -379,6 +624,8 @@ fun QuizMainScreen(
  * - Do NOT manually call ViewModel.onCleared() here in production.
  * ================================================
  *//*
+*/
+/*
 
 @Composable
 fun LifeCycleObserverApp(
@@ -414,6 +661,8 @@ fun LifeCycleObserverApp(
     }
 }
 
+*//*
+
 */
 /**
  * ================================================
@@ -425,6 +674,8 @@ fun LifeCycleObserverApp(
  * - Easily replace QuizHeaderSection or QuizOptionsSection for custom UI.
  * ================================================
  *//*
+*/
+/*
 
 @Composable
 private fun QuizScreenPortrait(
@@ -462,6 +713,8 @@ private fun QuizScreenPortrait(
     }
 }
 
+*//*
+
 */
 /**
  * ================================================
@@ -473,6 +726,8 @@ private fun QuizScreenPortrait(
  * - Adjust `fillMaxWidth(0.5f)` to change column ratio.
  * ================================================
  *//*
+*/
+/*
 
 @Composable
 private fun QuizScreenLandscape(
@@ -512,6 +767,8 @@ private fun QuizScreenLandscape(
     }
 }
 
+*//*
+
 */
 /**
  * ================================================
@@ -522,6 +779,8 @@ private fun QuizScreenLandscape(
  * - Theme-aware color for light/dark mode.
  * ================================================
  *//*
+*/
+/*
 
 @Composable
 fun QuizLoadingScreen() {
@@ -535,6 +794,8 @@ fun QuizLoadingScreen() {
     }
 }
 
+*//*
+
 */
 /**
  * ================================================
@@ -545,6 +806,8 @@ fun QuizLoadingScreen() {
  * - Create additional previews for portrait / dark mode if desired.
  * ================================================
  *//*
+*/
+/*
 
 @Preview(
     showBackground = true,
@@ -572,3 +835,5 @@ fun QuizScreenLandscapePreview() {
 }
 
 */
+
+

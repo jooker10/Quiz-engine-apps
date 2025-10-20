@@ -3,7 +3,6 @@ package futur.apps.composeproject1.RoomDatabase
 import android.app.Application
 import com.google.android.gms.ads.MobileAds
 import dagger.hilt.android.HiltAndroidApp
-import futur.apps.composeproject1.ads.AdsManager
 
 /**
  * Base class for maintaining global application state.

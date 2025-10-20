@@ -16,7 +16,8 @@ data class SettingsUiState(
     val autoNext: Boolean = true,
     val soundEnabled: Boolean = true,
     val ttsEnabled: Boolean = true,
-    val maxQuestions: Int = 10
+    val maxQuestions: Int = 10,
+    val useUserQuestions: Boolean = false
 )
 
 @HiltViewModel
@@ -46,6 +47,7 @@ class SettingsViewModel @Inject constructor(
         val sound = values[4] as? Boolean ?: true
         val tts = values[5] as? Boolean ?: true
         val maxQ = values[6] as? Int ?: 10
+        val useUser = values[7] as? Boolean ?: false
 
         SettingsUiState(
             isLoading = false,
@@ -56,7 +58,7 @@ class SettingsViewModel @Inject constructor(
             soundEnabled = sound,
             ttsEnabled = tts,
             maxQuestions = maxQ,
-            //isLoading = true
+            useUserQuestions = useUser
         )
     }
         .stateIn(
@@ -95,4 +97,6 @@ class SettingsViewModel @Inject constructor(
     fun updateMaxQuestions(value: Int) = viewModelScope.launch {
         dataStore.setMaxQuestions(value)
     }
+
+
 }
