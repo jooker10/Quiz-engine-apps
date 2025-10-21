@@ -30,8 +30,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val themeViewModel: ThemeViewModel = hiltViewModel()
             val isLoaded by themeViewModel.isLoaded.collectAsState()
-            val isDark by themeViewModel.isDarkTheme.collectAsState()
-            val selectedPalette by themeViewModel.selectedPaletteName.collectAsState()
+
 
             if (!isLoaded) {
                 LoadingScreen()

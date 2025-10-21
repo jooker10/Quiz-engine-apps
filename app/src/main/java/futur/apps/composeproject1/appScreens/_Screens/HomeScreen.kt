@@ -27,27 +27,24 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import futur.apps.composeproject1.R
-import futur.apps.composeproject1.dataStore.AppDataStore
 import futur.apps.composeproject1.quizsystem.ui.theme.progressResultColor
 import futur.apps.composeproject1.utils.BuildInCategory
 import futur.apps.composeproject1.utils.QuizMode
 import futur.apps.composeproject1.utils.Screen
-import futur.apps.composeproject1.viewmodels.HomeUiState
-import futur.apps.composeproject1.viewmodels.HomeViewModel
-import futur.apps.composeproject1.viewmodels.QuizViewModel
-import futur.apps.composeproject1.viewmodels.StatsUiState
+import futur.apps.composeproject1.viewmodels.*
 
-// ------------------- Home Screen -------------------
+/* ============================================================
+   🏠 Home Screen — Dual Source (Built-in / User-Created)
+   ============================================================ */
 @Composable
 fun HomeScreen(
     navController: NavController,
     homeViewModel: HomeViewModel = hiltViewModel(),
-    quizViewModel: QuizViewModel = hiltViewModel(),
-    appDataStore: AppDataStore = hiltViewModel()
+    quizViewModel: QuizViewModel = hiltViewModel()
 ) {
     val uiState by homeViewModel.uiState.collectAsState()
-    val currentQuizMode by quizViewModel.currentQuizMode.collectAsState()
-    val userStats by appDataStore.statsFlow.collectAsState(initial = StatsUiState())
+    val currentQuizMode by quizViewModel.mode.collectAsState()
+    val userStats by quizViewModel.stats.collectAsState()
 
     when {
         uiState.isLoading -> LoadingScreen()
@@ -61,7 +58,9 @@ fun HomeScreen(
     }
 }
 
-// ------------------- Home Content -------------------
+/* ============================================================
+   🧩 Home Content
+   ============================================================ */
 @Composable
 private fun HomeContent(
     navController: NavController,
@@ -80,22 +79,22 @@ private fun HomeContent(
 
         when (quizMode) {
             QuizMode.BUILT_IN -> {
-                QuizOverviewSection(uiState = uiState)
+                QuizOverviewSection(uiState)
                 QuizCategorySection(totalPoints = uiState.totalPoints, navController = navController)
             }
             QuizMode.USER_CREATED -> {
+                UserCreatedOverviewSection(uiState)
                 UserCreatedCategorySection(stats = userStats, navController = navController)
             }
         }
     }
 }
 
-// ------------------- Quiz Mode Selector -------------------
+/* ============================================================
+   🔘 Quiz Mode Selector
+   ============================================================ */
 @Composable
-fun QuizModeSelector(
-    selectedMode: QuizMode,
-    onModeSelected: (QuizMode) -> Unit
-) {
+fun QuizModeSelector(selectedMode: QuizMode, onModeSelected: (QuizMode) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -103,11 +102,10 @@ fun QuizModeSelector(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         QuizModeChip(
-            text = "Builtin",
+            text = "Built-in",
             isSelected = selectedMode == QuizMode.BUILT_IN,
             onClick = { onModeSelected(QuizMode.BUILT_IN) }
         )
-
         QuizModeChip(
             text = "User Created",
             isSelected = selectedMode == QuizMode.USER_CREATED,
@@ -117,11 +115,7 @@ fun QuizModeSelector(
 }
 
 @Composable
-fun QuizModeChip(
-    text: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
+fun QuizModeChip(text: String, isSelected: Boolean, onClick: () -> Unit) {
     Surface(
         shape = RoundedCornerShape(20.dp),
         color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
@@ -141,7 +135,9 @@ fun QuizModeChip(
     }
 }
 
-// ------------------- Built-in Overview -------------------
+/* ============================================================
+   🧠 Overview (Built-in)
+   ============================================================ */
 @Composable
 fun QuizOverviewSection(uiState: HomeUiState) {
     val totalPoints = uiState.totalPoints
@@ -154,7 +150,6 @@ fun QuizOverviewSection(uiState: HomeUiState) {
             .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Left side: Level + Points
         Column(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -163,54 +158,89 @@ fun QuizOverviewSection(uiState: HomeUiState) {
             GradientInfoCard(title = "TOTAL POINTS", value = "$totalPoints XP", isPrimary = false)
         }
 
-        // Right side: Profile
-        Card(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight(),
-            shape = RoundedCornerShape(20.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ProfileCard(username = uiState.username, modifier = Modifier.weight(1f))
+    }
+}
+
+/* ============================================================
+   👤 Overview (User-Created)
+   ============================================================ */
+@Composable
+fun UserCreatedOverviewSection(uiState: HomeUiState) {
+    val totalPoints = 0 // placeholder, later we’ll compute from user DB
+    val level = totalPoints / 20 + 1
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Column(
+            GradientInfoCard(title = "USER LEVEL", value = "$level")
+            GradientInfoCard(title = "TOTAL USER POINTS", value = "$totalPoints XP", isPrimary = false)
+        }
+
+        ProfileCard(username = uiState.username, modifier = Modifier.weight(1f))
+    }
+}
+
+/* ============================================================
+   🪪 Shared Profile Card
+   ============================================================ */
+@Composable
+fun ProfileCard(username: String, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier.fillMaxHeight(),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Text(
+                "YOUR PROFILE",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    letterSpacing = 0.5.sp
+                )
+            )
+            Image(
+                painter = painterResource(id = R.drawable.app_icon),
+                contentDescription = "Profile",
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(vertical = 12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Text(
-                    "YOUR PROFILE",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                        letterSpacing = 0.5.sp
-                    )
-                )
-                Image(
-                    painter = painterResource(id = R.drawable.app_icon),
-                    contentDescription = "Profile",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(65.dp)
-                        .clip(CircleShape)
-                )
-                Text(
-                    uiState.username,
-                    style = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onSurface)
-                )
-            }
+                    .size(65.dp)
+                    .clip(CircleShape)
+            )
+            Text(
+                username,
+                style = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onSurface)
+            )
         }
     }
 }
 
+/* ============================================================
+   🎨 Gradient Info Card
+   ============================================================ */
 @Composable
 private fun GradientInfoCard(title: String, value: String, isPrimary: Boolean = true) {
-    val startColor = if (isPrimary) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
+    val startColor =
+        if (isPrimary) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
     val endColor = startColor.copy(alpha = 0.6f)
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
@@ -241,7 +271,9 @@ private fun GradientInfoCard(title: String, value: String, isPrimary: Boolean = 
     }
 }
 
-// ------------------- Built-in Categories -------------------
+/* ============================================================
+   📚 Built-in Category Section
+   ============================================================ */
 @Composable
 fun QuizCategorySection(totalPoints: Int, navController: NavController) {
     val categories = BuildInCategory.entries.toTypedArray()
@@ -249,7 +281,9 @@ fun QuizCategorySection(totalPoints: Int, navController: NavController) {
     Column {
         Text(
             "Quiz Categories",
-            style = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)),
+            style = MaterialTheme.typography.titleMedium.copy(
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+            ),
             modifier = Modifier.padding(12.dp)
         )
 
@@ -266,24 +300,28 @@ fun QuizCategorySection(totalPoints: Int, navController: NavController) {
                     index = index,
                     score = progress,
                     isActive = isUnlocked,
-                    isCompleted = isCompleted,
-                    onClick = {
-                        if (isUnlocked) navController.navigate(Screen.Quiz.createRoute(QuizMode.BUILT_IN, category.name))
+                    isCompleted = isCompleted
+                ) {
+                    if (isUnlocked) {
+                        navController.navigate(
+                            Screen.Quiz.createRoute(QuizMode.BUILT_IN, category.name)
+                        )
                     }
-                )
+                }
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
 }
 
-// ------------------- User-Created Categories -------------------
+/* ============================================================
+   👥 User-Created Category Section
+   ============================================================ */
 @Composable
-fun UserCreatedCategorySection(
-    stats: StatsUiState,
-    navController: NavController
-) {
-    if (stats.quizzesPerCategory.isEmpty()) {
+fun UserCreatedCategorySection(stats: StatsUiState, navController: NavController) {
+    val categories = stats.quizzesPerCategory.keys.toList()
+
+    if (categories.isEmpty()) {
         UserCreatedPlaceholder()
     } else {
         Column {
@@ -296,28 +334,26 @@ fun UserCreatedCategorySection(
             )
 
             LazyColumn {
-                itemsIndexed(stats.quizzesPerCategory.keys.toList()) { index, categoryName ->
-                    val total =
-                        stats.correctPerCategory[categoryName]!! + stats.wrongPerCategory[categoryName]!!
+                itemsIndexed(categories) { index, categoryName ->
+                    val total = (stats.correctPerCategory[categoryName] ?: 0) +
+                            (stats.wrongPerCategory[categoryName] ?: 0)
                     val progress =
-                        if (total > 0) stats.correctPerCategory[categoryName]!! / total.toFloat() else 0f
+                        if (total > 0) (stats.correctPerCategory[categoryName] ?: 0) / total.toFloat() else 0f
                     val isCompleted = progress >= 1f
 
                     QuizCategoryCard(
                         index = index,
                         score = progress,
                         isActive = true,
-                        isCompleted = isCompleted,
-                        onClick = {
-                            navController.navigate(
-                                Screen.Quiz.createRoute(
-                                    mode = QuizMode.USER_CREATED,
-                                    categoryName = categoryName
-                                )
+                        isCompleted = isCompleted
+                    ) {
+                        navController.navigate(
+                            Screen.Quiz.createRoute(
+                                mode = QuizMode.USER_CREATED,
+                                categoryName = categoryName
                             )
-                        }
-
-                    )
+                        )
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
@@ -325,7 +361,9 @@ fun UserCreatedCategorySection(
     }
 }
 
-// ------------------- Shared Components -------------------
+/* ============================================================
+   🧱 Shared Category Card
+   ============================================================ */
 @Composable
 fun QuizCategoryCard(
     index: Int,
@@ -409,6 +447,9 @@ fun QuizCategoryCard(
     }
 }
 
+/* ============================================================
+   🚫 Empty Placeholder
+   ============================================================ */
 @Composable
 fun UserCreatedPlaceholder() {
     Box(
@@ -435,385 +476,3 @@ fun getGradientColor(startColor: Color, endColor: Color): Brush {
 fun QuizCategoryCardPreview() {
     QuizCategoryCard(index = 1, score = 0.5f, isActive = true, onClick = {})
 }
-
-
-/*
-package futur.apps.composeproject1.appScreens._Screens
-
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
-import futur.apps.composeproject1.R
-import futur.apps.composeproject1.dataStore.AppDataStore
-import futur.apps.composeproject1.quizsystem.ui.theme.progressResultColor
-import futur.apps.composeproject1.utils.BuildInCategory
-import futur.apps.composeproject1.utils.QuizMode
-import futur.apps.composeproject1.utils.Screen
-import futur.apps.composeproject1.viewmodels.HomeUiState
-import futur.apps.composeproject1.viewmodels.HomeViewModel
-import futur.apps.composeproject1.viewmodels.QuizViewModel
-import futur.apps.composeproject1.viewmodels.StatsUiState
-
-// ------------------- Home Screen -------------------
-@Composable
-fun HomeScreen(
-    navController: NavController,
-    homeViewModel: HomeViewModel = hiltViewModel(),
-    quizViewModel: QuizViewModel = hiltViewModel(),
-    appDataStore: AppDataStore = hiltViewModel() // collect stats directly
-) {
-    val uiState by homeViewModel.uiState.collectAsState()
-    val currentQuizMode by quizViewModel.currentQuizMode.collectAsState()
-    val userStats by appDataStore.statsFlow.collectAsState(initial = StatsUiState())
-
-    if (uiState.isLoading) {
-        LoadingScreen()
-    } else {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp)
-        ) {
-            // Mode selector
-            QuizModeSelector(
-                selectedMode = currentQuizMode,
-                onModeSelected = { mode -> quizViewModel.saveGlobalQuizMode(mode) }
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            when (currentQuizMode) {
-                QuizMode.BUILT_IN -> {
-                    QuizOverviewSection(uiState = uiState)
-                    QuizCategorySection(totalPoints = uiState.totalPoints, navController = navController)
-                }
-
-                QuizMode.USER_CREATED -> {
-                    UserCreatedCategorySection(stats = userStats, navController = navController)
-                }
-            }
-        }
-    }
-}
-
-// ------------------- Quiz Mode Selector -------------------
-@Composable
-fun QuizModeSelector(
-    selectedMode: QuizMode,
-    onModeSelected: (QuizMode) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        QuizModeChip(
-            text = "Builtin",
-            isSelected = selectedMode == QuizMode.BUILT_IN,
-            onClick = { onModeSelected(QuizMode.BUILT_IN) }
-        )
-
-        QuizModeChip(
-            text = "User Created",
-            isSelected = selectedMode == QuizMode.USER_CREATED,
-            onClick = { onModeSelected(QuizMode.USER_CREATED) }
-        )
-    }
-}
-
-@Composable
-fun QuizModeChip(
-    text: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Surface(
-        shape = RoundedCornerShape(20.dp),
-        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-        shadowElevation = if (isSelected) 6.dp else 2.dp,
-        modifier = Modifier.clickable { onClick() }
-    ) {
-        Box(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = text,
-                color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.Medium
-            )
-        }
-    }
-}
-
-
-
-@Composable
-fun UserCreatedPlaceholder() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "No user-created quizzes yet.",
-            style = MaterialTheme.typography.titleMedium.copy(
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-            )
-        )
-    }
-}
-
-// ------------------- Built-in Quiz Overview -------------------
-@Composable
-fun QuizOverviewSection(uiState: HomeUiState) {
-    val totalPoints = uiState.totalPoints
-    val level = totalPoints / 20 + 1
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Left Column: Level & Points
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // LEVEL CARD
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                shape = RoundedCornerShape(20.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(getGradientColor(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)))
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxSize().padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        Text("LEVEL", style = MaterialTheme.typography.labelSmall.copy(color = Color.White.copy(alpha = 0.9f), letterSpacing = 1.sp))
-                        Text("$level", style = MaterialTheme.typography.titleLarge.copy(color = Color.White, fontSize = 30.sp))
-                    }
-                }
-            }
-
-            // TOTAL POINTS CARD
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                shape = RoundedCornerShape(20.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(getGradientColor(MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.tertiary.copy(alpha = 0.6f)))
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxSize().padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        Text("TOTAL POINTS", style = MaterialTheme.typography.labelSmall.copy(color = Color.White.copy(alpha = 0.9f), letterSpacing = 1.sp))
-                        Text("$totalPoints XP", style = MaterialTheme.typography.titleMedium.copy(color = Color.White, fontSize = 24.sp))
-                    }
-                }
-            }
-        }
-
-        // Right Column: Profile
-        Card(
-            modifier = Modifier.weight(1f).fillMaxHeight(),
-            shape = RoundedCornerShape(20.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize().padding(vertical = 12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Text("YOUR PROFILE", style = MaterialTheme.typography.labelSmall.copy(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), letterSpacing = 0.5.sp))
-                Image(
-                    painter = painterResource(id = R.drawable.app_icon),
-                    contentDescription = "Profile Image",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(65.dp).clip(CircleShape)
-                )
-                Text(uiState.username, style = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onSurface))
-            }
-        }
-    }
-}
-
-// ------------------- Built-in Quiz Categories -------------------
-@Composable
-fun QuizCategorySection(totalPoints: Int, navController: NavController) {
-    val categories = BuildInCategory.entries.toTypedArray()
-
-    Column {
-        Text("Quiz Categories", style = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)), modifier = Modifier.padding(12.dp))
-
-        LazyColumn(modifier = Modifier.fillMaxWidth()) {
-            itemsIndexed(categories) { index, category ->
-                val unlockThreshold = index * category.maxPoints
-                val isUnlocked = totalPoints >= unlockThreshold
-                val progress = ((totalPoints - unlockThreshold).coerceIn(0, category.maxPoints).toFloat() / category.maxPoints)
-                val isCompleted = progress >= 1f
-
-                QuizCategoryCard(
-                    index = index,
-                    score = progress,
-                    isActive = isUnlocked,
-                    isCompleted = isCompleted,
-                    onClick = { if (isUnlocked) navController.navigate(Screen.Quiz.createRoute(category)) }
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-        }
-    }
-}
-
-// ------------------- Quiz Category Card -------------------
-@Composable
-fun QuizCategoryCard(index: Int, score: Float, isActive: Boolean, isCompleted: Boolean = false, onClick: () -> Unit) {
-    val category = BuildInCategory.entries[index]
-
-    Card(
-        modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 6.dp)
-            .clickable(enabled = isActive) { onClick() }
-            .alpha(if (isActive) 1f else 0.6f),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.elevatedCardElevation(if (isActive) 4.dp else 1.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = if (isActive) MaterialTheme.colorScheme.onSurface else Color.Gray)
-    ) {
-        Row(
-            modifier = Modifier
-                .clip(RoundedCornerShape(16.dp))
-                .background(Brush.horizontalGradient(colors = listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surface.copy(alpha = 0.1f))))
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(
-                    progress = score.coerceIn(0f, 1f),
-                    modifier = Modifier.size(50.dp),
-                    color = progressResultColor(score * 100),
-                    strokeWidth = 5.dp,
-                    trackColor = Color.LightGray.copy(alpha = 0.3f)
-                )
-                Text("${(score * 100).toInt()}%", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = if (isActive) MaterialTheme.colorScheme.onSurface else Color.Gray)
-            }
-
-            Column(modifier = Modifier.padding(start = 16.dp)) {
-                Text(category.displayName, fontSize = 18.sp, fontWeight = FontWeight.Medium, color = if (isActive) MaterialTheme.colorScheme.onSurface else Color(0xFF37474F))
-
-                val statusText = when {
-                    isCompleted -> "Completed ✅"
-                    !isActive -> "Locked - reach ${(index * 20)} pts"
-                    else -> "Tap to start"
-                }
-                val statusColor = when {
-                    isCompleted -> Color(0xFF4CAF50)
-                    !isActive -> Color(0xFFB0BEC5)
-                    else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                }
-                Text(statusText, fontSize = 12.sp, color = statusColor)
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            Icon(Icons.Filled.ArrowForward, contentDescription = "Go", tint = if (isActive) MaterialTheme.colorScheme.onSurface else Color.Gray)
-        }
-    }
-}
-
-// ------------------- Helpers -------------------
-fun getGradientColor(startColor: Color, endColor: Color): Brush {
-    return Brush.horizontalGradient(listOf(startColor, endColor))
-}
-
-@Preview(showBackground = true)
-@Composable
-fun QuizCategoryCardPreview() {
-    QuizCategoryCard(index = 1, score = 0.5f, isActive = false, isCompleted = false, onClick = {})
-}
-
-@Composable
-fun UserCreatedCategorySection(
-    stats: StatsUiState,
-    navController: NavController
-) {
-    if (stats.quizzesPerCategory.isEmpty()) {
-        UserCreatedPlaceholder()
-    } else {
-        Column {
-            Text(
-                text = "Your Quizzes",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-                ),
-                modifier = Modifier.padding(12.dp)
-            )
-
-            LazyColumn {
-                itemsIndexed(stats.quizzesPerCategory.keys.toList()) { index, categoryName ->
-                    val total =
-                        stats.correctPerCategory[categoryName]!! + stats.wrongPerCategory[categoryName]!!
-                    val progress = if (total > 0) stats.correctPerCategory[categoryName]!! / total.toFloat() else 0f
-                    val isCompleted = progress >= 1f
-
-                    QuizCategoryCard(
-                        index = index,
-                        score = progress,
-                        isActive = true,
-                        isCompleted = isCompleted,
-                        onClick = {
-                            navController.navigate(Screen.Quiz.createRoute(categoryName))
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-            }
-        }
-    }
-}
-
-*/

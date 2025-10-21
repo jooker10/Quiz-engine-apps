@@ -146,18 +146,6 @@ fun SettingsScreen(
             SectionHeader(title = "Quiz Configuration")
 
             SettingCard(
-                icon = Icons.Default.Person,
-                title = "Use My Questions",
-                description = "Play quizzes using your own custom questions"
-            ) {
-                Switch(
-                    checked = uiState.useUserQuestions,
-                    onCheckedChange = { /*viewModel.updateUseUserQuestions(it)*/ }
-                )
-            }
-
-
-            SettingCard(
                 icon = Icons.Default.PlayCircle,
                 title = "Auto-Next",
                 description = "Automatically move to next question"

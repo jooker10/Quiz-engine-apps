@@ -41,4 +41,25 @@ class UserQuizViewModel @Inject constructor(
     fun deleteQuestion(question: UserQuestionEntity) {
         viewModelScope.launch { repository.deleteQuestion(question) }
     }
+
+    // ============================================================
+// 🔹 Reset user-created quiz statistics
+// ============================================================
+    fun resetUserStats() {
+        viewModelScope.launch {
+            // Option 1: If you store user stats in DataStore (not yet)
+            // you can clear them there.
+            // Example (future):
+            // appDataStore.resetUserStats()
+
+            // Option 2: If user stats are derived directly from DB,
+            // just clear all categories/questions.
+            repository.getAllCategories().collect { categories ->
+                categories.forEach { category ->
+                    repository.deleteCategory(category)
+                }
+            }
+        }
+    }
+
 }

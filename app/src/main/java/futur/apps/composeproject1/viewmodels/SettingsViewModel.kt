@@ -4,12 +4,23 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import futur.apps.composeproject1.dataStore.AppDataStore
+import futur.apps.composeproject1.utils.QuizMode
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * ============================================================
+ * ⚙️ SettingsViewModel.kt
+ *
+ * Central ViewModel for app-wide preferences and settings.
+ * - Reads from [AppDataStore]
+ * - Exposes a unified [SettingsUiState]
+ * - Provides safe update methods
+ * ============================================================
+ */
 data class SettingsUiState(
-  val isLoading: Boolean = true,
+    val isLoading: Boolean = true,
     val isDarkMode: Boolean = false,
     val language: String = "English",
     val selectedPalette: String = "Blue",
@@ -17,7 +28,7 @@ data class SettingsUiState(
     val soundEnabled: Boolean = true,
     val ttsEnabled: Boolean = true,
     val maxQuestions: Int = 10,
-    val useUserQuestions: Boolean = false
+    val globalQuizMode: QuizMode = QuizMode.BUILT_IN
 )
 
 @HiltViewModel
@@ -25,21 +36,21 @@ class SettingsViewModel @Inject constructor(
     private val dataStore: AppDataStore
 ) : ViewModel() {
 
-    /**
-     * Combine multiple flows into a single SettingsUiState.
-     * We use the vararg combine overload that passes an Array<Any?> to the transform,
-     * then cast values by index. This avoids compiler overload/arity issues.
-     */
+    // ------------------------------------------------------------
+    // 🧠 Combine multiple flows into one unified SettingsUiState
+    // ------------------------------------------------------------
     val uiState: StateFlow<SettingsUiState> = combine(
-        dataStore.isDarkThemeEnabled,
-        dataStore.selectedLanguage,
-        dataStore.selectedPaletteName,
-        dataStore.autoNext,
-        dataStore.enableSounds,
-        dataStore.enableTTS,
-        dataStore.maxQuestions
-    ) { values: Array<Any?> ->
-        // Cast values by index to the expected types
+        listOf(
+            dataStore.isDarkThemeEnabled,
+            dataStore.selectedLanguage,
+            dataStore.selectedPaletteName,
+            dataStore.autoNext,
+            dataStore.enableSounds,
+            dataStore.enableTTS,
+            dataStore.maxQuestions,
+            dataStore.globalQuizMode
+        )
+    ) { values ->
         val dark = values[0] as? Boolean ?: false
         val lang = values[1] as? String ?: "English"
         val palette = values[2] as? String ?: "Blue"
@@ -47,7 +58,8 @@ class SettingsViewModel @Inject constructor(
         val sound = values[4] as? Boolean ?: true
         val tts = values[5] as? Boolean ?: true
         val maxQ = values[6] as? Int ?: 10
-        val useUser = values[7] as? Boolean ?: false
+        val quizMode = values[7] as? QuizMode
+            ?: QuizMode.BUILT_IN
 
         SettingsUiState(
             isLoading = false,
@@ -58,18 +70,18 @@ class SettingsViewModel @Inject constructor(
             soundEnabled = sound,
             ttsEnabled = tts,
             maxQuestions = maxQ,
-            useUserQuestions = useUser
+            globalQuizMode = quizMode
         )
-    }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = SettingsUiState()
-        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = SettingsUiState()
+    )
 
-    // ----------------------------
-    // Preference Update Functions
-    // ----------------------------
+
+    // ------------------------------------------------------------
+    // 🔄 Preference Update Functions
+    // ------------------------------------------------------------
     fun updateDarkMode(enabled: Boolean) = viewModelScope.launch {
         dataStore.saveDarkThemePreference(enabled)
     }
@@ -98,5 +110,7 @@ class SettingsViewModel @Inject constructor(
         dataStore.setMaxQuestions(value)
     }
 
-
+    fun updateGlobalQuizMode(mode: QuizMode) = viewModelScope.launch {
+        dataStore.setGlobalQuizMode(mode)
+    }
 }

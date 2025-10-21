@@ -40,16 +40,14 @@ fun MainScreen() {
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
     val showBottomBar = BottomBarRoutes.any { currentRoute?.startsWith(it) == true }
-    val showTopBar = TopBarRoutes.any { currentRoute?.startsWith(it) == true }
+    //val showTopBar = TopBarRoutes.any { currentRoute?.startsWith(it) == true }
 
     Scaffold(
         topBar = { TopBar(navController = navController) },
         bottomBar = {
             if (showBottomBar) {
                 MainNavigation(navController = navController)
-              /*  BottomAppBar(navController) {
-                    // Handle FAB action here if needed later
-                }*/
+
             }
         }
     ) { paddingValues ->

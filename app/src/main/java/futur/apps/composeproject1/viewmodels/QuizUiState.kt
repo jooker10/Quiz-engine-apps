@@ -117,9 +117,3 @@ data class QuizUiState(
             QuizConfig.TTS_FIXED_LANGUAGE
 }
 
-/** Prevents multiple button clicks / double-submit */
-/**
-     * 🔊 TTS Language selection:
-     * - If TTS_USE_DEVICE_LANGUAGE = true → use device default language.
-     * - Otherwise → force language defined in [QuizConfig.TTS_FIXED_LANGUAGE].
-     */
