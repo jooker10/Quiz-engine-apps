@@ -4,13 +4,11 @@ import android.content.Context
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
-import futur.apps.composeproject1.utils.BuildInCategory
+import futur.apps.composeproject1.utils.DefaultCategory
 import futur.apps.composeproject1.utils.QuizMode
 import futur.apps.composeproject1.viewmodels.StatsUiState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -64,11 +62,11 @@ class AppDataStore @Inject constructor(
     // ------------------------------------------------------------
     // 🧮 Points per mode
     // ------------------------------------------------------------
-    val builtInCategoryPoints: Flow<Map<BuildInCategory, Int>> =
+    val builtInCategoryPoints: Flow<Map<DefaultCategory, Int>> =
         context.dataStore.data.map { prefs ->
             prefs[BUILTIN_POINTS_KEY]?.let { json ->
                 runCatching {
-                    safeJson.decodeFromString<Map<BuildInCategory, Int>>(json)
+                    safeJson.decodeFromString<Map<DefaultCategory, Int>>(json)
                 }.getOrElse { emptyMap() }
             } ?: emptyMap()
         }
@@ -115,10 +113,10 @@ class AppDataStore @Inject constructor(
     val globalQuizMode: Flow<QuizMode> =
         context.dataStore.data.map { prefs ->
             prefs[QUIZ_MODE_KEY]?.let { saved ->
-                QuizMode.values().find { it.name == saved } ?: QuizMode.BUILT_IN
+                QuizMode.entries.find { it.name == saved } ?: QuizMode.DEFAULT
             } ?: run {
                 val legacy = prefs[USE_USER_QUESTIONS_KEY] ?: false
-                if (legacy) QuizMode.USER_CREATED else QuizMode.BUILT_IN
+                if (legacy) QuizMode.CUSTOM else QuizMode.DEFAULT
             }
         }
 
@@ -132,7 +130,7 @@ class AppDataStore @Inject constructor(
     suspend fun setSelectedPalette(name: String) = context.dataStore.edit { it[SELECTED_PALETTE_KEY] = name }
 
     // Points
-    suspend fun saveBuiltInCategoryPoints(points: Map<BuildInCategory, Int>) {
+    suspend fun saveBuiltInCategoryPoints(points: Map<DefaultCategory, Int>) {
         val json = safeJson.encodeToString(points)
         context.dataStore.edit { it[BUILTIN_POINTS_KEY] = json }
     }

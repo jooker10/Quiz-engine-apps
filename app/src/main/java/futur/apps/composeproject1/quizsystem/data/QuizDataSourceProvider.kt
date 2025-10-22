@@ -16,7 +16,7 @@ class QuizDataSourceProvider @Inject constructor(
 ) {
     fun getDataSource(mode: QuizMode): QuizDataSource =
         when (mode) {
-            QuizMode.BUILT_IN -> builtIn
-            QuizMode.USER_CREATED -> userCreated
+            QuizMode.DEFAULT -> builtIn
+            QuizMode.CUSTOM -> userCreated
         }
 }

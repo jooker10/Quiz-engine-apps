@@ -3,6 +3,8 @@ package futur.apps.composeproject1.RoomDatabase.userroom
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -11,16 +13,33 @@ class UserQuizViewModel @Inject constructor(
     private val repository: UserQuizRepository
 ) : ViewModel() {
 
-    val categories = repository.getAllCategories()
+    // 🔹 Expose categories as StateFlow for Compose
+    val categories: StateFlow<List<UserCategoryEntity>> =
+        repository.getAllCategories()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    fun getQuestions(categoryId: Int) = repository.getQuestionsByCategory(categoryId)
+    // 🔹 Expose questions grouped by categoryId
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val questionsByCategory: StateFlow<Map<Int, List<UserQuestionEntity>>> =
+        repository.getAllCategories()
+            .flatMapLatest { categories ->
+                combine(categories.map { cat ->
+                    repository.getQuestionsByCategory(cat.id)
+                        .map { questions -> cat.id to questions }
+                }) { pairs ->
+                    pairs.toMap()
+                }
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
+    // 🔹 Add new category
     fun addCategory(name: String, description: String? = null) {
         viewModelScope.launch {
             repository.insertCategory(UserCategoryEntity(name = name, description = description))
         }
     }
 
+    // 🔹 Add new question
     fun addQuestion(categoryId: Int, questionText: String, options: List<String>, correctAnswer: String) {
         viewModelScope.launch {
             repository.insertQuestion(
@@ -34,31 +53,24 @@ class UserQuizViewModel @Inject constructor(
         }
     }
 
+    // 🔹 Delete category
     fun deleteCategory(category: UserCategoryEntity) {
         viewModelScope.launch { repository.deleteCategory(category) }
     }
+    // UserQuizViewModel.kt  (make sure this function exists)
+    fun getQuestions(categoryId: Int) = repository.getQuestionsByCategory(categoryId)
 
+
+    // 🔹 Delete question
     fun deleteQuestion(question: UserQuestionEntity) {
         viewModelScope.launch { repository.deleteQuestion(question) }
     }
 
-    // ============================================================
-// 🔹 Reset user-created quiz statistics
-// ============================================================
+    // 🔹 Reset all user quizzes (categories + questions)
     fun resetUserStats() {
         viewModelScope.launch {
-            // Option 1: If you store user stats in DataStore (not yet)
-            // you can clear them there.
-            // Example (future):
-            // appDataStore.resetUserStats()
-
-            // Option 2: If user stats are derived directly from DB,
-            // just clear all categories/questions.
-            repository.getAllCategories().collect { categories ->
-                categories.forEach { category ->
-                    repository.deleteCategory(category)
-                }
-            }
+            repository.deleteAllQuestions()
+            repository.deleteAllCategories()
         }
     }
 

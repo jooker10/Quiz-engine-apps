@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import futur.apps.composeproject1.RoomDatabase.QuizRepository
-import futur.apps.composeproject1.utils.BuildInCategory
+import futur.apps.composeproject1.utils.DefaultCategory
 import futur.apps.composeproject1.utils.DataEntity
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -32,14 +32,14 @@ class DatabaseViewModel @Inject constructor(
      * Each flow automatically stays active while the ViewModel is alive,
      * and replays the latest database state for efficient UI updates.
      */
-    val categoryData: Map<BuildInCategory, StateFlow<List<DataEntity>>> = mapOf(
-        BuildInCategory.Verbs to repository.getAllVerbs(),
-        BuildInCategory.Sentences to repository.getAllSentences(),
-        BuildInCategory.PhrasalVerbs to repository.getAllPhrasalVerbs(),
-        BuildInCategory.Nouns to repository.getAllNouns(),
-        BuildInCategory.Adjectives to repository.getAllAdjectives(),
-        BuildInCategory.Adverbs to repository.getAllAdverbs(),
-        BuildInCategory.Idioms to repository.getAllIdioms()
+    val categoryData: Map<DefaultCategory, StateFlow<List<DataEntity>>> = mapOf(
+        DefaultCategory.Verbs to repository.getAllVerbs(),
+        DefaultCategory.Sentences to repository.getAllSentences(),
+        DefaultCategory.PhrasalVerbs to repository.getAllPhrasalVerbs(),
+        DefaultCategory.Nouns to repository.getAllNouns(),
+        DefaultCategory.Adjectives to repository.getAllAdjectives(),
+        DefaultCategory.Adverbs to repository.getAllAdverbs(),
+        DefaultCategory.Idioms to repository.getAllIdioms()
     ).mapValues { (_, flow) ->
         flow.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
         }

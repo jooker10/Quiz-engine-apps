@@ -28,7 +28,7 @@ data class SettingsUiState(
     val soundEnabled: Boolean = true,
     val ttsEnabled: Boolean = true,
     val maxQuestions: Int = 10,
-    val globalQuizMode: QuizMode = QuizMode.BUILT_IN
+    val globalQuizMode: QuizMode = QuizMode.DEFAULT
 )
 
 @HiltViewModel
@@ -59,7 +59,7 @@ class SettingsViewModel @Inject constructor(
         val tts = values[5] as? Boolean ?: true
         val maxQ = values[6] as? Int ?: 10
         val quizMode = values[7] as? QuizMode
-            ?: QuizMode.BUILT_IN
+            ?: QuizMode.DEFAULT
 
         SettingsUiState(
             isLoading = false,

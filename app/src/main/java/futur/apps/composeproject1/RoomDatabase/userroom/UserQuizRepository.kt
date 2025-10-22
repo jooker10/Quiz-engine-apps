@@ -17,4 +17,9 @@ class UserQuizRepository @Inject constructor(
     suspend fun deleteCategory(category: UserCategoryEntity) = dao.deleteCategory(category)
 
     suspend fun deleteQuestion(question: UserQuestionEntity) = dao.deleteQuestion(question)
+
+    suspend fun deleteAllCategories() = dao.deleteAllCategories()
+
+    suspend fun deleteAllQuestions() = dao.deleteAllQuestions()
+
 }

@@ -9,7 +9,7 @@ package futur.apps.composeproject1.utils
  * - A color (used for styling)
  * - A maximum score (points required to unlock the next category)
  */
-enum class BuildInCategory(
+enum class DefaultCategory(
     val displayName: String,
     val maxPoints: Int = 20
 ) {

@@ -9,8 +9,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import futur.apps.composeproject1.ads.AdsManager
 import futur.apps.composeproject1.appScreens._Screens.LoadingScreen
-import futur.apps.composeproject1.quizsystem.ui.theme.DynamicTheme
-import futur.apps.composeproject1.viewmodels.SettingsViewModel
+import futur.apps.composeproject1.quizsystem.ui.theme.AppTheme
 import futur.apps.composeproject1.viewmodels.ThemeViewModel
 
 /**
@@ -35,7 +34,7 @@ class MainActivity : ComponentActivity() {
             if (!isLoaded) {
                 LoadingScreen()
             } else {
-                DynamicTheme(themeViewModel) {
+                AppTheme(themeViewModel) {
                     MainScreen()
                 }
             }

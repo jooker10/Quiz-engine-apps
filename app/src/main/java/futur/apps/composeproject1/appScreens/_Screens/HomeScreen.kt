@@ -27,24 +27,28 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import futur.apps.composeproject1.R
+import futur.apps.composeproject1.RoomDatabase.userroom.UserCategoryEntity
+import futur.apps.composeproject1.RoomDatabase.userroom.UserQuizViewModel
 import futur.apps.composeproject1.quizsystem.ui.theme.progressResultColor
-import futur.apps.composeproject1.utils.BuildInCategory
+import futur.apps.composeproject1.utils.DefaultCategory
 import futur.apps.composeproject1.utils.QuizMode
 import futur.apps.composeproject1.utils.Screen
 import futur.apps.composeproject1.viewmodels.*
 
 /* ============================================================
-   🏠 Home Screen — Dual Source (Built-in / User-Created)
+   🏠 Home Screen — Unified for Built-in & User-Created
    ============================================================ */
 @Composable
 fun HomeScreen(
     navController: NavController,
     homeViewModel: HomeViewModel = hiltViewModel(),
-    quizViewModel: QuizViewModel = hiltViewModel()
+    quizViewModel: QuizViewModel = hiltViewModel(),
+    userQuizViewModel: UserQuizViewModel = hiltViewModel()
 ) {
     val uiState by homeViewModel.uiState.collectAsState()
     val currentQuizMode by quizViewModel.mode.collectAsState()
     val userStats by quizViewModel.stats.collectAsState()
+    val userCategories by userQuizViewModel.categories.collectAsState(initial = emptyList())
 
     when {
         uiState.isLoading -> LoadingScreen()
@@ -53,7 +57,8 @@ fun HomeScreen(
             uiState = uiState,
             quizMode = currentQuizMode,
             onModeSelected = { mode -> quizViewModel.saveGlobalQuizMode(mode) },
-            userStats = userStats
+            userStats = userStats,
+            userCategories = userCategories
         )
     }
 }
@@ -67,7 +72,8 @@ private fun HomeContent(
     uiState: HomeUiState,
     quizMode: QuizMode,
     onModeSelected: (QuizMode) -> Unit,
-    userStats: StatsUiState
+    userStats: StatsUiState,
+    userCategories: List<UserCategoryEntity>
 ) {
     Column(
         modifier = Modifier
@@ -78,13 +84,19 @@ private fun HomeContent(
         Spacer(modifier = Modifier.height(8.dp))
 
         when (quizMode) {
-            QuizMode.BUILT_IN -> {
-                QuizOverviewSection(uiState)
-                QuizCategorySection(totalPoints = uiState.totalPoints, navController = navController)
+            QuizMode.DEFAULT -> {
+                QuizOverviewSection(uiState = uiState)
+                QuizCategorySection(totalPoints = uiState.defaultTotalPoints, navController = navController)
             }
-            QuizMode.USER_CREATED -> {
-                UserCreatedOverviewSection(uiState)
-                UserCreatedCategorySection(stats = userStats, navController = navController)
+
+            QuizMode.CUSTOM -> {
+                UserCreatedOverviewSection(uiState = uiState)
+                UserCreatedCategorySection(
+                    userCategories = userCategories,
+                    userPoints = uiState.userPoints,
+                    userTotalPoints = uiState.userTotalPoints,
+                    navController = navController
+                )
             }
         }
     }
@@ -103,13 +115,13 @@ fun QuizModeSelector(selectedMode: QuizMode, onModeSelected: (QuizMode) -> Unit)
     ) {
         QuizModeChip(
             text = "Built-in",
-            isSelected = selectedMode == QuizMode.BUILT_IN,
-            onClick = { onModeSelected(QuizMode.BUILT_IN) }
+            isSelected = selectedMode == QuizMode.DEFAULT,
+            onClick = { onModeSelected(QuizMode.DEFAULT) }
         )
         QuizModeChip(
             text = "User Created",
-            isSelected = selectedMode == QuizMode.USER_CREATED,
-            onClick = { onModeSelected(QuizMode.USER_CREATED) }
+            isSelected = selectedMode == QuizMode.CUSTOM,
+            onClick = { onModeSelected(QuizMode.CUSTOM) }
         )
     }
 }
@@ -140,7 +152,7 @@ fun QuizModeChip(text: String, isSelected: Boolean, onClick: () -> Unit) {
    ============================================================ */
 @Composable
 fun QuizOverviewSection(uiState: HomeUiState) {
-    val totalPoints = uiState.totalPoints
+    val totalPoints = uiState.defaultTotalPoints
     val level = totalPoints / 20 + 1
 
     Row(
@@ -167,7 +179,7 @@ fun QuizOverviewSection(uiState: HomeUiState) {
    ============================================================ */
 @Composable
 fun UserCreatedOverviewSection(uiState: HomeUiState) {
-    val totalPoints = 0 // placeholder, later we’ll compute from user DB
+    val totalPoints = uiState.userTotalPoints
     val level = totalPoints / 20 + 1
 
     Row(
@@ -181,8 +193,8 @@ fun UserCreatedOverviewSection(uiState: HomeUiState) {
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            GradientInfoCard(title = "USER LEVEL", value = "$level")
-            GradientInfoCard(title = "TOTAL USER POINTS", value = "$totalPoints XP", isPrimary = false)
+            GradientInfoCard(title = "LEVEL", value = "$level")
+            GradientInfoCard(title = "TOTAL POINTS", value = "$totalPoints XP", isPrimary = false)
         }
 
         ProfileCard(username = uiState.username, modifier = Modifier.weight(1f))
@@ -240,14 +252,16 @@ private fun GradientInfoCard(title: String, value: String, isPrimary: Boolean = 
     val endColor = startColor.copy(alpha = 0.6f)
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(92.dp),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
                 .background(getGradientColor(startColor, endColor))
+                .fillMaxSize()
                 .padding(16.dp),
             contentAlignment = Alignment.Center
         ) {
@@ -276,11 +290,11 @@ private fun GradientInfoCard(title: String, value: String, isPrimary: Boolean = 
    ============================================================ */
 @Composable
 fun QuizCategorySection(totalPoints: Int, navController: NavController) {
-    val categories = BuildInCategory.entries.toTypedArray()
+    val categories = DefaultCategory.entries.toTypedArray()
 
     Column {
         Text(
-            "Quiz Categories",
+            text = "Quiz Categories",
             style = MaterialTheme.typography.titleMedium.copy(
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
             ),
@@ -289,91 +303,141 @@ fun QuizCategorySection(totalPoints: Int, navController: NavController) {
 
         LazyColumn(modifier = Modifier.fillMaxWidth()) {
             itemsIndexed(categories) { index, category ->
-                val unlockThreshold = index * category.maxPoints
+
+                // ------------------------------------------------------------
+                // 🧩 Improved Progress Logic
+                // ------------------------------------------------------------
+                val unlockThreshold = index * category.maxPoints       // points needed to unlock this category
+                val nextThreshold = (index + 1) * category.maxPoints   // points needed to unlock the next category
+
+                val progress = when {
+                    // ✅ Category fully completed (player reached the next threshold)
+                    totalPoints >= nextThreshold -> 1f
+
+                    // 🔹 Category partially completed
+                    totalPoints > unlockThreshold -> {
+                        ((totalPoints - unlockThreshold).toFloat() / category.maxPoints)
+                            .coerceIn(0f, 1f)
+                    }
+
+                    // 🔒 Locked category
+                    else -> 0f
+                }
+
                 val isUnlocked = totalPoints >= unlockThreshold
-                val progress = ((totalPoints - unlockThreshold)
-                    .coerceIn(0, category.maxPoints)
-                    .toFloat() / category.maxPoints)
                 val isCompleted = progress >= 1f
 
+                // ------------------------------------------------------------
+                // 🎴 Category Card
+                // ------------------------------------------------------------
                 QuizCategoryCard(
-                    index = index,
+                    title = category.displayName,
                     score = progress,
                     isActive = isUnlocked,
                     isCompleted = isCompleted
                 ) {
                     if (isUnlocked) {
                         navController.navigate(
-                            Screen.Quiz.createRoute(QuizMode.BUILT_IN, category.name)
+                            Screen.Quiz.createRoute(QuizMode.DEFAULT, category.name)
                         )
                     }
                 }
+
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
 }
 
+
 /* ============================================================
    👥 User-Created Category Section
    ============================================================ */
 @Composable
-fun UserCreatedCategorySection(stats: StatsUiState, navController: NavController) {
-    val categories = stats.quizzesPerCategory.keys.toList()
-
-    if (categories.isEmpty()) {
+fun UserCreatedCategorySection(
+    userCategories: List<UserCategoryEntity>,
+    userPoints: Map<String, Int>,
+    userTotalPoints: Int,
+    navController: NavController
+) {
+    if (userCategories.isEmpty()) {
         UserCreatedPlaceholder()
-    } else {
-        Column {
-            Text(
-                text = "Your Quizzes",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-                ),
-                modifier = Modifier.padding(12.dp)
-            )
+        return
+    }
 
-            LazyColumn {
-                itemsIndexed(categories) { index, categoryName ->
-                    val total = (stats.correctPerCategory[categoryName] ?: 0) +
-                            (stats.wrongPerCategory[categoryName] ?: 0)
-                    val progress =
-                        if (total > 0) (stats.correctPerCategory[categoryName] ?: 0) / total.toFloat() else 0f
-                    val isCompleted = progress >= 1f
+    val maxPerCategory = 20 // maximum points each user category can give
 
-                    QuizCategoryCard(
-                        index = index,
-                        score = progress,
-                        isActive = true,
-                        isCompleted = isCompleted
-                    ) {
+    Column {
+        Text(
+            text = "Your Quizzes",
+            style = MaterialTheme.typography.titleMedium.copy(
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+            ),
+            modifier = Modifier.padding(12.dp)
+        )
+
+        LazyColumn {
+            itemsIndexed(userCategories) { index, category ->
+                val catName = category.name
+                val catPoints = userPoints[catName] ?: 0
+
+                // ------------------------------------------------------------
+                // 🧩 Improved Progress Logic (consistent with built-in section)
+                // ------------------------------------------------------------
+                val unlockThreshold = index * maxPerCategory
+                val nextThreshold = (index + 1) * maxPerCategory
+
+                val progress = when {
+                    // ✅ Completed: total points already passed next threshold
+                    userTotalPoints >= nextThreshold -> 1f
+
+                    // 🔹 In progress between thresholds
+                    userTotalPoints > unlockThreshold -> {
+                        ((userTotalPoints - unlockThreshold).toFloat() / maxPerCategory)
+                            .coerceIn(0f, 1f)
+                    }
+
+                    // 🔒 Locked
+                    else -> 0f
+                }
+
+                val isUnlocked = userTotalPoints >= unlockThreshold
+                val isCompleted = progress >= 1f
+
+                // ------------------------------------------------------------
+                // 🎴 Category Card
+                // ------------------------------------------------------------
+                QuizCategoryCard(
+                    title = catName,
+                    score = progress,
+                    isActive = isUnlocked,
+                    isCompleted = isCompleted
+                ) {
+                    if (isUnlocked) {
                         navController.navigate(
-                            Screen.Quiz.createRoute(
-                                mode = QuizMode.USER_CREATED,
-                                categoryName = categoryName
-                            )
+                            Screen.Quiz.createRoute(QuizMode.CUSTOM, catName)
                         )
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
                 }
+
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
 }
+
 
 /* ============================================================
    🧱 Shared Category Card
    ============================================================ */
 @Composable
 fun QuizCategoryCard(
-    index: Int,
+    title: String,
     score: Float,
     isActive: Boolean,
     isCompleted: Boolean = false,
     onClick: () -> Unit
 ) {
-    val category = BuildInCategory.entries.getOrNull(index)
-
     Card(
         modifier = Modifier
             .padding(horizontal = 16.dp, vertical = 6.dp)
@@ -418,7 +482,7 @@ fun QuizCategoryCard(
 
             Column(modifier = Modifier.padding(start = 16.dp)) {
                 Text(
-                    category?.displayName ?: "Category ${index + 1}",
+                    title,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium,
                     color = if (isActive) MaterialTheme.colorScheme.onSurface else Color(0xFF37474F)
@@ -467,12 +531,10 @@ fun UserCreatedPlaceholder() {
     }
 }
 
-fun getGradientColor(startColor: Color, endColor: Color): Brush {
-    return Brush.horizontalGradient(listOf(startColor, endColor))
-}
+
 
 @Preview(showBackground = true)
 @Composable
 fun QuizCategoryCardPreview() {
-    QuizCategoryCard(index = 1, score = 0.5f, isActive = true, onClick = {})
+    QuizCategoryCard(title = "Verbs", score = 0.5f, isActive = true, onClick = {})
 }

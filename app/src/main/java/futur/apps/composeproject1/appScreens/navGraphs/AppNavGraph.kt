@@ -16,7 +16,7 @@ import futur.apps.composeproject1.appScreens._Screens.*
 import futur.apps.composeproject1.quizsystem.ui.screens.QuizScreen
 import futur.apps.composeproject1.quizCreator.CategoryListScreen
 import futur.apps.composeproject1.RoomDatabase.userroom.UserQuizViewModel
-import futur.apps.composeproject1.utils.BuildInCategory
+import futur.apps.composeproject1.utils.DefaultCategory
 import futur.apps.composeproject1.utils.QuizMode
 import futur.apps.composeproject1.utils.Screen
 import futur.apps.composeproject1.viewmodels.QuizCategory
@@ -34,7 +34,7 @@ import futur.apps.composeproject1.viewmodels.QuizViewModel
  * 🔹 Highlights:
  * - Uses nested graphs via `navigation()`
  * - Type-safe screen routes via [Screen]
- * - Supports multiple quiz modes (BuiltIn/UserCreated)
+ * - Supports multiple quiz modes (Default/Custom)
  * ============================================================
  */
 @Composable
@@ -119,11 +119,11 @@ fun NavGraphBuilder.addMainGraph(
 
         // ✅ Determine quiz category type
         val category: QuizCategory? = when (mode) {
-            QuizMode.BUILT_IN -> {
-                val builtIn = runCatching { BuildInCategory.valueOf(categoryName) }.getOrNull()
-                builtIn?.let { QuizCategory.BuiltIn(it) }
+            QuizMode.DEFAULT -> {
+                val default = runCatching { DefaultCategory.valueOf(categoryName) }.getOrNull()
+                default?.let { QuizCategory.Default(it) }
             }
-            QuizMode.USER_CREATED -> QuizCategory.UserCreated(categoryName)
+            QuizMode.CUSTOM -> QuizCategory.Custom(categoryName)
         }
 
         // ✅ Initialize the quiz directly

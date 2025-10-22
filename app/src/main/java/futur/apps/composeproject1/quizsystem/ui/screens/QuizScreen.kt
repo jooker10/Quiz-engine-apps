@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,7 +24,7 @@ import futur.apps.composeproject1.quizsystem.core.QuizEffectHandler
 import futur.apps.composeproject1.quizsystem.ui.components.QuizActionButton
 import futur.apps.composeproject1.quizsystem.ui.components.QuizHeaderSection
 import futur.apps.composeproject1.quizsystem.ui.components.QuizOptionsSection
-import futur.apps.composeproject1.utils.BuildInCategory
+import futur.apps.composeproject1.utils.DefaultCategory
 import futur.apps.composeproject1.utils.Question
 import futur.apps.composeproject1.viewmodels.*
 
@@ -31,12 +32,9 @@ import futur.apps.composeproject1.viewmodels.*
  * ============================================================
  * 🎯 QuizScreen.kt
  *
- * Supports BuiltIn and UserCreated modes.
- * Handles:
- *  - StateFlow collection
- *  - Effect playback (sound / TTS)
- *  - Lifecycle-safe timer & sound handling
- *  - Portrait/Landscape layout variants
+ * Unified QuizScreen for both Default and Custom sources.
+ * - Shows loading, finished, question, or empty state.
+ * - Handles lifecycle-safe timers & effects.
  * ============================================================
  */
 @Composable
@@ -54,7 +52,7 @@ fun QuizScreen(
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     /* ------------------------------------------------------------
-       🎬 Initialize quiz ONCE when category changes
+       🎬 Initialize quiz once when category changes
        ------------------------------------------------------------ */
     LaunchedEffect(uiState.category) {
         val category = uiState.category
@@ -64,7 +62,7 @@ fun QuizScreen(
     }
 
     /* ------------------------------------------------------------
-       🎧 Play quiz effects (sounds / TTS)
+       🎧 Sound / TTS effect handler
        ------------------------------------------------------------ */
     QuizEffectHandler(
         quizViewModel = quizViewModel,
@@ -74,13 +72,16 @@ fun QuizScreen(
 
     Log.d("QuizScreen", "Current question index: ${uiState.currentIndex}")
 
-
     /* ------------------------------------------------------------
-       🧩 UI Content
+       🧩 UI Rendering Logic
        ------------------------------------------------------------ */
     when {
         uiState.isLoading -> QuizLoadingScreen()
 
+        // 🚫 No questions available (especially for Custom)
+        uiState.questions.isEmpty() && !uiState.isLoading -> NoQuestionsScreen()
+
+        // ✅ Finished
         uiState.isFinished -> QuizResultScreen(
             isLandscape = isLandscape,
             uiState = uiState,
@@ -93,6 +94,7 @@ fun QuizScreen(
             onShare = { onShareResult?.invoke() }
         )
 
+        // ✅ Active question
         uiState.currentQuestion != null -> {
             val question = uiState.currentQuestion!!
             if (isLandscape) {
@@ -116,6 +118,7 @@ fun QuizScreen(
                     effectsViewModel.stopTimerSounds()
                     quizViewModel.pauseTimer()
                 }
+
                 Lifecycle.Event.ON_RESUME -> quizViewModel.resumeTimer()
                 Lifecycle.Event.ON_STOP -> effectsViewModel.stopTimerSounds()
                 else -> Unit
@@ -210,6 +213,24 @@ fun QuizLoadingScreen() {
 }
 
 /* ============================================================
+   🚫 No Questions State
+   ============================================================ */
+@Composable
+fun NoQuestionsScreen() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "No questions available in this category yet.",
+            style = MaterialTheme.typography.titleMedium.copy(
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+            )
+        )
+    }
+}
+
+/* ============================================================
    🧩 Preview
    ============================================================ */
 @Preview(showBackground = true, showSystemUi = true)
@@ -227,7 +248,7 @@ fun QuizScreenPreview() {
         wrongScore = 0,
         timeLeft = 8,
         maxTime = 10,
-        category = QuizCategory.BuiltIn(BuildInCategory.Verbs)
+        category = QuizCategory.Default(DefaultCategory.Verbs)
     )
     QuizScreenPortrait(uiState = fakeUiState, question = fakeQuestion, onEvent = {})
 }

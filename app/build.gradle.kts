@@ -75,8 +75,8 @@ dependencies {
     implementation(libs.google.hilt)
     implementation(libs.androidx.hilt.navigation)
 
-    kapt("com.google.dagger:hilt-android-compiler:2.57")
-    kapt("androidx.room:room-compiler:2.7.2")
+    kapt("com.google.dagger:hilt-android-compiler:2.57.2")
+    kapt("androidx.room:room-compiler:2.8.3")
 
     implementation("androidx.datastore:datastore-preferences:1.1.7")
 

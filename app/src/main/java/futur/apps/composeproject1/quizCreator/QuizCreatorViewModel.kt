@@ -18,7 +18,7 @@ class QuizCreatorViewModel @Inject constructor() : ViewModel() {
     private val _categories = MutableStateFlow<List<Category>>(emptyList())
     val categories: StateFlow<List<Category>> = _categories
 
-    // ------------------- BuildInCategory Functions -------------------
+    // ------------------- DefaultCategory Functions -------------------
     fun addCategory(name: String) {
         if (name.isBlank()) return
         val updated = _categories.value.toMutableList()

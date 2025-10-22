@@ -2,7 +2,7 @@ package futur.apps.composeproject1.quizsystem.data
 
 import futur.apps.composeproject1.RoomDatabase.QuizRepository
 import futur.apps.composeproject1.quizsystem.core.QuizConfig
-import futur.apps.composeproject1.utils.BuildInCategory
+import futur.apps.composeproject1.utils.DefaultCategory
 import futur.apps.composeproject1.utils.DataEntity
 import futur.apps.composeproject1.utils.Question
 import kotlinx.coroutines.flow.first
@@ -15,21 +15,21 @@ class BuiltInQuizDataSource @Inject constructor(
 ) : QuizDataSource {
 
     override suspend fun getCategories(): List<String> =
-        BuildInCategory.entries.map { it.name }
+        DefaultCategory.entries.map { it.name }
 
     override suspend fun getQuestions(categoryName: String): List<Question> {
-        val category = runCatching { BuildInCategory.valueOf(categoryName) }.getOrNull()
+        val category = runCatching { DefaultCategory.valueOf(categoryName) }.getOrNull()
             ?: return emptyList()
 
         // 🔹 Step 1: Load the right data list (List<DataEntity>)
         val data: List<DataEntity> = when (category) {
-            BuildInCategory.Verbs -> repository.getAllVerbs().first()
-            BuildInCategory.Sentences -> repository.getAllSentences().first()
-            BuildInCategory.PhrasalVerbs -> repository.getAllPhrasalVerbs().first()
-            BuildInCategory.Nouns -> repository.getAllNouns().first()
-            BuildInCategory.Adjectives -> repository.getAllAdjectives().first()
-            BuildInCategory.Adverbs -> repository.getAllAdverbs().first()
-            BuildInCategory.Idioms -> repository.getAllIdioms().first()
+            DefaultCategory.Verbs -> repository.getAllVerbs().first()
+            DefaultCategory.Sentences -> repository.getAllSentences().first()
+            DefaultCategory.PhrasalVerbs -> repository.getAllPhrasalVerbs().first()
+            DefaultCategory.Nouns -> repository.getAllNouns().first()
+            DefaultCategory.Adjectives -> repository.getAllAdjectives().first()
+            DefaultCategory.Adverbs -> repository.getAllAdverbs().first()
+            DefaultCategory.Idioms -> repository.getAllIdioms().first()
         }
 
         // 🔹 Step 2: Convert them into Question objects (like in QuizViewModel)

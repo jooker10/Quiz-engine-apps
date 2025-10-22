@@ -2,7 +2,7 @@ package futur.apps.composeproject1.viewmodels
 
 import futur.apps.composeproject1.quizsystem.core.QuizConfig
 import futur.apps.composeproject1.quizsystem.ui.components.ReviewAnswer
-import futur.apps.composeproject1.utils.BuildInCategory
+import futur.apps.composeproject1.utils.DefaultCategory
 import futur.apps.composeproject1.utils.Question
 import java.util.Locale
 
@@ -30,10 +30,11 @@ import java.util.Locale
 data class QuizUiState(
 
     // ---------------------------------------------------------
-    // 📘 BuildInCategory & General Data
+    // 📘 DefaultCategory & General Data
     // ---------------------------------------------------------
     val category: QuizCategory? = null,                       // Active quiz category
-    val pointsByCategory: Map<BuildInCategory, Int> = emptyMap(), // Points per category
+    val pointsByCategory: Map<Any, Int> = emptyMap(),
+
 
     // ---------------------------------------------------------
     // 📌 Core Quiz Progress

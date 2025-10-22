@@ -30,4 +30,11 @@ interface UserQuizDao {
 
     @Delete
     suspend fun deleteQuestion(question: UserQuestionEntity)
+
+    @Query("DELETE FROM user_categories")
+    suspend fun deleteAllCategories()
+
+    @Query("DELETE FROM user_questions")
+    suspend fun deleteAllQuestions()
+
 }

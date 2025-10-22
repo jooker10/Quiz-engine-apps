@@ -35,7 +35,7 @@ fun CategoryListScreen(
             horizontalArrangement = Arrangement.End
         ) {
             IconButton(onClick = { showAddCategoryDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Add BuildInCategory")
+                Icon(Icons.Default.Add, contentDescription = "Add DefaultCategory")
             }
         }
 
@@ -57,17 +57,17 @@ fun CategoryListScreen(
         }
     }
 
-    // ---------- Add BuildInCategory Dialog ----------
+    // ---------- Add DefaultCategory Dialog ----------
     if (showAddCategoryDialog) {
         AlertDialog(
             onDismissRequest = { showAddCategoryDialog = false },
-            title = { Text("Add BuildInCategory") },
+            title = { Text("Add DefaultCategory") },
             text = {
                 Column {
                     TextField(
                         value = newCategoryName,
                         onValueChange = { newCategoryName = it },
-                        placeholder = { Text("BuildInCategory Name") },
+                        placeholder = { Text("DefaultCategory Name") },
                         singleLine = true
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -118,7 +118,7 @@ fun CategoryItem(
             .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
             .padding(12.dp)
     ) {
-        // ---------- BuildInCategory Header ----------
+        // ---------- DefaultCategory Header ----------
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -143,7 +143,7 @@ fun CategoryItem(
                     Icon(Icons.Default.Add, contentDescription = "Add Question")
                 }
                 IconButton(onClick = { viewModel.deleteCategory(category) }) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete BuildInCategory")
+                    Icon(Icons.Default.Delete, contentDescription = "Delete DefaultCategory")
                 }
             }
         }

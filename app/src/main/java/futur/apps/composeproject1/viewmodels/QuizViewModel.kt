@@ -27,8 +27,8 @@ import kotlin.random.Random
 // 🔹 Unified Category Abstraction
 // ============================================================
 sealed class QuizCategory : java.io.Serializable {
-    data class BuiltIn(val category: BuildInCategory) : QuizCategory()
-    data class UserCreated(val name: String) : QuizCategory()
+    data class Default(val category: DefaultCategory) : QuizCategory()
+    data class Custom(val name: String) : QuizCategory()
 }
 
 // ============================================================
@@ -75,7 +75,7 @@ class QuizViewModel @Inject constructor(
     private val _effect = MutableSharedFlow<QuizUiEffect>()
     val effect: SharedFlow<QuizUiEffect> = _effect.asSharedFlow()
 
-    private val _mode = MutableStateFlow(QuizMode.BUILT_IN)
+    private val _mode = MutableStateFlow(QuizMode.DEFAULT)
     val mode: StateFlow<QuizMode> = _mode.asStateFlow()
 
     private var currentCategory: QuizCategory? = null
@@ -105,45 +105,71 @@ class QuizViewModel @Inject constructor(
 
     private fun collectSettings() {
         fun <T> collect(flow: Flow<T>, update: (SettingsUiState, T) -> SettingsUiState) {
-            viewModelScope.launch { flow.collect { v -> _settings.update { update(it, v) } } }
+            viewModelScope.launch {
+                flow.collect { v -> _settings.update { update(it, v) } }
+            }
         }
 
-        // Points and Stats (mode-aware)
+        // A tiny holder so we can destructure cleanly in collect
+        data class Snapshot(
+            val builtPoints: Map<DefaultCategory, Int>,
+            val userPoints: Map<String, Int>,
+            val builtStats: StatsUiState,
+            val userStats: StatsUiState,
+            val mode: QuizMode
+        )
+
+        // ------------------------------------------------------------
+        // 🧩 Collect Points, Stats, and Mode together (mode-aware)
+        // ------------------------------------------------------------
         viewModelScope.launch {
             combine(
                 preferences.builtInCategoryPoints,
                 preferences.userCategoryPoints,
                 preferences.builtInStats,
-                preferences.userStats
-            ) { builtPoints, userPoints, builtStats, userStats ->
-                Pair(builtPoints to userPoints, builtStats to userStats)
-            }.collect { (pointsPair, statsPair) ->
-                val (builtPoints, userPoints) = pointsPair
-                val (builtStats, userStats) = statsPair
+                preferences.userStats,
+                preferences.globalQuizMode
+            ) { builtPts, userPts, builtSt, userSt, mode ->
+                Snapshot(builtPts, userPts, builtSt, userSt, mode)
+            }.collect { (builtPoints, userPoints, builtStats, userStats, mode) ->
 
-                // update UI according to current mode
-                if (_mode.value == QuizMode.BUILT_IN) {
-                    _ui.update { it.copy(pointsByCategory = builtPoints) }
-                    _stats.value = builtStats.copy(isLoading = false)
-                } else {
-                    // Convert Map<String, Int> → Map<BuildInCategory, Int> if needed for UI
-                    val userPointsGeneric = userPoints.mapKeys { (k, _) -> BuildInCategory.Verbs.takeIf { false } }
-                    _ui.update { it.copy(pointsByCategory = emptyMap()) }
-                    _stats.value = userStats.copy(isLoading = false)
+                // keep the VM's mode in sync with global mode
+                _mode.value = mode
+
+                // ------------------------------------------------------------
+                // 🧩 Points: only load the active mode’s points
+                // ------------------------------------------------------------
+                val activePointsAny: Map<Any, Int> = when (mode) {
+                    QuizMode.DEFAULT -> builtPoints.entries.associate { (k, v) -> k as Any to v }
+                    QuizMode.CUSTOM  -> userPoints.entries.associate { (k, v) -> k as Any to v }
+                }
+                _ui.update { it.copy(pointsByCategory = activePointsAny) }
+
+                // ------------------------------------------------------------
+                // 📊 Stats: only load one source, never mix them
+                // ------------------------------------------------------------
+                _stats.value = when (mode) {
+                    QuizMode.DEFAULT -> builtStats.copy(isLoading = false)
+                    QuizMode.CUSTOM  -> userStats.copy(isLoading = false)
                 }
             }
         }
 
-        collect(preferences.isDarkThemeEnabled) { s, v -> s.copy(isDarkMode = v) }
-        collect(preferences.selectedLanguage) { s, v -> s.copy(language = v) }
-        collect(preferences.selectedPaletteName) { s, v -> s.copy(selectedPalette = v) }
-        collect(preferences.autoNext) { s, v -> s.copy(autoNext = v) }
-        collect(preferences.enableSounds) { s, v -> s.copy(soundEnabled = v) }
-        collect(preferences.enableTTS) { s, v -> s.copy(ttsEnabled = v) }
-        collect(preferences.maxQuestions) { s, v -> s.copy(maxQuestions = v) }
 
-        viewModelScope.launch { preferences.globalQuizMode.collectLatest { _mode.value = it } }
+        // ------------------------------------------------------------
+        // 🎨 Collect UI & Behavior Settings
+        // ------------------------------------------------------------
+        collect(preferences.isDarkThemeEnabled) { s, v -> s.copy(isDarkMode = v) }
+        collect(preferences.selectedLanguage)    { s, v -> s.copy(language = v) }
+        collect(preferences.selectedPaletteName) { s, v -> s.copy(selectedPalette = v) }
+        collect(preferences.autoNext)            { s, v -> s.copy(autoNext = v) }
+        collect(preferences.enableSounds)        { s, v -> s.copy(soundEnabled = v) }
+        collect(preferences.enableTTS)           { s, v -> s.copy(ttsEnabled = v) }
+        collect(preferences.maxQuestions)        { s, v -> s.copy(maxQuestions = v) }
+
+        // Note: we already combine globalQuizMode above, so no separate collector needed.
     }
+
 
     // ---------------------------------------------------------
     // 🚀 Public API
@@ -205,8 +231,8 @@ class QuizViewModel @Inject constructor(
             _ui.update { it.copy(isLoading = true, currentIndex = 0) }
             try {
                 val items: List<Any> = when (category) {
-                    is QuizCategory.BuiltIn -> getCategoryFlow(category.category).first()
-                    is QuizCategory.UserCreated -> getUserQuestions(category.name)
+                    is QuizCategory.Default -> getCategoryFlow(category.category).first()
+                    is QuizCategory.Custom -> getUserQuestions(category.name)
                 }
 
                 var qs = generateQuestions(items)
@@ -357,28 +383,54 @@ class QuizViewModel @Inject constructor(
     // ---------------------------------------------------------
     // 💾 Save Points & Stats — mode-aware
     // ---------------------------------------------------------
+    // ---------------------------------------------------------
+// 💾 Save Points & Stats — mode-aware (Fixed)
+// ---------------------------------------------------------
     private fun savePointsAndStats() {
         viewModelScope.launch {
             val s = _ui.value
             val cat = currentCategory
             val currentMode = _mode.value
 
+            // =========================
             // 🔹 Save Points
-            if (cat is QuizCategory.BuiltIn) {
-                val key = cat.category
-                val newPts = (s.pointsByCategory[key] ?: 0) + s.earnedPoints
-                preferences.saveBuiltInCategoryPoints(s.pointsByCategory + (key to newPts))
-                _ui.update { it.copy(pointsByCategory = it.pointsByCategory + (key to newPts)) }
-            } else if (cat is QuizCategory.UserCreated) {
-                val key = cat.name
-                val newMap = mapOf(key to s.earnedPoints)
-                preferences.saveUserCategoryPoints(newMap)
+            // =========================
+            when (cat) {
+                is QuizCategory.Default -> {
+                    val key = cat.category
+                    val currentMap = preferences.builtInCategoryPoints.first()
+                    val currentPts = currentMap[key] ?: 0
+                    val newPts = (currentPts + s.earnedPoints).coerceIn(0, key.maxPoints)
+                    val updatedMap = currentMap + (key to newPts)
+
+                    preferences.saveBuiltInCategoryPoints(updatedMap)
+                    _ui.update {
+                        it.copy(pointsByCategory = updatedMap.entries.associate { (k, v) -> k as Any to v })
+                    }
+                }
+
+                is QuizCategory.Custom -> {
+                    val key = cat.name
+                    val currentMap = preferences.userCategoryPoints.first()
+                    val currentPts = currentMap[key] ?: 0
+                    val newPts = (currentPts + s.earnedPoints).coerceAtLeast(0)
+                    val updatedMap = currentMap + (key to newPts)
+
+                    preferences.saveUserCategoryPoints(updatedMap)
+                    _ui.update {
+                        it.copy(pointsByCategory = updatedMap.entries.associate { (k, v) -> k as Any to v })
+                    }
+                }
+
+                else -> Unit
             }
 
+            // =========================
             // 🔹 Save Stats
+            // =========================
             val key = when (cat) {
-                is QuizCategory.BuiltIn -> cat.category.name
-                is QuizCategory.UserCreated -> cat.name
+                is QuizCategory.Default -> cat.category.name
+                is QuizCategory.Custom -> cat.name
                 else -> "Unknown"
             }
 
@@ -395,12 +447,13 @@ class QuizViewModel @Inject constructor(
             )
 
             _stats.value = ns
-            if (currentMode == QuizMode.BUILT_IN)
-                preferences.saveBuiltInStats(ns)
-            else
-                preferences.saveUserStats(ns)
+            when (currentMode) {
+                QuizMode.DEFAULT -> preferences.saveBuiltInStats(ns)
+                QuizMode.CUSTOM -> preferences.saveUserStats(ns)
+            }
         }
     }
+
 
     // ---------------------------------------------------------
     // 🕒 Timer Controls & Helpers
@@ -411,14 +464,14 @@ class QuizViewModel @Inject constructor(
     fun resumeTimer() = timer.resume()
     private fun emitEffect(e: QuizUiEffect) { viewModelScope.launch { _effect.emit(e) } }
 
-    private suspend fun getCategoryFlow(cat: BuildInCategory) = when (cat) {
-        BuildInCategory.Verbs -> repository.getAllVerbs()
-        BuildInCategory.Sentences -> repository.getAllSentences()
-        BuildInCategory.PhrasalVerbs -> repository.getAllPhrasalVerbs()
-        BuildInCategory.Nouns -> repository.getAllNouns()
-        BuildInCategory.Adjectives -> repository.getAllAdjectives()
-        BuildInCategory.Adverbs -> repository.getAllAdverbs()
-        BuildInCategory.Idioms -> repository.getAllIdioms()
+    private suspend fun getCategoryFlow(cat: DefaultCategory) = when (cat) {
+        DefaultCategory.Verbs -> repository.getAllVerbs()
+        DefaultCategory.Sentences -> repository.getAllSentences()
+        DefaultCategory.PhrasalVerbs -> repository.getAllPhrasalVerbs()
+        DefaultCategory.Nouns -> repository.getAllNouns()
+        DefaultCategory.Adjectives -> repository.getAllAdjectives()
+        DefaultCategory.Adverbs -> repository.getAllAdverbs()
+        DefaultCategory.Idioms -> repository.getAllIdioms()
     }
 
     private fun <T : Any> generateQuestions(items: List<T>): List<Question> = when (items.firstOrNull()) {
@@ -450,4 +503,25 @@ class QuizViewModel @Inject constructor(
             ads.initializeAds(it)
         }
     }
+
+    // --- Add inside QuizViewModel ---
+    fun resetBuiltInStats() {
+        viewModelScope.launch {
+            val empty = StatsUiState(isLoading = false)
+            _stats.value = empty
+            preferences.saveBuiltInStats(empty)
+        }
+    }
+
+    fun resetUserStats() {
+        viewModelScope.launch {
+            val empty = StatsUiState(isLoading = false)
+            _stats.value = empty
+            preferences.saveUserStats(empty)
+        }
+    }
+
+    fun resetStatsFor(mode: QuizMode) { if (mode == QuizMode.DEFAULT) resetBuiltInStats() else resetUserStats() }
+
+
 }

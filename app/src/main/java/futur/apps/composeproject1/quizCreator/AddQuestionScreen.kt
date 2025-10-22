@@ -54,7 +54,7 @@ fun AddQuestionScreen(
             maxLines = 3
         )
 
-        // BuildInCategory Selector
+        // DefaultCategory Selector
         ExposedDropdownMenuBox(
             expanded = expandedCategory,
             onExpandedChange = { expandedCategory = !expandedCategory }
@@ -62,7 +62,7 @@ fun AddQuestionScreen(
             OutlinedTextField(
                 value = category,
                 onValueChange = {},
-                label = { Text("Select BuildInCategory") },
+                label = { Text("Select DefaultCategory") },
                 modifier = Modifier
                     .menuAnchor()
                     .fillMaxWidth(),
