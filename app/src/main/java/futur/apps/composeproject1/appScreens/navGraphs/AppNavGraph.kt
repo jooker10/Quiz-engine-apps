@@ -81,7 +81,7 @@ fun NavGraphBuilder.addMainGraph(
     userQuizViewModel: UserQuizViewModel
 ) {
     composable(Screen.Home.route) {
-        HomeScreen(navController = navController)
+        QuizHomeScreen(nav = navController)
     }
 
     composable(Screen.Stats.route) {

@@ -3,7 +3,6 @@ package futur.apps.composeproject1.appScreens._Screens
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,7 +10,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.outlined.Assessment
+import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.FactCheck
+import androidx.compose.material.icons.outlined.QueryStats
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
@@ -20,16 +27,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import futur.apps.composeproject1.quizsystem.ui.theme.progressResultColor
 import futur.apps.composeproject1.utils.QuizMode
@@ -50,22 +53,19 @@ import kotlin.math.roundToInt
    ============================================================ */
 enum class ChartMetric { ACCURACY, CORRECT, WRONG }
 enum class ChartSort { ALPHA, VALUE_DESC }
-
 /* ============================================================
-   📊 Stats Screen
+   📊 Stats Screen (Refined Design)
    ============================================================ */
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun StatsScreen(
     quizViewModel: QuizViewModel = hiltViewModel(),
-    onGoHome: (() -> Unit)? = null,
-    onGoToQuiz: (() -> Unit)? = null
+    onGoHome: (() -> Unit)? = null
 ) {
     val stats by quizViewModel.stats.collectAsState()
     val currentMode by quizViewModel.mode.collectAsState()
     var selectedSource by remember { mutableIntStateOf(if (currentMode == QuizMode.DEFAULT) 0 else 1) }
 
-    // Sync global mode
     LaunchedEffect(selectedSource) {
         quizViewModel.saveGlobalQuizMode(if (selectedSource == 0) QuizMode.DEFAULT else QuizMode.CUSTOM)
     }
@@ -89,10 +89,10 @@ fun StatsScreen(
             icon = {
                 Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
             },
-            title = { Text("Confirm reset") },
+            title = { Text("Confirm Reset") },
             text = {
                 Text(
-                    "Reset ${if (selectedSource == 0) "built-in" else "user"} stats? This cannot be undone.",
+                    "Reset ${if (selectedSource == 0) "App Quizzes" else "My Quizzes"} stats? This cannot be undone.",
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
@@ -102,7 +102,7 @@ fun StatsScreen(
                     quizViewModel.resetStatsFor(
                         if (selectedSource == 0) QuizMode.DEFAULT else QuizMode.CUSTOM
                     )
-                }) { Text("Reset", color = MaterialTheme.colorScheme.error) }
+                }) { Text("Clear Stats", color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
                 TextButton(onClick = { showConfirm = false }) { Text("Cancel") }
@@ -113,13 +113,13 @@ fun StatsScreen(
     Scaffold(
         topBar = {
             Surface(
-                tonalElevation = 4.dp,
-                color = MaterialTheme.colorScheme.surfaceContainerHigh
+               // tonalElevation = 4.dp,
+                color = MaterialTheme.colorScheme.background
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     StatsSourceSelector(
@@ -132,8 +132,7 @@ fun StatsScreen(
         bottomBar = {
             ActionsSection(
                 onReset = { showConfirm = true },
-                onGoHome = onGoHome,
-                onGoToQuiz = onGoToQuiz
+                onGoHome = onGoHome
             )
         }
     ) { innerPadding ->
@@ -141,7 +140,7 @@ fun StatsScreen(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -205,9 +204,8 @@ fun StatsScreen(
     }
 }
 
-
 /* ============================================================
-   🌈 Theme-adaptive chips (sticky at top)
+   🌈 Chips renamed and clearer
    ============================================================ */
 @Composable
 fun StatsSourceSelector(
@@ -221,14 +219,14 @@ fun StatsSourceSelector(
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         StatModeChip(
-            text = "Built-in",
+            text = "App Quizzes",
             selected = selectedSource == 0,
             activeColor = MaterialTheme.colorScheme.primary,
             onClick = { onSourceSelected(0) },
             modifier = Modifier.weight(1f)
         )
         StatModeChip(
-            text = "User",
+            text = "My Quizzes",
             selected = selectedSource == 1,
             activeColor = MaterialTheme.colorScheme.tertiary,
             onClick = { onSourceSelected(1) },
@@ -237,125 +235,41 @@ fun StatsSourceSelector(
     }
 }
 
-@Composable
-fun StatModeChip(
-    text: String,
-    selected: Boolean,
-    activeColor: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val scale by animateFloatAsState(if (selected) 1.05f else 1f)
-    val glowAlpha by animateFloatAsState(if (selected) 0.25f else 0f)
-    val containerColor = if (selected) activeColor else MaterialTheme.colorScheme.surfaceVariant
-    val textColor = if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(50))
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
-            .background(containerColor)
-            .clickable { onClick() }
-            .drawBehind {
-                if (glowAlpha > 0f) {
-                    drawCircle(
-                        color = activeColor.copy(alpha = glowAlpha),
-                        radius = size.height * 0.7f
-                    )
-                }
-            },
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            color = textColor,
-            fontWeight = FontWeight.Medium,
-            letterSpacing = 0.5.sp
-        )
-    }
-}
-
 /* ============================================================
-   🧭 Sticky bottom actions
+   🧭 Bottom buttons — simplified
    ============================================================ */
 @Composable
 private fun ActionsSection(
     onReset: () -> Unit,
-    onGoHome: (() -> Unit)?,
-    onGoToQuiz: (() -> Unit)?
+    onGoHome: (() -> Unit)?
 ) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surfaceContainerHighest,
-        tonalElevation = 6.dp,
-        shadowElevation = 8.dp
-    ) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            ElevatedButton(
-                onClick = onReset,
-                shape = CircleShape,
-                colors = ButtonDefaults.elevatedButtonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
-            ) { Text("Reset", color = Color.White) }
-
-            ElevatedButton(
-                onClick = { onGoHome?.invoke() },
-                shape = CircleShape,
-                colors = ButtonDefaults.elevatedButtonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary
-                )
-            ) { Text("Home", color = Color.White) }
-
-            ElevatedButton(
-                onClick = { onGoToQuiz?.invoke() },
-                shape = CircleShape,
-                colors = ButtonDefaults.elevatedButtonColors(
-                    containerColor = MaterialTheme.colorScheme.tertiary
-                )
-            ) { Text("Quiz", color = Color.White) }
-        }
-    }
-}
-
-/* ============================================================
-   📴 Empty State
-   ============================================================ */
-@Composable
-fun EmptyStatsMessage(source: Int) {
-    val text = if (source == 0)
-        "No built-in quiz data yet.\nPlay quizzes to see your statistics!"
-    else
-        "No user-created quiz data yet.\nAdd questions and start your custom quizzes!"
-
-    Box(
-        modifier = Modifier
+    Row(
+        Modifier
             .fillMaxWidth()
-            .padding(32.dp),
-        contentAlignment = Alignment.Center
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = text,
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.titleMedium.copy(
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+        ElevatedButton(
+            onClick = onReset,
+            shape = CircleShape,
+            colors = ButtonDefaults.elevatedButtonColors(
+                containerColor = MaterialTheme.colorScheme.error
             )
-        )
+        ) { Text("Clear Stats", color = Color.White) }
+
+        ElevatedButton(
+            onClick = { onGoHome?.invoke() },
+            shape = CircleShape,
+            colors = ButtonDefaults.elevatedButtonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
+        ) { Text("Home", color = Color.White) }
     }
 }
 
 /* ============================================================
-   🧮 General stats grid
+   🧮 Updated Stat Cards Titles
    ============================================================ */
 @Composable
 private fun GeneralStatsGrid(stats: StatsUiState, accuracy: Int) {
@@ -366,16 +280,11 @@ private fun GeneralStatsGrid(stats: StatsUiState, accuracy: Int) {
                 .height(70.dp),
             horizontalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            StatCard(
-                "Total Quizzes", stats.totalQuizzes.toString(),
-                getGradientColor(
-                    MaterialTheme.colorScheme.primary,
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-                ),
+            StatCard("Total Quizzes", stats.totalQuizzes.toString(),
+                getGradientColor(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)),
                 Modifier.weight(1f)
             )
-            StatCard(
-                "Correct", stats.totalCorrectAnswers.toString(),
+            StatCard("Correct Answers", stats.totalCorrectAnswers.toString(),
                 getGradientColor(Color(0xFF4CAF50), Color(0xFF66BB6A)),
                 Modifier.weight(1f)
             )
@@ -387,13 +296,11 @@ private fun GeneralStatsGrid(stats: StatsUiState, accuracy: Int) {
                 .height(70.dp),
             horizontalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            StatCard(
-                "Wrong", stats.totalWrongAnswers.toString(),
+            StatCard("Wrong Answers", stats.totalWrongAnswers.toString(),
                 getGradientColor(Color(0xFFD32F2F), Color(0xFFE57373)),
                 Modifier.weight(1f)
             )
-            StatCard(
-                "Accuracy", "$accuracy%",
+            StatCard("Accuracy Rate", "$accuracy%",
                 getGradientColor(Color(0xFF1976D2), Color(0xFF64B5F6)),
                 Modifier.weight(1f)
             )
@@ -401,8 +308,96 @@ private fun GeneralStatsGrid(stats: StatsUiState, accuracy: Int) {
     }
 }
 
+
+/* ============================================================
+   🌈 Theme-adaptive chips
+   ============================================================ */
+
+
 @Composable
-private fun StatCard(title: String, value: String, gradient: Brush, modifier: Modifier = Modifier) {
+fun StatModeChip(
+    text: String,
+    selected: Boolean,
+    activeColor: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val scale by animateFloatAsState(if (selected) 1.04f else 1f)
+    val glowAlpha by animateFloatAsState(if (selected) 0.22f else 0f)
+    val containerColor =
+        if (selected) activeColor else MaterialTheme.colorScheme.surfaceVariant
+    val textColor =
+        if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(100))
+            .graphicsLayer { scaleX = scale; scaleY = scale }
+            .background(containerColor)
+            .clickable { onClick() }
+            .drawBehind {
+                if (glowAlpha > 0f) {
+                    drawCircle(
+                        color = activeColor.copy(alpha = glowAlpha),
+                        radius = size.height * 0.6f
+                    )
+                }
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = textColor,
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+        )
+    }
+}
+
+
+/* ============================================================
+   📴 Empty State
+   ============================================================ */
+@Composable
+fun EmptyStatsMessage(source: Int) {
+    val text = if (source == 0)
+        "No built-in quiz data yet.\nPlay quizzes to see your statistics!"
+    else
+        "No user-created quiz data yet.\nAdd questions and start your custom quizzes!"
+
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = text,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            )
+        }
+    }
+}
+
+/* ============================================================
+   🧮 Stat cards (icon + gradient)
+   ============================================================ */
+
+
+@Composable
+private fun StatCard(
+    title: String,
+    value: String,
+    gradient: Brush,
+    modifier: Modifier = Modifier
+) {
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(20.dp),
@@ -424,7 +419,8 @@ private fun StatCard(title: String, value: String, gradient: Brush, modifier: Mo
                     style = MaterialTheme.typography.labelSmall.copy(
                         color = Color.White.copy(alpha = 0.9f),
                         letterSpacing = 1.sp
-                    )
+                    ),
+                    textAlign = TextAlign.Center
                 )
                 Text(
                     value,
@@ -432,15 +428,17 @@ private fun StatCard(title: String, value: String, gradient: Brush, modifier: Mo
                         color = Color.White,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
-                    )
+                    ),
+                    textAlign = TextAlign.Center
                 )
             }
         }
     }
 }
 
+
 /* ============================================================
-   📋 Category details list
+   📋 Category list
    ============================================================ */
 @Composable
 private fun CategoryStatsList(
@@ -450,8 +448,7 @@ private fun CategoryStatsList(
 ) {
     if (stats.quizzesPerCategory.isEmpty()) {
         Text(
-            text = if (currentMode == QuizMode.DEFAULT)
-                "No built-in category data yet."
+            text = if (currentMode == QuizMode.DEFAULT) "No built-in category data yet."
             else "No user-created category data yet.",
             textAlign = TextAlign.Center,
             modifier = modifier
@@ -464,7 +461,7 @@ private fun CategoryStatsList(
 
     Column(
         verticalArrangement = Arrangement.spacedBy(10.dp),
-        modifier = modifier.padding(horizontal = 8.dp)
+        modifier = modifier.padding(horizontal = 4.dp)
     ) {
         stats.quizzesPerCategory.keys.forEach { category ->
             val correct = stats.correctPerCategory[category] ?: 0
@@ -491,7 +488,7 @@ private fun CategoryStatCard(category: String, quizzes: Int, correct: Int, wrong
                     Brush.horizontalGradient(
                         listOf(
                             MaterialTheme.colorScheme.surface,
-                            MaterialTheme.colorScheme.surface.copy(alpha = 0.1f)
+                            MaterialTheme.colorScheme.surface.copy(alpha = 0.07f)
                         )
                     )
                 )
@@ -500,10 +497,7 @@ private fun CategoryStatCard(category: String, quizzes: Int, correct: Int, wrong
             Text(category, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.titleSmall)
             Spacer(Modifier.height(8.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Q: $quizzes")
-                Text("C: $correct")
-                Text("W: $wrong")
-                Text("Acc: $accuracy%")
+                Text("Q: $quizzes"); Text("C: $correct"); Text("W: $wrong"); Text("Acc: $accuracy%")
             }
             Spacer(Modifier.height(10.dp))
             LinearProgressIndicator(
@@ -513,7 +507,7 @@ private fun CategoryStatCard(category: String, quizzes: Int, correct: Int, wrong
                     .height(8.dp)
                     .clip(RoundedCornerShape(50)),
                 color = progressResultColor(accuracy.toFloat()),
-                trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
             )
         }
     }
@@ -543,7 +537,7 @@ fun StatsTabs(selectedTab: Int, onTabSelected: (Int) -> Unit) {
 }
 
 /* ============================================================
-   🎛 Chart controls (metric + sort)
+   🎛 Segmented controls
    ============================================================ */
 @Composable
 private fun ChartControls(
@@ -557,7 +551,6 @@ private fun ChartControls(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Metric chips
         SmallChoiceChip(
             label = "Accuracy",
             selected = metric == ChartMetric.ACCURACY,
@@ -579,7 +572,6 @@ private fun ChartControls(
 
         Spacer(Modifier.weight(1f))
 
-        // Sort chips
         SmallChoiceChip(
             label = "A–Z",
             selected = sort == ChartSort.ALPHA,
@@ -617,7 +609,7 @@ private fun SmallChoiceChip(
 }
 
 /* ============================================================
-   📈 Pro Bar Chart (theme, metric, sort)
+   📈 Pro Bar Chart
    ============================================================ */
 @Composable
 fun StatsBarChart(
@@ -633,25 +625,20 @@ fun StatsBarChart(
                 .height(220.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                "No data yet — play quizzes to see results!",
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Text("No data yet — play quizzes to see results!", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         return
     }
 
-    // --------------------------------------------------
-    // 🔹 Prepare data
-    // --------------------------------------------------
+    // Build data
     val items = stats.quizzesPerCategory.map { (category, _) ->
         val correct = stats.correctPerCategory[category] ?: 0
         val wrong = stats.wrongPerCategory[category] ?: 0
         val total = max(1, correct + wrong)
         val value = when (metric) {
             ChartMetric.ACCURACY -> (correct.toFloat() / total) * 100f
-            ChartMetric.CORRECT -> correct.toFloat()
-            ChartMetric.WRONG -> wrong.toFloat()
+            ChartMetric.CORRECT  -> correct.toFloat()
+            ChartMetric.WRONG    -> wrong.toFloat()
         }
         Triple(category, value, correct to wrong)
     }
@@ -661,62 +648,46 @@ fun StatsBarChart(
         ChartSort.VALUE_DESC -> items.sortedByDescending { it.second }
     }
 
-    // --------------------------------------------------
-    // 🔹 Colors
-    // --------------------------------------------------
-    var color = when (metric) {
+    val color = when (metric) {
         ChartMetric.ACCURACY -> MaterialTheme.colorScheme.primary
-        ChartMetric.CORRECT -> Color(0xFF4CAF50)
-        ChartMetric.WRONG -> Color(0xFFD32F2F)
+        ChartMetric.CORRECT  -> Color(0xFF4CAF50)
+        ChartMetric.WRONG    -> Color(0xFFD32F2F)
     }
 
-    // --------------------------------------------------
-    // 🔹 Bars + maxY
-    // --------------------------------------------------
-    val bars = sorted.map { (label, value, pair) ->
-        val labelText = label // keep category name clean below bar
+    val bars = sorted.map { (label, value, _) ->
         BarChartData.Bar(
-            label = labelText,
+            label = label,
             value = value,
-            color = if (metric == ChartMetric.ACCURACY)
-                progressResultColor(value)
-            else
-                color
+            color = if (metric == ChartMetric.ACCURACY) progressResultColor(value) else color
         )
     }
 
     val maxY = when (metric) {
         ChartMetric.ACCURACY -> 100f
-        ChartMetric.CORRECT -> (stats.correctPerCategory.values.maxOrNull() ?: 1).toFloat()
-        ChartMetric.WRONG -> (stats.wrongPerCategory.values.maxOrNull() ?: 1).toFloat()
+        ChartMetric.CORRECT  -> (stats.correctPerCategory.values.maxOrNull() ?: 1).toFloat()
+        ChartMetric.WRONG    -> (stats.wrongPerCategory.values.maxOrNull() ?: 1).toFloat()
     }
 
     val chartData = BarChartData(
         bars = bars,
-        maxBarValue = maxY  // add headroom for label on top
+        maxBarValue = maxY
     )
 
-    // --------------------------------------------------
-    // 🔹 UI
-    // --------------------------------------------------
     Column(modifier = modifier) {
         // Header
         Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(bottom = 4.dp),
+            Modifier.fillMaxWidth().padding(bottom = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
                 when (metric) {
                     ChartMetric.ACCURACY -> "Accuracy by category"
-                    ChartMetric.CORRECT -> "Correct answers by category"
-                    ChartMetric.WRONG -> "Wrong answers by category"
+                    ChartMetric.CORRECT  -> "Correct answers by category"
+                    ChartMetric.WRONG    -> "Wrong answers by category"
                 },
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-
             Text(
                 if (metric == ChartMetric.ACCURACY) "0–100%" else "Count",
                 style = MaterialTheme.typography.labelMedium,
@@ -724,28 +695,29 @@ fun StatsBarChart(
             )
         }
 
-        // --------------------------------------------------
-        // 🔹 Chart with overlay numbers
-        // --------------------------------------------------
+        // Chart
         Box(
             Modifier
                 .fillMaxWidth()
                 .heightIn(min = 240.dp, max = 480.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
+                .padding(12.dp)
         ) {
-            // Base chart
             BarChart(
                 barChartData = chartData,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .zIndex(0f),
+                modifier = Modifier.fillMaxSize(),
                 animation = simpleChartAnimation(),
                 barDrawer = SimpleBarDrawer(),
-                xAxisDrawer = SimpleXAxisDrawer(axisLineThickness = 2.dp),
+                xAxisDrawer = SimpleXAxisDrawer(
+                    axisLineColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    axisLineThickness = 2.dp),
                 yAxisDrawer = SimpleYAxisDrawer(
                     labelTextSize = 12.sp,
+                    labelTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    axisLineColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    axisLineThickness = 2.dp,
                     labelValueFormatter = { v ->
-                        if (metric == ChartMetric.ACCURACY) "${v.toInt()}%"
-                        else v.toInt().toString()
+                        if (metric == ChartMetric.ACCURACY) "${v.toInt()}%" else v.toInt().toString()
                     }
                 ),
                 labelDrawer = SimpleLabelDrawer(
@@ -753,26 +725,12 @@ fun StatsBarChart(
                     labelTextColor = MaterialTheme.colorScheme.onSurface
                 )
             )
-
-
         }
     }
 }
-
-
-
-
-
 
 /* ============================================================
    🎨 Helpers
    ============================================================ */
 fun getGradientColor(startColor: Color, endColor: Color): Brush =
     Brush.horizontalGradient(listOf(startColor, endColor))
-
-/*@Composable
-fun LoadingScreen() {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator()
-    }
-}*/
