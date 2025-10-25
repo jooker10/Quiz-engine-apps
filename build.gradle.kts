@@ -5,4 +5,5 @@ plugins {
     alias(libs.plugins.kotlin.compose) apply false
     id("org.jetbrains.kotlin.kapt") version "2.2.10" apply false
     id("com.google.dagger.hilt.android") version "2.57" apply false
+    alias(libs.plugins.google.gms.google.services) apply false
 }

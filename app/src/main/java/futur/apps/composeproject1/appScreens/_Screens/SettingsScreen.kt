@@ -38,7 +38,7 @@ fun SettingsScreen(
     val questionOptions = listOf(10, 15, 20)
 
     if(uiState.isLoading){
-        LoadingScreen()
+        ThemeLoadingScreen()
         return
     }
 

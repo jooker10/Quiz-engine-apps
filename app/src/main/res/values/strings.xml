@@ -3,6 +3,11 @@
     <!-- ✅ App General Labels -->
     <!-- ===================== -->
     <string name="app_name" translatable="true">Quiz System</string>
+
+    <string name="default_web_client_id">
+    386230020083-00k145u11omv4o365dgmdvcc6ift1kg1.apps.googleusercontent.com
+</string>
+
     <string name="action_confirm" translatable="true">Confirm</string>
     <string name="action_finish" translatable="true">Finish</string>
     <string name="action_next" translatable="true">Next</string>

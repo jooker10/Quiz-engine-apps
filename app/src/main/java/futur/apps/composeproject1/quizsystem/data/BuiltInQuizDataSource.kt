@@ -1,7 +1,7 @@
 package futur.apps.composeproject1.quizsystem.data
 
 import futur.apps.composeproject1.RoomDatabase.QuizRepository
-import futur.apps.composeproject1.quizsystem.core.QuizConfig
+import futur.apps.composeproject1.quizsystem.core.AppConfig
 import futur.apps.composeproject1.utils.DefaultCategory
 import futur.apps.composeproject1.utils.DataEntity
 import futur.apps.composeproject1.utils.Question
@@ -33,11 +33,11 @@ class BuiltInQuizDataSource @Inject constructor(
         }
 
         // 🔹 Step 2: Convert them into Question objects (like in QuizViewModel)
-        return data.shuffled().take(QuizConfig.MAX_QUESTIONS_PER_QUIZ).map { entity ->
+        return data.shuffled().take(AppConfig.MAX_QUESTIONS_PER_QUIZ).map { entity ->
             // Build random options using English translations from other items
             val incorrectOptions = data.filter { it.en != entity.en }
                 .shuffled()
-                .take(QuizConfig.CHOICE_COUNT - 1)
+                .take(AppConfig.CHOICE_COUNT - 1)
                 .map { it.en }
 
             val options = (incorrectOptions + entity.en).shuffled()

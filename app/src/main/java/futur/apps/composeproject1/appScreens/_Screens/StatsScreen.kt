@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import futur.apps.composeproject1.quizsystem.ui.components.QuizModeSelectorRow
 import futur.apps.composeproject1.quizsystem.ui.theme.progressResultColor
 import futur.apps.composeproject1.utils.QuizMode
 import futur.apps.composeproject1.viewmodels.QuizViewModel
@@ -122,7 +123,7 @@ fun StatsScreen(
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    StatsSourceSelector(
+                    QuizModeSelectorRow(
                         selectedSource = selectedSource,
                         onSourceSelected = { selectedSource = it }
                     )
@@ -204,36 +205,7 @@ fun StatsScreen(
     }
 }
 
-/* ============================================================
-   🌈 Chips renamed and clearer
-   ============================================================ */
-@Composable
-fun StatsSourceSelector(
-    selectedSource: Int,
-    onSourceSelected: (Int) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(50.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        StatModeChip(
-            text = "App Quizzes",
-            selected = selectedSource == 0,
-            activeColor = MaterialTheme.colorScheme.primary,
-            onClick = { onSourceSelected(0) },
-            modifier = Modifier.weight(1f)
-        )
-        StatModeChip(
-            text = "My Quizzes",
-            selected = selectedSource == 1,
-            activeColor = MaterialTheme.colorScheme.tertiary,
-            onClick = { onSourceSelected(1) },
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
+
 
 /* ============================================================
    🧭 Bottom buttons — simplified
@@ -314,45 +286,6 @@ private fun GeneralStatsGrid(stats: StatsUiState, accuracy: Int) {
    ============================================================ */
 
 
-@Composable
-fun StatModeChip(
-    text: String,
-    selected: Boolean,
-    activeColor: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val scale by animateFloatAsState(if (selected) 1.04f else 1f)
-    val glowAlpha by animateFloatAsState(if (selected) 0.22f else 0f)
-    val containerColor =
-        if (selected) activeColor else MaterialTheme.colorScheme.surfaceVariant
-    val textColor =
-        if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(100))
-            .graphicsLayer { scaleX = scale; scaleY = scale }
-            .background(containerColor)
-            .clickable { onClick() }
-            .drawBehind {
-                if (glowAlpha > 0f) {
-                    drawCircle(
-                        color = activeColor.copy(alpha = glowAlpha),
-                        radius = size.height * 0.6f
-                    )
-                }
-            },
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            color = textColor,
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
-        )
-    }
-}
 
 
 /* ============================================================

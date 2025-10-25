@@ -1,8 +1,7 @@
 package futur.apps.composeproject1.viewmodels
 
-import futur.apps.composeproject1.quizsystem.core.QuizConfig
+import futur.apps.composeproject1.quizsystem.core.AppConfig
 import futur.apps.composeproject1.quizsystem.ui.components.ReviewAnswer
-import futur.apps.composeproject1.utils.DefaultCategory
 import futur.apps.composeproject1.utils.Question
 import java.util.Locale
 
@@ -15,13 +14,13 @@ import java.util.Locale
  *
  * - Acts as the SINGLE SOURCE OF TRUTH for the UI.
  * - Contains quiz progress, scoring, timer, UI options, sounds, etc.
- * - Initialized with defaults from [futur.apps.composeproject1.quizsystem.core.QuizConfig].
+ * - Initialized with defaults from [futur.apps.composeproject1.quizsystem.core.AppConfig].
  * - Updated only by [QuizViewModel].
  * - Pure data holder (no business logic here).
  *
  * 🔹 Buyers Notes:
  * - All quiz behavior (timer, scoring, sounds, shuffle, etc.)
- *   can be enabled/disabled here or via [futur.apps.composeproject1.quizsystem.core.QuizConfig].
+ *   can be enabled/disabled here or via [futur.apps.composeproject1.quizsystem.core.AppConfig].
  * - Use this file to **customize default UI state** on app start.
  * ============================================================
  */
@@ -54,45 +53,45 @@ data class QuizUiState(
     // ---------------------------------------------------------
     val earnedPoints: Int = 0,                             // Points earned so far
     val completionPercent: Int = 0,                        // % progress (0–100)
-    val enableNegativeScoring: Boolean = QuizConfig.ENABLE_NEGATIVE_SCORING,
+    val enableNegativeScoring: Boolean = AppConfig.ENABLE_NEGATIVE_SCORING,
 
     // ---------------------------------------------------------
     // ⏱️ Timer
     // ---------------------------------------------------------
-    val timeLeft: Int = QuizConfig.QUESTION_TIME_LIMIT,     // Current countdown value
-    val maxTime: Int = QuizConfig.QUESTION_TIME_LIMIT,      // Initial countdown value
-    val showTimer: Boolean = QuizConfig.SHOW_TIMER,         // Show/hide timer
-    val timerTickInterval: Long = QuizConfig.TIMER_TICK_INTERVAL,
-    val autoNextDelay: Long = QuizConfig.AUTO_NEXT_DELAY,             // Delay before auto-move
-    val timerCriticalThreshold: Int = QuizConfig.TIMER_CRITICAL_THRESHOLD, // Red alert threshold
+    val timeLeft: Int = AppConfig.QUESTION_TIME_LIMIT,     // Current countdown value
+    val maxTime: Int = AppConfig.QUESTION_TIME_LIMIT,      // Initial countdown value
+    val showTimer: Boolean = AppConfig.SHOW_TIMER,         // Show/hide timer
+    val timerTickInterval: Long = AppConfig.TIMER_TICK_INTERVAL,
+    val autoNextDelay: Long = AppConfig.AUTO_NEXT_DELAY,             // Delay before auto-move
+    val timerCriticalThreshold: Int = AppConfig.TIMER_CRITICAL_THRESHOLD, // Red alert threshold
 
     // ---------------------------------------------------------
     // 🎨 UI Options
     // ---------------------------------------------------------
-    val showProgressBar: Boolean = QuizConfig.SHOW_PROGRESS_BAR,
-    val showQuestionIndex: Boolean = QuizConfig.SHOW_QUESTION_INDEX,
-    val enableReviewScreen: Boolean = QuizConfig.ENABLE_REVIEW_SCREEN,
+    val showProgressBar: Boolean = AppConfig.SHOW_PROGRESS_BAR,
+    val showQuestionIndex: Boolean = AppConfig.SHOW_QUESTION_INDEX,
+    val enableReviewScreen: Boolean = AppConfig.ENABLE_REVIEW_SCREEN,
 
     // ---------------------------------------------------------
     // 🔊 Sounds & Effects
     // ---------------------------------------------------------
-    val soundCorrect: Int = QuizConfig.SOUND_CORRECT,
-    val soundWrong: Int = QuizConfig.SOUND_WRONG,
-    val soundTimerTick: Int = QuizConfig.SOUND_TIMER_TICK,
-    val soundTimerUrgent: Int = QuizConfig.SOUND_TIMER_URGENT,
-    val enableTTSOnTimeOut: Boolean = QuizConfig.ENABLE_TTS_ON_TIMEOUT,
+    val soundCorrect: Int = AppConfig.SOUND_CORRECT,
+    val soundWrong: Int = AppConfig.SOUND_WRONG,
+    val soundTimerTick: Int = AppConfig.SOUND_TIMER_TICK,
+    val soundTimerUrgent: Int = AppConfig.SOUND_TIMER_URGENT,
+    val enableTTSOnTimeOut: Boolean = AppConfig.ENABLE_TTS_ON_TIMEOUT,
 
     // ---------------------------------------------------------
     // ❓ Question Behavior
     // ---------------------------------------------------------
-    val shuffleQuestions: Boolean = QuizConfig.SHUFFLE_QUESTIONS,
-    val shuffleOptions: Boolean = QuizConfig.SHUFFLE_OPTIONS,
+    val shuffleQuestions: Boolean = AppConfig.SHUFFLE_QUESTIONS,
+    val shuffleOptions: Boolean = AppConfig.SHUFFLE_OPTIONS,
 
     // ---------------------------------------------------------
     // 📊 Result Screen Config
     // ---------------------------------------------------------
-    val resultStatsConfig: List<QuizConfig.StatItemConfig> = QuizConfig.resultStatsConfig,
-    val resultActionsConfig: List<QuizConfig.ActionItemConfig> = QuizConfig.resultActionsConfig,
+    val resultStatsConfig: List<AppConfig.StatItemConfig> = AppConfig.resultStatsConfig,
+    val resultActionsConfig: List<AppConfig.ActionItemConfig> = AppConfig.resultActionsConfig,
 
     // ---------------------------------------------------------
     // ⏳ Loading & Error
@@ -112,9 +111,9 @@ data class QuizUiState(
     // 🌍 TTS Language
     // ---------------------------------------------------------
     val ttsLanguage: Locale
-        get() = if (QuizConfig.TTS_USE_DEVICE_LANGUAGE)
+        get() = if (AppConfig.TTS_USE_DEVICE_LANGUAGE)
             Locale.getDefault()
         else
-            QuizConfig.TTS_FIXED_LANGUAGE
+            AppConfig.TTS_FIXED_LANGUAGE
 }
 

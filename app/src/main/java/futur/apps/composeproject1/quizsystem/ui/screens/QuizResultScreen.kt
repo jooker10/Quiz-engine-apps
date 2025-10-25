@@ -1,30 +1,5 @@
 package futur.apps.composeproject1.quizsystem.ui.screens
 
-import android.view.animation.OvershootInterpolator
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import futur.apps.composeproject1.quizsystem.core.QuizConfig
-import futur.apps.composeproject1.quizsystem.ui.components.ReviewAnswersRow
-import futur.apps.composeproject1.quizsystem.ui.theme.progressResultColor
-import futur.apps.composeproject1.viewmodels.QuizUiState
-import futur.apps.composeproject1.R
-
 
 /**
  * ================================================
@@ -37,34 +12,70 @@ import futur.apps.composeproject1.R
  * 🔹 Action buttons include Retry, Home, Share (customizable).
  *
  * Buyer Notes:
- * - Customize colors, icons, or actions via QuizConfig.
+ * - Customize colors, icons, or actions via AppConfig.
  * - Easily swap out ReviewAnswersRow or Stats layout for your design.
  * - Animations are smooth, spring-based, and ready for production.
  * - Perfect for Codester resale as a polished, ready-to-use results screen.
  * ================================================
  */
+
+import android.app.Activity
+import android.view.animation.OvershootInterpolator
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import futur.apps.composeproject1.R
+import futur.apps.composeproject1.quizsystem.core.AppConfig
+import futur.apps.composeproject1.quizsystem.ui.components.ReviewAnswersRow
+import futur.apps.composeproject1.quizsystem.ui.theme.progressResultColor
+import futur.apps.composeproject1.viewmodels.QuizUiState
+import futur.apps.composeproject1.viewmodels.QuizViewModel
+import kotlinx.coroutines.launch
+
 @Composable
 fun QuizResultScreen(
     isLandscape: Boolean,
     uiState: QuizUiState,
     score: Int,
     total: Int,
+    viewModel: QuizViewModel,
     modifier: Modifier = Modifier,
     onRetry: () -> Unit = {},
     onHome: () -> Unit = {},
     onShare: () -> Unit = {},
 ) {
-    val percentage = (score.toFloat() / total.toFloat()) * 100f
-    val progressColor = progressResultColor(percentage)
+    val context = LocalContext.current
+    val activity = context as? Activity
+    val progressColor = progressResultColor((score.toFloat() / total) * 100f)
 
-    // Animate entire screen appearance for smooth entry
+    // Attach the activity for ad usage (safe weak ref)
+    LaunchedEffect(activity) { viewModel.attachHostActivity(activity) }
+
     var visible by remember { mutableStateOf(false) }
+    var rewardEarned by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
     LaunchedEffect(Unit) { visible = true }
 
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn(animationSpec = tween(600)) + scaleIn(initialScale = 0.8f, animationSpec = tween(600)),
-        exit = fadeOut(animationSpec = tween(400)) + scaleOut(targetScale = 0.8f, animationSpec = tween(400))
+        enter = fadeIn(animationSpec = tween(600)) + scaleIn(initialScale = 0.8f),
+        exit = fadeOut(animationSpec = tween(400)) + scaleOut(targetScale = 0.8f)
     ) {
         Box(
             modifier = modifier
@@ -72,36 +83,42 @@ fun QuizResultScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .padding(16.dp)
         ) {
+            val layoutModifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp))
+                .padding(24.dp)
+
             if (!isLandscape) {
-                // =========================
-                // PORTRAIT LAYOUT
-                // =========================
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp))
-                        .padding(24.dp),
+                    modifier = layoutModifier,
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
                     ResultHeaderSection(score, total, progressColor, isLandscape)
                     ResultStatsSection(score, total, uiState.earnedPoints, progressColor)
+
+                    // 🎁 Rewarded Ad button
+                    RewardedAdSection(
+                        rewardEarned = rewardEarned,
+                        onWatchAd = {
+                            viewModel.showRewardedAd {
+                                scope.launch {
+                                    viewModel.addBonusPoints(10)
+                                    rewardEarned = true
+                                }
+                            }
+                        }
+                    )
+
                     ReviewSection(uiState)
                     ActionsSection(onRetry, onHome, onShare)
                 }
             } else {
-                // =========================
-                // LANDSCAPE LAYOUT
-                // =========================
                 Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp))
-                        .padding(24.dp),
+                    modifier = layoutModifier,
                     horizontalArrangement = Arrangement.spacedBy(24.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Left column: progress + stats
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -112,9 +129,20 @@ fun QuizResultScreen(
                     ) {
                         ResultHeaderSection(score, total, progressColor, isLandscape)
                         ResultStatsSection(score, total, uiState.earnedPoints, progressColor)
+
+                        RewardedAdSection(
+                            rewardEarned = rewardEarned,
+                            onWatchAd = {
+                                viewModel.showRewardedAd {
+                                    scope.launch {
+                                        viewModel.addBonusPoints(10)
+                                        rewardEarned = true
+                                    }
+                                }
+                            }
+                        )
                     }
 
-                    // Right column: review + actions
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -133,13 +161,39 @@ fun QuizResultScreen(
     }
 }
 
+// -------------------------- 🎁 Reward Section --------------------------
+@Composable
+fun RewardedAdSection(rewardEarned: Boolean, onWatchAd: () -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        if (!rewardEarned) {
+            Button(
+                onClick = onWatchAd,
+                modifier = Modifier
+                    .padding(top = 16.dp)
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(text = "🎁 Watch Ad to Earn +10 Points")
+            }
+        } else {
+            Text(
+                text = "✅ +10 Bonus Points Added!",
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(top = 12.dp)
+            )
+        }
+    }
+}
+
+
 // -------------------------- HEADER SECTION --------------------------
 /**
  * ResultHeaderSection
  *
  * 🔹 Displays animated circular progress + percentage.
  * 🔹 Shows a result message based on percentage.
- * 🔹 Buyer can customize text, size, colors via MaterialTheme or QuizConfig.
+ * 🔹 Buyer can customize text, size, colors via MaterialTheme or AppConfig.
  */
 @Composable
 fun ResultHeaderSection(score: Int, total: Int, progressColor: Color, isLandscape: Boolean) {
@@ -193,7 +247,7 @@ fun ResultHeaderSection(score: Int, total: Int, progressColor: Color, isLandscap
             enter = fadeIn(animationSpec = tween(800))
         ) {
             Text(
-                text = stringResource(QuizConfig.getResultMessageRes(finalPercentage)),
+                text = stringResource(AppConfig.getResultMessageRes(finalPercentage)),
                 style = MaterialTheme.typography.titleMedium.copy(color = progressColor),
                 textAlign = TextAlign.Center
             )
@@ -219,7 +273,7 @@ fun ResultStatsSection(correctAnswers: Int, total: Int, points: Int, progressCol
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        QuizConfig.resultStatsConfig.forEachIndexed { index, config ->
+        AppConfig.resultStatsConfig.forEachIndexed { index, config ->
             val value = values.getOrNull(index) ?: 0
             val color = if (config.useDynamicColor) progressColor else MaterialTheme.colorScheme.primary
             StatItem(icon = config.icon, label = stringResource(id = config.labelRes), targetValue = value, color = color)
@@ -289,7 +343,7 @@ fun ReviewSection(uiState: QuizUiState) {
  *
  * 🔹 Displays Retry, Home, Share buttons.
  * 🔹 Button actions customizable via parameters.
- * 🔹 Icons and labels configurable via QuizConfig.
+ * 🔹 Icons and labels configurable via AppConfig.
  */
 @Composable
 fun ActionsSection(onRetry: () -> Unit = {}, onHome: () -> Unit = {}, onShare: () -> Unit = {}) {
@@ -301,7 +355,7 @@ fun ActionsSection(onRetry: () -> Unit = {}, onHome: () -> Unit = {}, onShare: (
             .padding(top = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
     ) {
-        QuizConfig.resultActionsConfig.forEachIndexed { index, action ->
+        AppConfig.resultActionsConfig.forEachIndexed { index, action ->
             OutlinedButton(
                 onClick = handlers.getOrNull(index) ?: {},
                 modifier = Modifier.size(width = 90.dp, height = 48.dp),
@@ -320,9 +374,3 @@ fun ActionsSection(onRetry: () -> Unit = {}, onHome: () -> Unit = {}, onShare: (
  * 🔹 Helps test portrait layout in Android Studio preview.
  * 🔹 Create additional previews for landscape / dark mode if needed.
  */
-@Preview(showBackground = true)
-@Composable
-fun PreviewQuizResultScreen() {
-    val dummyUiState = QuizUiState(earnedPoints = 120, reviewAnswers = emptyList())
-    QuizResultScreen(isLandscape = false, uiState = dummyUiState, score = 7, total = 10)
-}

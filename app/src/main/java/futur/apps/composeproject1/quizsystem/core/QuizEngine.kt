@@ -125,14 +125,14 @@ class QuizEngine(
 
     /**
      * Calculates score points based on completion percentage.
-     * Uses thresholds from [QuizConfig].
+     * Uses thresholds from [AppConfig].
      */
     private fun calculatePoints(): Int {
         return when {
-            completionPercent == QuizConfig.PERFECT_PERCENTAGE.toInt() -> QuizConfig.POINTS_PERFECT_SCORE
-            completionPercent >= QuizConfig.GOOD_PERCENTAGE.toInt() -> QuizConfig.POINTS_GOOD_SCORE
-            completionPercent >= QuizConfig.PASSING_PERCENTAGE.toInt() -> QuizConfig.POINTS_PASSING_SCORE
-            else -> QuizConfig.POINTS_FAILING_SCORE
+            completionPercent == AppConfig.PERFECT_PERCENTAGE.toInt() -> AppConfig.POINTS_PERFECT_SCORE
+            completionPercent >= AppConfig.GOOD_PERCENTAGE.toInt() -> AppConfig.POINTS_GOOD_SCORE
+            completionPercent >= AppConfig.PASSING_PERCENTAGE.toInt() -> AppConfig.POINTS_PASSING_SCORE
+            else -> AppConfig.POINTS_FAILING_SCORE
         }
     }
 }

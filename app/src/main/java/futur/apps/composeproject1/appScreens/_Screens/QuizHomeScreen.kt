@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -27,15 +28,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import futur.apps.composeproject1.R
 import futur.apps.composeproject1.RoomDatabase.userroom.UserCategoryEntity
 import futur.apps.composeproject1.RoomDatabase.userroom.UserQuizViewModel
+import futur.apps.composeproject1.auth.AuthViewModel
+import futur.apps.composeproject1.auth.UserProfile
 import futur.apps.composeproject1.quizsystem.ui.theme.progressResultColor
 import futur.apps.composeproject1.utils.DefaultCategory
 import futur.apps.composeproject1.utils.QuizMode
 import futur.apps.composeproject1.utils.Screen
 import futur.apps.composeproject1.viewmodels.*
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import futur.apps.composeproject1.quizsystem.core.AppConfig
+import futur.apps.composeproject1.quizsystem.ui.components.QuizModeSelectorRow
 
 /* ============================================================
    🏠 QUIZ HOME SCREEN
@@ -54,23 +64,44 @@ fun QuizHomeScreen(
     nav: NavController,
     homeViewModel: HomeViewModel = hiltViewModel(),
     quizViewModel: QuizViewModel = hiltViewModel(),
-    userQuizViewModel: UserQuizViewModel = hiltViewModel()
+    userQuizViewModel: UserQuizViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = viewModel()
 ) {
     val homeUiState by homeViewModel.uiState.collectAsState()
     val currentQuizMode by quizViewModel.mode.collectAsState()
     val userCategories by userQuizViewModel.categories.collectAsState(initial = emptyList())
+    val userProfile = authViewModel.userProfile.collectAsState().value
 
-    when {
-        homeUiState.isLoading -> LoadingScreen()
-        else -> QuizHomeContent(
+    // 🧠 Use totals from HomeViewModel (the real source of truth)
+    val totalPoints = when (currentQuizMode) {
+        QuizMode.DEFAULT -> homeUiState.defaultTotalPoints
+        QuizMode.CUSTOM -> homeUiState.userTotalPoints
+    }
+
+    val username = userProfile?.name ?: homeUiState.username
+
+    // ✅ Optional: update Firestore total points automatically
+    LaunchedEffect(totalPoints) {
+        if (AppConfig.USE_FIRESTORE_SYNC && userProfile != null && totalPoints > 0) {
+            authViewModel.updatePointsInFirestore(totalPoints)
+        }
+    }
+
+     QuizHomeContent(
+            userProfile = userProfile,
             navController = nav,
-            uiState = homeUiState,
+            uiState = homeUiState.copy(
+                username = username,
+                defaultTotalPoints = homeUiState.defaultTotalPoints,
+                userTotalPoints = homeUiState.userTotalPoints
+            ),
             quizMode = currentQuizMode,
             onModeSelected = { mode -> quizViewModel.saveGlobalQuizMode(mode) },
             userCategories = userCategories
         )
     }
-}
+
+
 
 /* ============================================================
    🧩 MAIN CONTENT — DISPLAYS QUIZ MODE SECTIONS
@@ -81,7 +112,8 @@ private fun QuizHomeContent(
     uiState: HomeUiState,
     quizMode: QuizMode,
     onModeSelected: (QuizMode) -> Unit,
-    userCategories: List<UserCategoryEntity>
+    userCategories: List<UserCategoryEntity>,
+    userProfile: UserProfile? = null
 ) {
     Column(
         modifier = Modifier
@@ -100,14 +132,14 @@ private fun QuizHomeContent(
         // 🟩 Mode-specific content
         when (quizMode) {
             QuizMode.DEFAULT -> {
-                BuiltInOverviewSection(uiState = uiState)
+                BuiltInOverviewSection(uiState = uiState, userProfile = userProfile)
                 BuiltInCategoryList(
                     totalPoints = uiState.defaultTotalPoints,
                     navController = navController
                 )
             }
             QuizMode.CUSTOM -> {
-                UserOverviewSection(uiState = uiState)
+                UserOverviewSection(uiState = uiState,userProfile = userProfile)
                 UserCategoryList(
                     userCategories = userCategories,
                     userPoints = uiState.userPoints,
@@ -119,75 +151,7 @@ private fun QuizHomeContent(
     }
 }
 
-/* ============================================================
-   🌈 QUIZ MODE SELECTOR (Top Chips)
-   ============================================================ */
-@Composable
-fun QuizModeSelectorRow(
-    selectedSource: Int,
-    onSourceSelected: (Int) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        QuizModeChip(
-            text = "Built-in Quizzes",
-            selected = selectedSource == 0,
-            activeColor = MaterialTheme.colorScheme.primary,
-            onClick = { onSourceSelected(0) },
-            modifier = Modifier.weight(1f)
-        )
-        QuizModeChip(
-            text = "My Quizzes",
-            selected = selectedSource == 1,
-            activeColor = MaterialTheme.colorScheme.tertiary,
-            onClick = { onSourceSelected(1) },
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
 
-/* Small toggle chip for switching between modes */
-@Composable
-fun QuizModeChip(
-    text: String,
-    selected: Boolean,
-    activeColor: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val scale by animateFloatAsState(if (selected) 1.04f else 1f)
-    val glowAlpha by animateFloatAsState(if (selected) 0.22f else 0f)
-    val containerColor = if (selected) activeColor else MaterialTheme.colorScheme.surfaceVariant
-    val textColor = if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(100))
-            .graphicsLayer { scaleX = scale; scaleY = scale }
-            .background(containerColor)
-            .clickable { onClick() }
-            .drawBehind {
-                if (glowAlpha > 0f) {
-                    drawCircle(
-                        color = activeColor.copy(alpha = glowAlpha),
-                        radius = size.height * 0.6f
-                    )
-                }
-            },
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            color = textColor,
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
-        )
-    }
-}
 
 /* ============================================================
    🧠 OVERVIEW SECTIONS (LEVEL + POINTS)
@@ -195,33 +159,34 @@ fun QuizModeChip(
 
 /* Built-in quizzes overview */
 @Composable
-fun BuiltInOverviewSection(uiState: HomeUiState) {
+fun BuiltInOverviewSection(uiState: HomeUiState , userProfile: UserProfile?) {
     val totalPoints = uiState.defaultTotalPoints
     val level = totalPoints / 20 + 1
 
     OverviewRow(
         level = level,
         totalPoints = totalPoints,
-        username = uiState.username
+        userProfile = userProfile,
+
     )
 }
 
 /* User-created quizzes overview */
 @Composable
-fun UserOverviewSection(uiState: HomeUiState) {
+fun UserOverviewSection(uiState: HomeUiState, userProfile: UserProfile?) {
     val totalPoints = uiState.userTotalPoints
     val level = totalPoints / 20 + 1
 
     OverviewRow(
         level = level,
         totalPoints = totalPoints,
-        username = uiState.username
+        userProfile = userProfile
     )
 }
 
 /* Shared layout for both modes */
 @Composable
-private fun OverviewRow(level: Int, totalPoints: Int, username: String) {
+private fun OverviewRow(level: Int, totalPoints: Int, userProfile: UserProfile?) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -235,8 +200,17 @@ private fun OverviewRow(level: Int, totalPoints: Int, username: String) {
                 .fillMaxHeight(),
             verticalArrangement = Arrangement.SpaceEvenly
         ) {
-            StatCardGradient(title = "LEVEL", value = "$level")
             StatCardGradient(
+                modifier = Modifier
+                    .padding(8.dp)
+                    .weight(1f),
+                title = "LEVEL",
+                value = "$level"
+            )
+            StatCardGradient(
+                modifier = Modifier
+                    .padding(8.dp)
+                    .weight(1f),
                 title = "TOTAL POINTS",
                 value = "$totalPoints XP",
                 isPrimary = false
@@ -244,11 +218,13 @@ private fun OverviewRow(level: Int, totalPoints: Int, username: String) {
         }
 
         PlayerProfileCard(
-            username = username,
             modifier = Modifier
                 .weight(1f)
-                .fillMaxHeight()
+                .fillMaxHeight(),
+            username = userProfile?.name ?: "Guest",
+            photoUrl = userProfile?.photoUrl
         )
+
     }
 }
 
@@ -299,7 +275,11 @@ fun StatCardGradient(
    👤 PLAYER PROFILE CARD
    ============================================================ */
 @Composable
-fun PlayerProfileCard(username: String, modifier: Modifier = Modifier) {
+fun PlayerProfileCard(
+    username: String,
+    photoUrl: String? = null,
+    modifier: Modifier = Modifier
+) {
     Card(
         modifier = modifier.fillMaxHeight(),
         shape = RoundedCornerShape(20.dp),
@@ -320,6 +300,7 @@ fun PlayerProfileCard(username: String, modifier: Modifier = Modifier) {
                     letterSpacing = 0.5.sp
                 )
             )
+
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
@@ -334,25 +315,47 @@ fun PlayerProfileCard(username: String, modifier: Modifier = Modifier) {
                         )
                     )
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.app_icon),
-                    contentDescription = "Profile",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(CircleShape)
-                )
+                if (photoUrl != null) {
+                    AsyncImage(
+                        model = photoUrl,
+                        contentDescription = "Profile Picture",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(60.dp)
+                            .clip(CircleShape)
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.app_icon),
+                        contentDescription = "Default Profile",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(60.dp)
+                            .clip(CircleShape)
+                    )
+                }
             }
+
+            // ✅ Auto-adjust text for long usernames
             Text(
-                username,
+                text = username,
                 style = MaterialTheme.typography.titleMedium.copy(
                     color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.SemiBold
-                )
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 18.sp
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .fillMaxWidth(),
+                textAlign = TextAlign.Center
             )
         }
     }
 }
+
+
 
 /* ============================================================
    📚 BUILT-IN CATEGORY LIST

@@ -5,7 +5,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import futur.apps.composeproject1.quizsystem.core.QuizConfig
+import futur.apps.composeproject1.quizsystem.core.AppConfig
 
 /* ==========================================================
    🎨 COLORS — Full Material3 + Custom Quiz Semantics
@@ -31,9 +31,9 @@ fun wrongAnswerColor(): Color =
 @Composable
 fun progressResultColor(percentage: Float): Color {
     return when {
-        percentage >= QuizConfig.PERFECT_PERCENTAGE -> CorrectLight
-        percentage >= QuizConfig.GOOD_PERCENTAGE -> Color(0xFFFFEB3B)
-        percentage >= QuizConfig.PASSING_PERCENTAGE -> Color(0xFFFF9800)
+        percentage >= AppConfig.PERFECT_PERCENTAGE -> CorrectLight
+        percentage >= AppConfig.GOOD_PERCENTAGE -> Color(0xFFFFEB3B)
+        percentage >= AppConfig.PASSING_PERCENTAGE -> Color(0xFFFF9800)
         else -> WrongLight
     }
 }

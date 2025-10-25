@@ -42,11 +42,25 @@ fun MainNavigation(navController: NavHostController) {
             iconSelected = R.drawable.filled_home_24
         ),
         NavItem(
-            label = "Statistics",
+            label = "Stats",
             navigateRoute = Screen.Stats.route,
             isSelected = { dest -> dest?.hierarchy?.any { it.route == Screen.Stats.route } == true },
             iconUnselected = R.drawable.outline_table,
             iconSelected = R.drawable.filled_table
+        ),
+        NavItem(
+            label = "My Quizzes",
+            navigateRoute = Screen.UserCategory.route,
+            isSelected = { dest -> dest?.hierarchy?.any { it.route == Screen.UserCategory.route } == true },
+            iconUnselected = R.drawable.about_outline,
+            iconSelected = R.drawable.about_filled
+        ),
+        NavItem(
+            label = "Top 10",
+            navigateRoute = Screen.Leaderboard.route,
+            isSelected = { dest -> dest?.hierarchy?.any { it.route == Screen.Leaderboard.route } == true },
+            iconUnselected = R.drawable.outline_menu,
+            iconSelected = R.drawable.outline_menu
         ),
         NavItem(
             label = "Settings",
@@ -54,13 +68,6 @@ fun MainNavigation(navController: NavHostController) {
             isSelected = { dest -> dest?.hierarchy?.any { it.route == Screen.Settings.route } == true },
             iconUnselected = R.drawable.outline_settings,
             iconSelected = R.drawable.filled_settings
-        ),
-        NavItem(
-            label = "UserCategory",
-            navigateRoute = Screen.UserCategory.route,
-            isSelected = { dest -> dest?.hierarchy?.any { it.route == Screen.UserCategory.route } == true },
-            iconUnselected = R.drawable.about_outline,
-            iconSelected = R.drawable.about_filled
         )
     )
 

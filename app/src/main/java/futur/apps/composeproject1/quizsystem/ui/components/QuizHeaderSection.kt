@@ -17,7 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import futur.apps.composeproject1.utils.Question
-import futur.apps.composeproject1.quizsystem.core.QuizConfig
+import futur.apps.composeproject1.quizsystem.core.AppConfig
 import futur.apps.composeproject1.quizsystem.ui.theme.correctAnswerColor
 import futur.apps.composeproject1.quizsystem.ui.theme.wrongAnswerColor
 import futur.apps.composeproject1.viewmodels.QuizUiState
@@ -192,7 +192,7 @@ private fun TimerIndicator(timeLeft: Int, maxTime: Int) {
         color = MaterialTheme.colorScheme.surface
     ) {
         Box(contentAlignment = Alignment.Center) {
-            val criticalTime = minOf(QuizConfig.TIMER_CRITICAL_THRESHOLD, maxTime)
+            val criticalTime = minOf(AppConfig.TIMER_CRITICAL_THRESHOLD, maxTime)
             CircularProgressIndicator(
                 progress = { 1f - (timeLeft.toFloat() / maxTime.toFloat()) },
                 modifier = Modifier.size(size),

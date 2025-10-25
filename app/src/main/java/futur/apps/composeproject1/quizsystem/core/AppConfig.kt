@@ -13,7 +13,7 @@ import java.util.Locale
 
 /**
  * ============================================================
- * QuizConfig.kt
+ * AppConfig.kt
  *
  * 🔹 Central configuration object for the Quiz App.
  *
@@ -25,7 +25,15 @@ import java.util.Locale
  * - Texts use strings.xml → Full multi-language support.
  * ============================================================
  */
-object QuizConfig {
+object AppConfig {
+
+    // Auth and Storage
+
+    /** 🔌 Toggle Firestore integration globally */
+    const val USE_FIRESTORE_SYNC = true
+
+    /** 🔧 Optional: toggle Google Sign-In (if you want to make it optional too) */
+    const val USE_GOOGLE_SIGN_IN = true
 
     // ---------------------------------------------------------
     // ⏱️ TIMER SETTINGS

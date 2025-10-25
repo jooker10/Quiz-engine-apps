@@ -5,7 +5,7 @@ import android.media.MediaPlayer
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import futur.apps.composeproject1.quizsystem.core.QuizConfig
+import futur.apps.composeproject1.quizsystem.core.AppConfig
 
 /**
  * EffectsViewModel
@@ -81,7 +81,7 @@ class EffectsViewModel : ViewModel() {
      */
     fun playCorrectSound(enable: Boolean, context: Context) {
         if (!enable) return
-        MediaPlayer.create(context, QuizConfig.SOUND_CORRECT).apply {
+        MediaPlayer.create(context, AppConfig.SOUND_CORRECT).apply {
             setOnCompletionListener { release() }
             start()
         }
@@ -92,7 +92,7 @@ class EffectsViewModel : ViewModel() {
      */
     fun playWrongSound(enable: Boolean, context: Context) {
         if (!enable) return
-        MediaPlayer.create(context, QuizConfig.SOUND_WRONG).apply {
+        MediaPlayer.create(context, AppConfig.SOUND_WRONG).apply {
             setOnCompletionListener { release() }
             start()
         }

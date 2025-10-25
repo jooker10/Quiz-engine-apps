@@ -12,7 +12,7 @@ import futur.apps.composeproject1.RoomDatabase.userroom.UserQuestionEntity
 import futur.apps.composeproject1.RoomDatabase.userroom.UserQuizRepository
 import futur.apps.composeproject1.ads.AdsManager
 import futur.apps.composeproject1.dataStore.AppDataStore
-import futur.apps.composeproject1.quizsystem.core.QuizConfig
+import futur.apps.composeproject1.quizsystem.core.AppConfig
 import futur.apps.composeproject1.quizsystem.core.QuizEngine
 import futur.apps.composeproject1.quizsystem.ui.components.ReviewAnswer
 import futur.apps.composeproject1.utils.*
@@ -21,6 +21,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import futur.apps.composeproject1.auth.AuthViewModel
+import java.lang.ref.WeakReference
 import kotlin.random.Random
 
 // ============================================================
@@ -82,13 +84,16 @@ class QuizViewModel @Inject constructor(
     private lateinit var engine: QuizEngine
     private var autoNextJob: Job? = null
 
+    // 🔒 Safe Activity reference for ads (no memory leaks)
+    private var hostActivityRef: WeakReference<Activity>? = null
+
     private val timer = QuizTimer(
         scope = viewModelScope,
-        tickInterval = QuizConfig.TIMER_TICK_INTERVAL,
+        tickInterval = AppConfig.TIMER_TICK_INTERVAL,
         onTick = { time ->
             _ui.update { it.copy(timeLeft = time) }
             if (_settings.value.soundEnabled) {
-                if (time <= QuizConfig.TIMER_CRITICAL_THRESHOLD)
+                if (time <= AppConfig.TIMER_CRITICAL_THRESHOLD)
                     emitEffect(QuizUiEffect.PlayTimerUrgent)
                 else emitEffect(QuizUiEffect.PlayTimerTick)
             }
@@ -103,6 +108,15 @@ class QuizViewModel @Inject constructor(
         collectSettings()
     }
 
+    /** Call this once from the UI (e.g., QuizScreen) after you get Activity */
+    fun attachHostActivity(activity: Activity?) {
+        if (activity != null) {
+            hostActivityRef = WeakReference(activity)
+            // Optionally: pre-load ads here if you want
+            // ads.initializeAds(activity) // you already do this in MainActivity, so it's optional
+        }
+    }
+
     private fun collectSettings() {
         fun <T> collect(flow: Flow<T>, update: (SettingsUiState, T) -> SettingsUiState) {
             viewModelScope.launch {
@@ -110,7 +124,6 @@ class QuizViewModel @Inject constructor(
             }
         }
 
-        // A tiny holder so we can destructure cleanly in collect
         data class Snapshot(
             val builtPoints: Map<DefaultCategory, Int>,
             val userPoints: Map<String, Int>,
@@ -119,9 +132,6 @@ class QuizViewModel @Inject constructor(
             val mode: QuizMode
         )
 
-        // ------------------------------------------------------------
-        // 🧩 Collect Points, Stats, and Mode together (mode-aware)
-        // ------------------------------------------------------------
         viewModelScope.launch {
             combine(
                 preferences.builtInCategoryPoints,
@@ -133,21 +143,14 @@ class QuizViewModel @Inject constructor(
                 Snapshot(builtPts, userPts, builtSt, userSt, mode)
             }.collect { (builtPoints, userPoints, builtStats, userStats, mode) ->
 
-                // keep the VM's mode in sync with global mode
                 _mode.value = mode
 
-                // ------------------------------------------------------------
-                // 🧩 Points: only load the active mode’s points
-                // ------------------------------------------------------------
                 val activePointsAny: Map<Any, Int> = when (mode) {
                     QuizMode.DEFAULT -> builtPoints.entries.associate { (k, v) -> k as Any to v }
                     QuizMode.CUSTOM  -> userPoints.entries.associate { (k, v) -> k as Any to v }
                 }
                 _ui.update { it.copy(pointsByCategory = activePointsAny) }
 
-                // ------------------------------------------------------------
-                // 📊 Stats: only load one source, never mix them
-                // ------------------------------------------------------------
                 _stats.value = when (mode) {
                     QuizMode.DEFAULT -> builtStats.copy(isLoading = false)
                     QuizMode.CUSTOM  -> userStats.copy(isLoading = false)
@@ -155,10 +158,6 @@ class QuizViewModel @Inject constructor(
             }
         }
 
-
-        // ------------------------------------------------------------
-        // 🎨 Collect UI & Behavior Settings
-        // ------------------------------------------------------------
         collect(preferences.isDarkThemeEnabled) { s, v -> s.copy(isDarkMode = v) }
         collect(preferences.selectedLanguage)    { s, v -> s.copy(language = v) }
         collect(preferences.selectedPaletteName) { s, v -> s.copy(selectedPalette = v) }
@@ -166,10 +165,7 @@ class QuizViewModel @Inject constructor(
         collect(preferences.enableSounds)        { s, v -> s.copy(soundEnabled = v) }
         collect(preferences.enableTTS)           { s, v -> s.copy(ttsEnabled = v) }
         collect(preferences.maxQuestions)        { s, v -> s.copy(maxQuestions = v) }
-
-        // Note: we already combine globalQuizMode above, so no separate collector needed.
     }
-
 
     // ---------------------------------------------------------
     // 🚀 Public API
@@ -319,29 +315,28 @@ class QuizViewModel @Inject constructor(
                     }
                     if (_ui.value.showTimer) startTimer()
                 } else {
-                    finishQuiz(null)
+                    // 🏁 Done
+                    finishQuiz(authViewModel = null)
                 }
             }
         } finally {
             _ui.update { it.copy(isProcessing = false) }
         }
     }
+
     // ---------------------------------------------------------
-// ⏰ Time Up
-// ---------------------------------------------------------
+    // ⏰ Time Up
+    // ---------------------------------------------------------
     private fun handleTimeUp() {
         val s = _ui.value
         if (s.isAnswerChecked || s.isFinished) return
 
-        // Optional TTS announcement
         if (s.enableTTSOnTimeOut && _settings.value.ttsEnabled)
             emitEffect(QuizUiEffect.SpeakTextRes(R.string.tts_no_answer))
 
-        // Stop timer sound and confirm answer
         emitEffect(QuizUiEffect.StopTimerSounds)
         confirmOrNext(fromTimeout = true)
 
-        // Auto move to next question after delay (if enabled)
         if (_settings.value.autoNext) {
             autoNextJob?.cancel()
             val current = s.currentQuestion
@@ -359,12 +354,14 @@ class QuizViewModel @Inject constructor(
     // ---------------------------------------------------------
     // 🏁 Finish Quiz
     // ---------------------------------------------------------
-    private fun finishQuiz(activity: Activity?) {
+    private fun finishQuiz(authViewModel: AuthViewModel? = null) {
         emitEffect(QuizUiEffect.StopTimerSounds)
         stopTimer()
         updateResults()
-        savePointsAndStats()
-        showAds(activity)
+        savePointsAndStats(authViewModel = authViewModel)
+
+        // ✅ ALWAYS show interstitial at the end
+        showAds()
     }
 
     private fun updateResults() {
@@ -383,18 +380,12 @@ class QuizViewModel @Inject constructor(
     // ---------------------------------------------------------
     // 💾 Save Points & Stats — mode-aware
     // ---------------------------------------------------------
-    // ---------------------------------------------------------
-// 💾 Save Points & Stats — mode-aware (Fixed)
-// ---------------------------------------------------------
-    private fun savePointsAndStats() {
+    private fun savePointsAndStats(authViewModel: AuthViewModel? = null) {
         viewModelScope.launch {
             val s = _ui.value
             val cat = currentCategory
             val currentMode = _mode.value
 
-            // =========================
-            // 🔹 Save Points
-            // =========================
             when (cat) {
                 is QuizCategory.Default -> {
                     val key = cat.category
@@ -406,6 +397,11 @@ class QuizViewModel @Inject constructor(
                     preferences.saveBuiltInCategoryPoints(updatedMap)
                     _ui.update {
                         it.copy(pointsByCategory = updatedMap.entries.associate { (k, v) -> k as Any to v })
+                    }
+
+                    if (AppConfig.USE_FIRESTORE_SYNC && authViewModel != null) {
+                        val totalPoints = updatedMap.values.sum()
+                        authViewModel.updatePointsInFirestore(totalPoints)
                     }
                 }
 
@@ -425,9 +421,6 @@ class QuizViewModel @Inject constructor(
                 else -> Unit
             }
 
-            // =========================
-            // 🔹 Save Stats
-            // =========================
             val key = when (cat) {
                 is QuizCategory.Default -> cat.category.name
                 is QuizCategory.Custom -> cat.name
@@ -454,7 +447,6 @@ class QuizViewModel @Inject constructor(
         }
     }
 
-
     // ---------------------------------------------------------
     // 🕒 Timer Controls & Helpers
     // ---------------------------------------------------------
@@ -479,7 +471,7 @@ class QuizViewModel @Inject constructor(
             val data = items as List<DataEntity>
             data.shuffled().take(_settings.value.maxQuestions).map { d ->
                 val options = (data.filter { it.en != d.en }
-                    .shuffled().take(QuizConfig.CHOICE_COUNT - 1)
+                    .shuffled().take(AppConfig.CHOICE_COUNT - 1)
                     .map { it.en } + d.en).shuffled()
                 Question(d.fr, options, d.en)
             }
@@ -493,18 +485,83 @@ class QuizViewModel @Inject constructor(
         else -> emptyList()
     }
 
-    private fun showAds(activity: Activity?) {
-        activity?.let {
-            val random = Random.nextBoolean()
-            if (random) ads.showInterstitial(it)
-            else ads.showRewardedAd(it) {
-                Toast.makeText(activity, "ad rewarded!", Toast.LENGTH_SHORT).show()
+    // ---------------------------------------------------------
+    // 📣 Ads helpers
+    // ---------------------------------------------------------
+    private fun hostActivity(): Activity? = hostActivityRef?.get()
+
+    /** Called automatically at quiz finish */
+    private fun showFinishInterstitial() {
+        hostActivity()?.let { ads.showInterstitial(it) }
+    }
+
+    private fun showAds() {
+        hostActivity()?.let { act ->
+            if (Random.nextBoolean()) {
+                ads.showInterstitial(act) { ads.loadInterstitialAd(act) }
+            } else {
+                ads.showRewardedAd(act) {
+                    Toast.makeText(act, "Ad rewarded!", Toast.LENGTH_SHORT).show()
+                    ads.loadRewardedAd(act)
+                }
             }
-            ads.initializeAds(it)
         }
     }
 
-    // --- Add inside QuizViewModel ---
+
+
+
+
+    /** Use this from ResultScreen button to grant reward (UI decides how many points) */
+    fun showRewardedAd(onReward: () -> Unit) {
+        val act = hostActivity() ?: return
+        ads.showRewardedAd(act) { _ ->
+            onReward()
+        }
+    }
+
+    fun addBonusPoints(amount: Int) {
+        viewModelScope.launch {
+            val cat = currentCategory ?: return@launch
+
+            when (cat) {
+                is QuizCategory.Default -> {
+                    val currentMap = preferences.builtInCategoryPoints.first()
+                    val currentPts = currentMap[cat.category] ?: 0
+                    val newPts = currentPts + amount
+                    val updatedMap = currentMap + (cat.category to newPts)
+
+                    // persist
+                    preferences.saveBuiltInCategoryPoints(updatedMap)
+
+                    // 🔧 cast keys to Any for UI state
+                    _ui.update {
+                        it.copy(pointsByCategory = updatedMap.entries.associate { (k, v) -> k as Any to v })
+                    }
+                }
+
+                is QuizCategory.Custom -> {
+                    val currentMap = preferences.userCategoryPoints.first()
+                    val currentPts = currentMap[cat.name] ?: 0
+                    val newPts = currentPts + amount
+                    val updatedMap = currentMap + (cat.name to newPts)
+
+                    // persist
+                    preferences.saveUserCategoryPoints(updatedMap)
+
+                    // 🔧 cast keys to Any for UI state
+                    _ui.update {
+                        it.copy(pointsByCategory = updatedMap.entries.associate { (k, v) -> k as Any to v })
+                    }
+                }
+            }
+        }
+    }
+
+
+    // ---------------------------------------------------------
+    // 🔄 Stats reset (unchanged)
+    // ---------------------------------------------------------
     fun resetBuiltInStats() {
         viewModelScope.launch {
             val empty = StatsUiState(isLoading = false)
@@ -522,6 +579,4 @@ class QuizViewModel @Inject constructor(
     }
 
     fun resetStatsFor(mode: QuizMode) { if (mode == QuizMode.DEFAULT) resetBuiltInStats() else resetUserStats() }
-
-
 }

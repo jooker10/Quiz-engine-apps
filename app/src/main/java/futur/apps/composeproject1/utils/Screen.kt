@@ -9,9 +9,12 @@ sealed class Screen(val route: String, val title: String = "") {
 
     // ---------------- Main Screens ----------------
     object Home : Screen("home", "Home")
-    object Stats : Screen("stats", "Statistics")
+    object Stats : Screen("stats", "Stats")
     object Settings : Screen("settings", "Settings")
     object UserCategory : Screen("user_category", "Categories")
+    object Splash : Screen("splash", "Splash")
+    object Leaderboard : Screen("leaderboard","Leaderboard")
+
 
     // ---------------- Quiz ----------------
     /**
