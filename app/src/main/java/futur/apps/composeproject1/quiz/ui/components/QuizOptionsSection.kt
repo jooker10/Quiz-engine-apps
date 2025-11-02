@@ -1,4 +1,4 @@
-package futur.apps.composeproject1.quizsystem.ui.components
+package futur.apps.composeproject1.quiz.ui.components
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
@@ -15,7 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import futur.apps.composeproject1.utils.Question
-import futur.apps.composeproject1.quizsystem.ui.theme.correctAnswerColor
+import futur.apps.composeproject1.quiz.ui.theme.correctAnswerColor
 import futur.apps.composeproject1.viewmodels.QuizUiState
 import futur.apps.composeproject1.viewmodels.QuizEvent
 

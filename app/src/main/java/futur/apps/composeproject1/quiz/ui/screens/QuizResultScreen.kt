@@ -1,4 +1,4 @@
-package futur.apps.composeproject1.quizsystem.ui.screens
+package futur.apps.composeproject1.quiz.ui.screens
 
 
 /**
@@ -37,12 +37,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import futur.apps.composeproject1.R
-import futur.apps.composeproject1.quizsystem.core.AppConfig
-import futur.apps.composeproject1.quizsystem.ui.components.ReviewAnswersRow
-import futur.apps.composeproject1.quizsystem.ui.theme.progressResultColor
+import futur.apps.composeproject1.quiz.core.AppConfig
+import futur.apps.composeproject1.quiz.ui.components.ReviewAnswersRow
+import futur.apps.composeproject1.quiz.ui.theme.progressResultColor
 import futur.apps.composeproject1.viewmodels.QuizUiState
 import futur.apps.composeproject1.viewmodels.QuizViewModel
 import kotlinx.coroutines.launch

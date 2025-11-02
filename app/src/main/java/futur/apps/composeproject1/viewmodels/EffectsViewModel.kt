@@ -5,7 +5,7 @@ import android.media.MediaPlayer
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import futur.apps.composeproject1.quizsystem.core.AppConfig
+import futur.apps.composeproject1.quiz.core.AppConfig
 
 /**
  * EffectsViewModel

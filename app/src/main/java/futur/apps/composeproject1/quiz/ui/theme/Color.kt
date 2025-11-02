@@ -1,11 +1,11 @@
-package futur.apps.composeproject1.quizsystem.ui.theme
+package futur.apps.composeproject1.quiz.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import futur.apps.composeproject1.quizsystem.core.AppConfig
+import futur.apps.composeproject1.quiz.core.AppConfig
 
 /* ==========================================================
    🎨 COLORS — Full Material3 + Custom Quiz Semantics

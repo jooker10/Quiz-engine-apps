@@ -23,7 +23,7 @@ import futur.apps.composeproject1.auth.AuthViewModel
 import futur.apps.composeproject1.auth.LoginScreen
 import futur.apps.composeproject1.auth.RegisterScreen
 import futur.apps.composeproject1.quizCreator.CategoryListScreen
-import futur.apps.composeproject1.quizsystem.ui.screens.QuizScreen
+import futur.apps.composeproject1.quiz.ui.screens.QuizScreen
 import futur.apps.composeproject1.utils.DefaultCategory
 import futur.apps.composeproject1.utils.QuizMode
 import futur.apps.composeproject1.utils.Screen

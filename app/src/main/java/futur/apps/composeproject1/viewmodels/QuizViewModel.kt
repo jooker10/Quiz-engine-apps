@@ -12,9 +12,9 @@ import futur.apps.composeproject1.RoomDatabase.userroom.UserQuestionEntity
 import futur.apps.composeproject1.RoomDatabase.userroom.UserQuizRepository
 import futur.apps.composeproject1.ads.AdsManager
 import futur.apps.composeproject1.dataStore.AppDataStore
-import futur.apps.composeproject1.quizsystem.core.AppConfig
-import futur.apps.composeproject1.quizsystem.core.QuizEngine
-import futur.apps.composeproject1.quizsystem.ui.components.ReviewAnswer
+import futur.apps.composeproject1.quiz.core.AppConfig
+import futur.apps.composeproject1.quiz.core.QuizEngine
+import futur.apps.composeproject1.quiz.ui.components.ReviewAnswer
 import futur.apps.composeproject1.utils.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

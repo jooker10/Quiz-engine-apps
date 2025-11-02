@@ -1,7 +1,7 @@
 package futur.apps.composeproject1.viewmodels
 
-import futur.apps.composeproject1.quizsystem.core.AppConfig
-import futur.apps.composeproject1.quizsystem.ui.components.ReviewAnswer
+import futur.apps.composeproject1.quiz.core.AppConfig
+import futur.apps.composeproject1.quiz.ui.components.ReviewAnswer
 import futur.apps.composeproject1.utils.Question
 import java.util.Locale
 
@@ -14,13 +14,13 @@ import java.util.Locale
  *
  * - Acts as the SINGLE SOURCE OF TRUTH for the UI.
  * - Contains quiz progress, scoring, timer, UI options, sounds, etc.
- * - Initialized with defaults from [futur.apps.composeproject1.quizsystem.core.AppConfig].
+ * - Initialized with defaults from [futur.apps.composeproject1.quiz.core.AppConfig].
  * - Updated only by [QuizViewModel].
  * - Pure data holder (no business logic here).
  *
  * 🔹 Buyers Notes:
  * - All quiz behavior (timer, scoring, sounds, shuffle, etc.)
- *   can be enabled/disabled here or via [futur.apps.composeproject1.quizsystem.core.AppConfig].
+ *   can be enabled/disabled here or via [futur.apps.composeproject1.quiz.core.AppConfig].
  * - Use this file to **customize default UI state** on app start.
  * ============================================================
  */

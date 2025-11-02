@@ -1,9 +1,8 @@
-package futur.apps.composeproject1.quizsystem.ui.theme
+package futur.apps.composeproject1.quiz.ui.theme
 
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect

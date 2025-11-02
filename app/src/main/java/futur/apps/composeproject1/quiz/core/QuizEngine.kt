@@ -1,4 +1,4 @@
-package futur.apps.composeproject1.quizsystem.core
+package futur.apps.composeproject1.quiz.core
 
 import futur.apps.composeproject1.utils.Question
 import futur.apps.composeproject1.R

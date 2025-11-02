@@ -4,9 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import futur.apps.composeproject1.dataStore.AppDataStore
-import futur.apps.composeproject1.quizsystem.ui.theme.AllPalettes
-import futur.apps.composeproject1.quizsystem.ui.theme.AppPalette
-import futur.apps.composeproject1.quizsystem.ui.theme.BluePalette
+import futur.apps.composeproject1.quiz.ui.theme.AllPalettes
+import futur.apps.composeproject1.quiz.ui.theme.AppPalette
+import futur.apps.composeproject1.quiz.ui.theme.BluePalette
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject

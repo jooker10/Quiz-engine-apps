@@ -1,4 +1,4 @@
-package futur.apps.composeproject1.quizsystem.core
+package futur.apps.composeproject1.quiz.core
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle

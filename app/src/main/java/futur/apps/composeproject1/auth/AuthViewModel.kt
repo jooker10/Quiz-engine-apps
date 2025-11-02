@@ -11,8 +11,7 @@ import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
 import dagger.hilt.android.lifecycle.HiltViewModel
-import futur.apps.composeproject1.dataStore.AppDataStore
-import futur.apps.composeproject1.quizsystem.core.AppConfig
+import futur.apps.composeproject1.quiz.core.AppConfig
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

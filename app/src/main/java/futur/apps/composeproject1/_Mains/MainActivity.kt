@@ -11,7 +11,7 @@ import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.firestoreSettings
 import dagger.hilt.android.AndroidEntryPoint
 import futur.apps.composeproject1.ads.AdsManager
-import futur.apps.composeproject1.quizsystem.ui.theme.AppTheme
+import futur.apps.composeproject1.quiz.ui.theme.AppTheme
 import futur.apps.composeproject1.viewmodels.ThemeViewModel
 
 /**

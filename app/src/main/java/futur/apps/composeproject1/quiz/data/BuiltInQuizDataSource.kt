@@ -1,7 +1,7 @@
-package futur.apps.composeproject1.quizsystem.data
+package futur.apps.composeproject1.quiz.data
 
 import futur.apps.composeproject1.RoomDatabase.QuizRepository
-import futur.apps.composeproject1.quizsystem.core.AppConfig
+import futur.apps.composeproject1.quiz.core.AppConfig
 import futur.apps.composeproject1.utils.DefaultCategory
 import futur.apps.composeproject1.utils.DataEntity
 import futur.apps.composeproject1.utils.Question

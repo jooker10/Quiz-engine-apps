@@ -1,4 +1,4 @@
-package futur.apps.composeproject1.quizsystem.ui.components
+package futur.apps.composeproject1.quiz.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding

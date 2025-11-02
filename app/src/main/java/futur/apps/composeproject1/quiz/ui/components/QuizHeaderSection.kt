@@ -1,4 +1,4 @@
-package futur.apps.composeproject1.quizsystem.ui.components
+package futur.apps.composeproject1.quiz.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -17,9 +17,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import futur.apps.composeproject1.utils.Question
-import futur.apps.composeproject1.quizsystem.core.AppConfig
-import futur.apps.composeproject1.quizsystem.ui.theme.correctAnswerColor
-import futur.apps.composeproject1.quizsystem.ui.theme.wrongAnswerColor
+import futur.apps.composeproject1.quiz.core.AppConfig
+import futur.apps.composeproject1.quiz.ui.theme.correctAnswerColor
+import futur.apps.composeproject1.quiz.ui.theme.wrongAnswerColor
 import futur.apps.composeproject1.viewmodels.QuizUiState
 import futur.apps.composeproject1.R
 

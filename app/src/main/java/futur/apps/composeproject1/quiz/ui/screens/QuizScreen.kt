@@ -1,4 +1,4 @@
-package futur.apps.composeproject1.quizsystem.ui.screens
+package futur.apps.composeproject1.quiz.ui.screens
 
 import android.app.Activity
 import android.content.res.Configuration
@@ -22,11 +22,11 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import futur.apps.composeproject1.auth.AuthViewModel
-import futur.apps.composeproject1.quizsystem.core.AppConfig
-import futur.apps.composeproject1.quizsystem.core.QuizEffectHandler
-import futur.apps.composeproject1.quizsystem.ui.components.QuizActionButton
-import futur.apps.composeproject1.quizsystem.ui.components.QuizHeaderSection
-import futur.apps.composeproject1.quizsystem.ui.components.QuizOptionsSection
+import futur.apps.composeproject1.quiz.core.AppConfig
+import futur.apps.composeproject1.quiz.core.QuizEffectHandler
+import futur.apps.composeproject1.quiz.ui.components.QuizActionButton
+import futur.apps.composeproject1.quiz.ui.components.QuizHeaderSection
+import futur.apps.composeproject1.quiz.ui.components.QuizOptionsSection
 import futur.apps.composeproject1.utils.DefaultCategory
 import futur.apps.composeproject1.utils.Question
 import futur.apps.composeproject1.viewmodels.*

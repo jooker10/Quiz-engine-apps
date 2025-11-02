@@ -1,10 +1,8 @@
 package futur.apps.composeproject1.appScreens._Screens
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -18,10 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -36,7 +32,7 @@ import futur.apps.composeproject1.RoomDatabase.userroom.UserCategoryEntity
 import futur.apps.composeproject1.RoomDatabase.userroom.UserQuizViewModel
 import futur.apps.composeproject1.auth.AuthViewModel
 import futur.apps.composeproject1.auth.UserProfile
-import futur.apps.composeproject1.quizsystem.ui.theme.progressResultColor
+import futur.apps.composeproject1.quiz.ui.theme.progressResultColor
 import futur.apps.composeproject1.utils.DefaultCategory
 import futur.apps.composeproject1.utils.QuizMode
 import futur.apps.composeproject1.utils.Screen
@@ -44,8 +40,8 @@ import futur.apps.composeproject1.viewmodels.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import futur.apps.composeproject1.quizsystem.core.AppConfig
-import futur.apps.composeproject1.quizsystem.ui.components.QuizModeSelectorRow
+import futur.apps.composeproject1.quiz.core.AppConfig
+import futur.apps.composeproject1.quiz.ui.components.QuizModeSelectorRow
 
 /* ============================================================
    🏠 QUIZ HOME SCREEN

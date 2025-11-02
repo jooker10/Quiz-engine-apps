@@ -137,7 +137,7 @@ dependencies {
     implementation("io.github.bytebeats:compose-charts:0.2.1")
 
     // --- Firebase (BOM manages versions automatically) ---
-    implementation(platform("com.google.firebase:firebase-bom:34.4.0"))
+    implementation(platform("com.google.firebase:firebase-bom:34.5.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth") // ✅ Firebase Auth
 
