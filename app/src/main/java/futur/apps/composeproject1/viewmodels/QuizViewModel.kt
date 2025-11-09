@@ -22,6 +22,8 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import futur.apps.composeproject1.auth.AuthViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import java.lang.ref.WeakReference
 import kotlin.random.Random
 
@@ -495,15 +497,60 @@ class QuizViewModel @Inject constructor(
         hostActivity()?.let { ads.showInterstitial(it) }
     }
 
+
+
+    // ---------------------------------------------
+// 🎯 Randomly show either Interstitial or Rewarded ad
+// ---------------------------------------------
     private fun showAds() {
-        hostActivity()?.let { act ->
-            if (Random.nextBoolean()) {
-                ads.showInterstitial(act) { ads.loadInterstitialAd(act) }
-            } else {
-                ads.showRewardedAd(act) {
-                    Toast.makeText(act, "Ad rewarded!", Toast.LENGTH_SHORT).show()
-                    ads.loadRewardedAd(act)
+        val activity = hostActivity() ?: return
+        val showRewarded = Random.nextBoolean()
+
+        // launch coroutine on Main thread
+        viewModelScope.launch(Dispatchers.Main) {
+            try {
+                if (showRewarded) {
+                    // ✅ call suspend safely
+                    ads.showRewardedAd(activity) { reward ->
+                        Toast.makeText(
+                            activity,
+                            "🎁 You earned ${reward.amount} ${reward.type}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                } else {
+                    ads.showInterstitial(activity)
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                // ✅ always reload both
+                ads.loadInterstitialAd(activity)
+                ads.loadRewardedAd(activity)
+            }
+        }
+    }
+
+    // ---------------------------------------------
+// 🪙 Called from ResultScreen — triggers reward ad
+// ---------------------------------------------
+    fun showRewardedAd(onReward: () -> Unit) {
+        val activity = hostActivity() ?: return
+
+        viewModelScope.launch(Dispatchers.Main) {
+            try {
+                ads.showRewardedAd(activity) { reward ->
+                    Toast.makeText(
+                        activity,
+                        "Reward unlocked: +${reward.amount} ${reward.type}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    onReward()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                ads.loadRewardedAd(activity)
             }
         }
     }
@@ -511,16 +558,8 @@ class QuizViewModel @Inject constructor(
 
 
 
-
-    /** Use this from ResultScreen button to grant reward (UI decides how many points) */
-    fun showRewardedAd(onReward: () -> Unit) {
-        val act = hostActivity() ?: return
-        ads.showRewardedAd(act) { _ ->
-            onReward()
-        }
-    }
-
-    fun addBonusPoints(amount: Int) {
+    fun addBonusPoints(amount: Int)
+    {
         viewModelScope.launch {
             val cat = currentCategory ?: return@launch
 

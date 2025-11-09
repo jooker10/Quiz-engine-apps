@@ -13,65 +13,66 @@ class UserQuizViewModel @Inject constructor(
     private val repository: UserQuizRepository
 ) : ViewModel() {
 
-    // 🔹 Expose categories as StateFlow for Compose
+    // ---------- Categories ----------
     val categories: StateFlow<List<UserCategoryEntity>> =
         repository.getAllCategories()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // 🔹 Expose questions grouped by categoryId
+    fun getCategoryById(id: Int) = repository.getCategoryById(id)
+
+    fun addCategory(name: String, description: String? = null) = viewModelScope.launch {
+        repository.insertCategory(UserCategoryEntity(name = name, description = description))
+    }
+
+    fun updateCategory(category: UserCategoryEntity, name: String, desc: String?) =
+        viewModelScope.launch {
+            repository.updateCategory(category.id, name, desc)
+        }
+
+    fun deleteCategory(category: UserCategoryEntity) = viewModelScope.launch {
+        repository.deleteCategory(category)
+    }
+
+
+    // ---------- Questions ----------
     @OptIn(ExperimentalCoroutinesApi::class)
     val questionsByCategory: StateFlow<Map<Int, List<UserQuestionEntity>>> =
         repository.getAllCategories()
             .flatMapLatest { categories ->
                 combine(categories.map { cat ->
                     repository.getQuestionsByCategory(cat.id)
-                        .map { questions -> cat.id to questions }
-                }) { pairs ->
-                    pairs.toMap()
-                }
+                        .map { cat.id to it }
+                }) { it.toMap() }
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
-    // 🔹 Add new category
-    fun addCategory(name: String, description: String? = null) {
-        viewModelScope.launch {
-            repository.insertCategory(UserCategoryEntity(name = name, description = description))
-        }
-    }
+    fun getQuestions(categoryId: Int) = repository.getQuestionsByCategory(categoryId)
 
-    // 🔹 Add new question
-    fun addQuestion(categoryId: Int, questionText: String, options: List<String>, correctAnswer: String) {
+    fun addQuestion(categoryId: Int, text: String, opts: List<String>, correct: String) =
         viewModelScope.launch {
             repository.insertQuestion(
                 UserQuestionEntity(
                     categoryId = categoryId,
-                    questionText = questionText,
-                    options = options,
-                    correctAnswer = correctAnswer
+                    questionText = text,
+                    options = opts,
+                    correctAnswer = correct
                 )
             )
         }
-    }
 
-    // 🔹 Delete category
-    fun deleteCategory(category: UserCategoryEntity) {
-        viewModelScope.launch { repository.deleteCategory(category) }
-    }
-    // UserQuizViewModel.kt  (make sure this function exists)
-    fun getQuestions(categoryId: Int) = repository.getQuestionsByCategory(categoryId)
-
-
-    // 🔹 Delete question
-    fun deleteQuestion(question: UserQuestionEntity) {
-        viewModelScope.launch { repository.deleteQuestion(question) }
-    }
-
-    // 🔹 Reset all user quizzes (categories + questions)
-    fun resetUserStats() {
+    fun updateQuestion(q: UserQuestionEntity, newText: String, newOpts: List<String>, newCorrect: String) =
         viewModelScope.launch {
-            repository.deleteAllQuestions()
-            repository.deleteAllCategories()
+            repository.updateQuestion(q.id, newText, newOpts, newCorrect)
         }
+
+    fun deleteQuestion(q: UserQuestionEntity) = viewModelScope.launch {
+        repository.deleteQuestion(q)
     }
 
+
+    // ---------- Reset ----------
+    fun resetUserStats() = viewModelScope.launch {
+        repository.deleteAllQuestions()
+        repository.deleteAllCategories()
+    }
 }

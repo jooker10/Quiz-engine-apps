@@ -23,7 +23,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
@@ -40,21 +39,10 @@ import futur.apps.composeproject1.viewmodels.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import futur.apps.composeproject1.quiz.core.AppConfig
 import futur.apps.composeproject1.quiz.ui.components.QuizModeSelectorRow
 
-/* ============================================================
-   🏠 QUIZ HOME SCREEN
-   ------------------------------------------------------------
-   🔹 Main entry point of the app’s home interface.
-   🔹 Lets user switch between Built-in Quizzes and User-Created Quizzes.
-   🔹 Displays overview stats, levels, and available categories.
-   ------------------------------------------------------------
-   🟩 Codester Buyers Note:
-   This file is the core of your quiz app’s home page.
-   It’s already optimized for readability, organization, and
-   customization — perfect for quickly building quiz-based apps.
-   ============================================================ */
 @Composable
 fun QuizHomeScreen(
     nav: NavController,
@@ -66,24 +54,20 @@ fun QuizHomeScreen(
     val homeUiState by homeViewModel.uiState.collectAsState()
     val currentQuizMode by quizViewModel.mode.collectAsState()
     val userCategories by userQuizViewModel.categories.collectAsState(initial = emptyList())
-    val userProfile = authViewModel.userProfile.collectAsState().value
+    val userProfile by authViewModel.userProfile.collectAsState()
 
-    // 🧠 Use totals from HomeViewModel (the real source of truth)
     val totalPoints = when (currentQuizMode) {
         QuizMode.DEFAULT -> homeUiState.defaultTotalPoints
         QuizMode.CUSTOM -> homeUiState.userTotalPoints
     }
-
     val username = userProfile?.name ?: homeUiState.username
 
-    // ✅ Optional: update Firestore total points automatically
-    LaunchedEffect(totalPoints) {
-        if (AppConfig.USE_FIRESTORE_SYNC && userProfile != null && totalPoints > 0) {
-            authViewModel.updatePointsInFirestore(totalPoints)
-        }
-    }
-
-     QuizHomeContent(
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        QuizHomeContent(
             userProfile = userProfile,
             navController = nav,
             uiState = homeUiState.copy(
@@ -96,6 +80,14 @@ fun QuizHomeScreen(
             userCategories = userCategories
         )
     }
+
+    // ✅ Firestore sync after UI is ready
+    LaunchedEffect(totalPoints) {
+        if (AppConfig.USE_FIRESTORE_SYNC && userProfile != null && totalPoints > 0) {
+            authViewModel.updatePointsInFirestore(totalPoints)
+        }
+    }
+}
 
 
 
@@ -272,9 +264,9 @@ fun StatCardGradient(
    ============================================================ */
 @Composable
 fun PlayerProfileCard(
+    modifier: Modifier = Modifier,
     username: String,
-    photoUrl: String? = null,
-    modifier: Modifier = Modifier
+    photoUrl: String? = null
 ) {
     Card(
         modifier = modifier.fillMaxHeight(),

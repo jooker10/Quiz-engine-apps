@@ -43,7 +43,7 @@ class AppDataStore @Inject constructor(
 
         // Global Mode
         val QUIZ_MODE_KEY = stringPreferencesKey("quiz_mode")
-        val USE_USER_QUESTIONS_KEY = booleanPreferencesKey("use_user_questions") // legacy
+        val USE_USER_QUESTIONS_KEY = booleanPreferencesKey("use_user_questions")
     }
 
     // ------------------------------------------------------------

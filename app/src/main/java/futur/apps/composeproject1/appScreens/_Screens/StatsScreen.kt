@@ -22,8 +22,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import futur.apps.composeproject1.quiz.ui.components.QuizModeSelectorRow
+import futur.apps.composeproject1.quiz.ui.components.getGradientColor
 import futur.apps.composeproject1.quiz.ui.theme.progressResultColor
 import futur.apps.composeproject1.utils.QuizMode
 import futur.apps.composeproject1.viewmodels.QuizViewModel
@@ -61,8 +62,7 @@ fun StatsScreen(
     }
 
     val totalAnswers = stats.totalCorrectAnswers + stats.totalWrongAnswers
-    val accuracy =
-        if (totalAnswers > 0) (stats.totalCorrectAnswers * 100f / totalAnswers).roundToInt() else 0
+    val accuracy = if (totalAnswers > 0) (stats.totalCorrectAnswers * 100f / totalAnswers).roundToInt() else 0
 
     if (stats.isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -77,9 +77,9 @@ fun StatsScreen(
         AlertDialog(
             onDismissRequest = { showConfirm = false },
             icon = {
-                Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                Icon(imageVector = Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
             },
-            title = { Text("Confirm Reset") },
+            title = { Text(text = "Confirm Reset") },
             text = {
                 Text(
                     "Reset ${if (selectedSource == 0) "App Quizzes" else "My Quizzes"} stats? This cannot be undone.",
@@ -90,12 +90,12 @@ fun StatsScreen(
                 TextButton(onClick = {
                     showConfirm = false
                     quizViewModel.resetStatsFor(
-                        if (selectedSource == 0) QuizMode.DEFAULT else QuizMode.CUSTOM
+                        mode = if (selectedSource == 0) QuizMode.DEFAULT else QuizMode.CUSTOM
                     )
                 }) { Text("Clear Stats", color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
-                TextButton(onClick = { showConfirm = false }) { Text("Cancel") }
+                TextButton(onClick = { showConfirm = false }) { Text(text = "Cancel") }
             }
         )
     }
@@ -103,7 +103,6 @@ fun StatsScreen(
     Scaffold(
         topBar = {
             Surface(
-               // tonalElevation = 4.dp,
                 color = MaterialTheme.colorScheme.background
             ) {
                 Column(
@@ -128,7 +127,7 @@ fun StatsScreen(
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
-                .padding(innerPadding)
+                .padding(paddingValues = innerPadding)
                 .fillMaxSize()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -140,20 +139,20 @@ fun StatsScreen(
                 item { GeneralStatsGrid(stats, accuracy) }
 
                 item {
-                    var selectedTab by remember { mutableIntStateOf(0) }
+                    var selectedTab by remember { mutableIntStateOf(value = 0) }
                     StatsTabs(selectedTab) { selectedTab = it }
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(height = 12.dp))
                     Crossfade(targetState = selectedTab, label = "tab") { tab ->
                         when (tab) {
                             0 -> {
                                 Column(
-                                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(space = 12.dp),
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(top = 4.dp, bottom = 12.dp)
                                 ) {
-                                    var metric by remember { mutableStateOf(ChartMetric.ACCURACY) }
-                                    var sort by remember { mutableStateOf(ChartSort.VALUE_DESC) }
+                                    var metric by remember { mutableStateOf(value = ChartMetric.ACCURACY) }
+                                    var sort by remember { mutableStateOf(value = ChartSort.VALUE_DESC) }
 
                                     ChartControls(
                                         metric = metric,
@@ -268,13 +267,6 @@ private fun GeneralStatsGrid(stats: StatsUiState, accuracy: Int) {
         }
     }
 }
-
-
-/* ============================================================
-   🌈 Theme-adaptive chips
-   ============================================================ */
-
-
 
 
 /* ============================================================
@@ -651,8 +643,4 @@ fun StatsBarChart(
     }
 }
 
-/* ============================================================
-   🎨 Helpers
-   ============================================================ */
-fun getGradientColor(startColor: Color, endColor: Color): Brush =
-    Brush.horizontalGradient(listOf(startColor, endColor))
+

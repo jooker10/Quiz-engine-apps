@@ -16,7 +16,7 @@ enum class DefaultCategory(
     Verbs("Verbs"),
     Sentences("Sentences"),
     PhrasalVerbs("Phrasal Verbs"),
-    Nouns("Nouns", ),
+    Nouns("Nouns"),
     Adjectives("Adjectives"),
     Adverbs("Adverbs"),
     Idioms("Idioms")

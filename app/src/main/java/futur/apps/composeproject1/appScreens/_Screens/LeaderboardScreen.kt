@@ -1,9 +1,11 @@
 package futur.apps.composeproject1.appScreens._Screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
@@ -14,21 +16,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
+import futur.apps.composeproject1.R
 import kotlinx.coroutines.tasks.await
 
 data class PlayerScore(
     val uid: String = "",
     val name: String = "Unknown",
-    val points: Int = 0
+    val points: Int = 0,
+    val photoUrl: String? = null
 )
 
 @Composable
@@ -40,13 +47,10 @@ fun LeaderboardScreen() {
     var currentUser by remember { mutableStateOf<PlayerScore?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    // ✅ Real-time listener registration
     var listener: ListenerRegistration? by remember { mutableStateOf(null) }
 
     LaunchedEffect(Unit) {
         try {
-            // 👂 Listen in real-time for top 10 players
             listener = db.collection("users")
                 .orderBy("totalPoints", Query.Direction.DESCENDING)
                 .limit(10)
@@ -55,27 +59,26 @@ fun LeaderboardScreen() {
                         errorMessage = error.localizedMessage
                         return@addSnapshotListener
                     }
-
-                    val fetchedPlayers = snapshot?.documents?.mapIndexed { index, doc ->
+                    val fetched = snapshot?.documents?.mapIndexed { index, doc ->
                         PlayerScore(
                             uid = doc.id,
                             name = doc.getString("name") ?: "Player ${index + 1}",
-                            points = (doc.getLong("totalPoints") ?: 0L).toInt()
+                            points = (doc.getLong("totalPoints") ?: 0L).toInt(),
+                            photoUrl = doc.getString("photoUrl")
                         )
                     } ?: emptyList()
-
-                    topPlayers = fetchedPlayers
+                    topPlayers = fetched
                     isLoading = false
                 }
 
-            // 👤 Load current user's data once
             auth.currentUser?.uid?.let { uid ->
                 val doc = db.collection("users").document(uid).get().await()
                 if (doc.exists()) {
                     currentUser = PlayerScore(
                         uid = uid,
                         name = doc.getString("name") ?: "You",
-                        points = (doc.getLong("totalPoints") ?: 0L).toInt()
+                        points = (doc.getLong("totalPoints") ?: 0L).toInt(),
+                        photoUrl = doc.getString("photoUrl")
                     )
                 }
             }
@@ -85,46 +88,21 @@ fun LeaderboardScreen() {
         }
     }
 
-    DisposableEffect(Unit) {
-        onDispose { listener?.remove() } // ✅ Stop listening when leaving screen
-    }
+    DisposableEffect(Unit) { onDispose { listener?.remove() } }
 
     when {
-        isLoading -> LoadingLeaderboard()
-        errorMessage != null -> ErrorLeaderboard(errorMessage!!)
+        isLoading -> Box(Modifier.fillMaxSize(), Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        errorMessage != null -> Box(Modifier.fillMaxSize(), Alignment.Center) {
+            Text("Error: $errorMessage", color = MaterialTheme.colorScheme.error)
+        }
         else -> LeaderboardContent(topPlayers, currentUser)
     }
 }
 
 /* -----------------------------------------------
-   💫 Loading & Error
------------------------------------------------ */
-@Composable
-fun LoadingLeaderboard() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-    }
-}
-
-@Composable
-fun ErrorLeaderboard(message: String) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "Error: $message",
-            color = MaterialTheme.colorScheme.error,
-            textAlign = TextAlign.Center
-        )
-    }
-}
-
-/* -----------------------------------------------
-   🏆 Main Content
+   🏆 Content
 ----------------------------------------------- */
 @Composable
 fun LeaderboardContent(players: List<PlayerScore>, currentUser: PlayerScore?) {
@@ -133,46 +111,41 @@ fun LeaderboardContent(players: List<PlayerScore>, currentUser: PlayerScore?) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.primary,
-                        MaterialTheme.colorScheme.background
-                    )
-                )
-            )
-            .padding(16.dp)
+            .background(MaterialTheme.colorScheme.background)
+            .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
         Text(
             text = "🏆 Top 10 Players",
-            style = MaterialTheme.typography.headlineMedium.copy(
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontWeight = FontWeight.Bold
+            style = MaterialTheme.typography.headlineSmall.copy(
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
             ),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 20.dp),
-            textAlign = TextAlign.Center
+                .padding(vertical = 12.dp)
         )
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             itemsIndexed(players) { index, player ->
-                LeaderboardCard(player, rank = index + 1)
+                LeaderboardCard(
+                    player = player,
+                    rank = index + 1,
+                    highlight = player.uid == currentUser?.uid
+                )
             }
 
             if (!userInTop && currentUser != null) {
                 item {
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Divider(color = MaterialTheme.colorScheme.outlineVariant)
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
                     Text(
-                        "Your Stats",
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
+                        "Your Position",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                        ),
+                        modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    LeaderboardCard(currentUser, rank = null, highlight = true)
+                    LeaderboardCard(player = currentUser, rank = null, highlight = true)
                 }
             }
         }
@@ -180,7 +153,7 @@ fun LeaderboardContent(players: List<PlayerScore>, currentUser: PlayerScore?) {
 }
 
 /* -----------------------------------------------
-   🥇 Player Card
+   🥇 Player Card — styled like CategoryListScreen
 ----------------------------------------------- */
 @Composable
 fun LeaderboardCard(
@@ -188,53 +161,90 @@ fun LeaderboardCard(
     rank: Int?,
     highlight: Boolean = false
 ) {
-    val gradientColors = when (rank) {
-        1 -> listOf(Color(0xFFFFD700), Color(0xFFFFE97F)) // Gold
-        2 -> listOf(Color(0xFFC0C0C0), Color(0xFFE0E0E0)) // Silver
-        3 -> listOf(Color(0xFFCD7F32), Color(0xFFE6A96B)) // Bronze
-        else -> if (highlight)
-            listOf(MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.tertiary)
-        else
-            listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceVariant)
+    val rankColor = when (rank) {
+        1 -> Color(0xFFFFD700)
+        2 -> Color(0xFFC0C0C0)
+        3 -> Color(0xFFCD7F32)
+        else -> MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
     }
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(Brush.horizontalGradient(gradientColors))
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (rank != null) {
-                Text(
-                    text = "#$rank",
-                    color = Color.Black,
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Profile photo or initial
+            if (!player.photoUrl.isNullOrEmpty()) {
+                AsyncImage(
+                    model = player.photoUrl,
+                    contentDescription = "Profile",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(50.dp)
+                        .clip(CircleShape)
                 )
-                Spacer(modifier = Modifier.width(16.dp))
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(50.dp)
+                        .clip(CircleShape)
+                        .background(rankColor),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = player.name.firstOrNull()?.uppercase() ?: "?",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp
+                    )
+                }
             }
-            Text(
-                text = player.name,
-                color = Color.Black,
-                style = MaterialTheme.typography.titleMedium
-            )
-        }
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = Icons.Default.Star,
-                contentDescription = null,
-                tint = Color.Black
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = "${player.points}",
-                color = Color.Black,
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
-            )
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = player.name,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "Points: ${player.points}",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                )
+            }
+
+            if (rank != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = null,
+                        tint = rankColor,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "#$rank",
+                        color = rankColor,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
         }
     }
 }

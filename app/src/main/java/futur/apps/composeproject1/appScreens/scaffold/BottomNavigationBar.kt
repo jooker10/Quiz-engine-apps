@@ -32,7 +32,7 @@ data class NavItem(
 )
 
 @Composable
-fun MainNavigation(navController: NavHostController) {
+fun BottomNavigationBar(navController: NavHostController) {
     val items = listOf(
         NavItem(
             label = "Home",

@@ -1,101 +1,141 @@
 package futur.apps.composeproject1.quizCreator
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import futur.apps.composeproject1.RoomDatabase.userroom.UserCategoryEntity
-import futur.apps.composeproject1.RoomDatabase.userroom.UserQuestionEntity
-import futur.apps.composeproject1.RoomDatabase.userroom.UserQuizViewModel
+import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavController
+import futur.apps.composeproject1.RoomDatabase.userroom.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryListScreen(
+    navController: NavController,
     viewModel: UserQuizViewModel = hiltViewModel()
 ) {
     val categories by viewModel.categories.collectAsState(initial = emptyList())
-    var showAddCategoryDialog by remember { mutableStateOf(false) }
-    var newCategoryName by remember { mutableStateOf("") }
-    var newCategoryDescription by remember { mutableStateOf("") }
+    var showAdd by remember { mutableStateOf(false) }
+    var editCat by remember { mutableStateOf<UserCategoryEntity?>(null) }
+    var catToDelete by remember { mutableStateOf<UserCategoryEntity?>(null) }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-
-        // ---------- Header ----------
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { showAdd = true },
+                containerColor = MaterialTheme.colorScheme.primary,
+                shape = CircleShape,
+                modifier = Modifier
+                    .padding(end = 16.dp)
+                    .padding(WindowInsets.navigationBars.asPaddingValues()) // adaptive bottom space
+            ) {
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = "Add Category",
+                    tint = Color.White
+                )
+            }
+        },
+        floatingActionButtonPosition = FabPosition.End
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            IconButton(onClick = { showAddCategoryDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Add DefaultCategory")
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        if (categories.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No categories yet. Click + to add one.")
-            }
-        } else {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(categories) { category ->
-                    CategoryItem(
-                        category = category,
-                        viewModel = viewModel
+            if (categories.isEmpty()) {
+                item {
+                    Box(
+                        Modifier
+                            .fillParentMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "No categories yet.\nTap the + button to add one.",
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            } else {
+                items(categories) { cat ->
+                    CategoryCardModern(
+                        category = cat,
+                        onClick = { navController.navigate("questions/${cat.id}") },
+                        onEdit = { editCat = cat },
+                        onDelete = { catToDelete = cat }
                     )
                 }
             }
         }
     }
 
-    // ---------- Add DefaultCategory Dialog ----------
-    if (showAddCategoryDialog) {
+    // Add new category dialog
+    if (showAdd) {
+        CategoryDialog(
+            title = "Add Category",
+            onDismiss = { showAdd = false },
+            onConfirm = { name, desc ->
+                viewModel.addCategory(name, desc)
+                showAdd = false
+            }
+        )
+    }
+
+    // Edit category dialog
+    editCat?.let { cat ->
+        CategoryDialog(
+            title = "Edit Category",
+            initialName = cat.name,
+            initialDesc = cat.description ?: "",
+            onDismiss = { editCat = null },
+            onConfirm = { name, desc ->
+                viewModel.updateCategory(cat, name, desc)
+                editCat = null
+            }
+        )
+    }
+
+    // Confirm delete dialog
+    catToDelete?.let { cat ->
         AlertDialog(
-            onDismissRequest = { showAddCategoryDialog = false },
-            title = { Text("Add DefaultCategory") },
+            onDismissRequest = { catToDelete = null },
+            title = { Text("Delete Category") },
             text = {
-                Column {
-                    TextField(
-                        value = newCategoryName,
-                        onValueChange = { newCategoryName = it },
-                        placeholder = { Text("DefaultCategory Name") },
-                        singleLine = true
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    TextField(
-                        value = newCategoryDescription,
-                        onValueChange = { newCategoryDescription = it },
-                        placeholder = { Text("Description (optional)") },
-                        singleLine = true
-                    )
-                }
+                Text("Are you sure you want to delete \"${cat.name}\"? " +
+                        "All its questions will also be removed.")
             },
             confirmButton = {
                 TextButton(onClick = {
-                    if (newCategoryName.isNotBlank()) {
-                        viewModel.addCategory(
-                            name = newCategoryName,
-                            description = newCategoryDescription.ifBlank { null }
-                        )
-                        newCategoryName = ""
-                        newCategoryDescription = ""
-                    }
-                    showAddCategoryDialog = false
+                    viewModel.deleteCategory(cat)
+                    catToDelete = null
                 }) {
-                    Text("Add")
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showAddCategoryDialog = false }) {
+                TextButton(onClick = { catToDelete = null }) {
                     Text("Cancel")
                 }
             }
@@ -103,154 +143,95 @@ fun CategoryListScreen(
     }
 }
 
+/* ------------------------------------------------------------------
+   ✨ Modern Card — Same vibe as HomeScreen
+------------------------------------------------------------------- */
 @Composable
-fun CategoryItem(
+private fun CategoryCardModern(
     category: UserCategoryEntity,
-    viewModel: UserQuizViewModel
+    onClick: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
 ) {
-    var showAddQuestionDialog by remember { mutableStateOf(false) }
-    val questions by viewModel.getQuestions(category.id).collectAsState(initial = emptyList())
-
-    Column(
+    Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
-            .padding(12.dp)
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
     ) {
-        // ---------- DefaultCategory Header ----------
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .clip(RoundedCornerShape(16.dp))
+                .background(
+                    Brush.horizontalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.surface,
+                            MaterialTheme.colorScheme.surface.copy(alpha = 0.08f)
+                        )
+                    )
+                )
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            // 🟣 Circle avatar
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = category.name.firstOrNull()?.uppercase() ?: "?",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .padding(start = 16.dp)
+                    .weight(1f)
+            ) {
                 Text(
                     text = category.name,
-                    style = MaterialTheme.typography.titleMedium
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-                if (!category.description.isNullOrBlank()) {
+                category.description?.takeIf { it.isNotBlank() }?.let {
                     Text(
-                        text = category.description!!,
-                        style = MaterialTheme.typography.bodySmall,
+                        text = if (it.length > 40) it.take(37) + "..." else it,
+                        fontSize = 13.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
             Row {
-                IconButton(onClick = { showAddQuestionDialog = true }) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Question")
+                IconButton(onClick = onEdit) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "Edit",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 }
-                IconButton(onClick = { viewModel.deleteCategory(category) }) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete DefaultCategory")
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // ---------- Questions List ----------
-        if (questions.isEmpty()) {
-            Text(
-                text = "No questions yet.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        } else {
-            questions.forEachIndexed { index, question ->
-                QuestionCard(question = question, index = index) {
-                    viewModel.deleteQuestion(question)
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Delete",
+                        tint = MaterialTheme.colorScheme.error
+                    )
                 }
             }
         }
     }
-
-    // ---------- Add Question Dialog ----------
-    if (showAddQuestionDialog) {
-        AddQuestionDialog(
-            onDismiss = { showAddQuestionDialog = false },
-            onConfirm = { qText, opts, correct ->
-                viewModel.addQuestion(category.id, qText, opts, correct)
-                showAddQuestionDialog = false
-            }
-        )
-    }
-}
-
-@Composable
-fun QuestionCard(
-    question: UserQuestionEntity,
-    index: Int,
-    onDelete: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        shape = RoundedCornerShape(10.dp),
-        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surface)
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text("Q${index + 1}: ${question.questionText}", style = MaterialTheme.typography.bodyLarge)
-            Spacer(modifier = Modifier.height(6.dp))
-            question.options.forEachIndexed { optIndex, option ->
-                val isCorrect = option == question.correctAnswer
-                Text(
-                    text = "${'A' + optIndex}. $option",
-                    color = if (isCorrect) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            TextButton(onClick = onDelete) {
-                Text("Delete Question", color = MaterialTheme.colorScheme.error)
-            }
-        }
-    }
-}
-
-@Composable
-fun AddQuestionDialog(
-    onDismiss: () -> Unit,
-    onConfirm: (String, List<String>, String) -> Unit
-) {
-    var questionText by remember { mutableStateOf("") }
-    var optionA by remember { mutableStateOf("") }
-    var optionB by remember { mutableStateOf("") }
-    var optionC by remember { mutableStateOf("") }
-    var optionD by remember { mutableStateOf("") }
-    var correctAnswer by remember { mutableStateOf("") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Add Question") },
-        text = {
-            Column {
-                TextField(value = questionText, onValueChange = { questionText = it }, label = { Text("Question") })
-                Spacer(modifier = Modifier.height(8.dp))
-                TextField(value = optionA, onValueChange = { optionA = it }, label = { Text("Option A") })
-                TextField(value = optionB, onValueChange = { optionB = it }, label = { Text("Option B") })
-                TextField(value = optionC, onValueChange = { optionC = it }, label = { Text("Option C") })
-                TextField(value = optionD, onValueChange = { optionD = it }, label = { Text("Option D") })
-                Spacer(modifier = Modifier.height(8.dp))
-                TextField(value = correctAnswer, onValueChange = { correctAnswer = it }, label = { Text("Correct Answer") })
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = {
-                if (questionText.isNotBlank() && correctAnswer.isNotBlank()) {
-                    val options = listOf(optionA, optionB, optionC, optionD).filter { it.isNotBlank() }
-                    onConfirm(questionText, options, correctAnswer)
-                }
-            }) {
-                Text("Add")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
 }

@@ -1,41 +1,23 @@
 package futur.apps.composeproject1.appScreens.navGraphs
 
 import android.app.Activity
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavGraphBuilder
-import androidx.navigation.NavHostController
-import androidx.navigation.NavType
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+
+import androidx.navigation.*
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import futur.apps.composeproject1.RoomDatabase.userroom.UserQuizViewModel
-import futur.apps.composeproject1.appScreens._Screens.LeaderboardScreen
-import futur.apps.composeproject1.appScreens._Screens.QuizHomeScreen
-import futur.apps.composeproject1.appScreens._Screens.SettingsScreen
-import futur.apps.composeproject1.appScreens._Screens.StatsScreen
-import futur.apps.composeproject1.auth.AuthViewModel
-import futur.apps.composeproject1.auth.LoginScreen
-import futur.apps.composeproject1.auth.RegisterScreen
-import futur.apps.composeproject1.quizCreator.CategoryListScreen
+import futur.apps.composeproject1.appScreens._Screens.*
+import futur.apps.composeproject1.auth.*
 import futur.apps.composeproject1.quiz.ui.screens.QuizScreen
-import futur.apps.composeproject1.utils.DefaultCategory
-import futur.apps.composeproject1.utils.QuizMode
-import futur.apps.composeproject1.utils.Screen
-import futur.apps.composeproject1.viewmodels.QuizCategory
-import futur.apps.composeproject1.viewmodels.QuizViewModel
+import futur.apps.composeproject1.quizCreator.CategoryListScreen
+import futur.apps.composeproject1.quizCreator.CategoryQuestionsScreen
+import futur.apps.composeproject1.utils.*
+import futur.apps.composeproject1.viewmodels.*
 
-/* ============================================================
-   🌐 Unified AppNavGraph
-   ------------------------------------------------------------
-   Handles navigation for both Auth and Main areas.
-   Works seamlessly with AuthViewModel state and the global loader.
-   ============================================================ */
 @Composable
 fun AppNavGraph(
     navController: NavHostController,
@@ -46,33 +28,43 @@ fun AppNavGraph(
     val userProfile by authViewModel.userProfile.collectAsState()
     val isChecking by authViewModel.isCheckingSession
 
-    // ✅ Navigate only when Auth state changes (after checking is done)
-    LaunchedEffect(userProfile, isChecking) {
+    // 1) ثبّت startDestination مرة واحدة فقط عند أول تركيب
+    val initialStart = remember {
+        if (userProfile != null || isUserLoggedIn) Screen.MainGraph.route
+        else Screen.AuthGraph.route
+    }
+
+    // 2) راقب الهدف الحالي، ولا تنفذ navigate إلا إذا تغيّر الهدف وثبتت حالة الفحص
+    val targetGraph = if (userProfile != null) Screen.MainGraph.route else Screen.AuthGraph.route
+    var lastRoutedGraph by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(isChecking, targetGraph) {
         if (!isChecking) {
-            if (userProfile != null) {
-                // User logged in → switch to Main graph
-                navController.navigate(Screen.MainGraph.route) {
-                    popUpTo(Screen.AuthGraph.route) { inclusive = true }
-                }
-            } else {
-                // User logged out → switch to Auth graph
-                navController.navigate(Screen.AuthGraph.route) {
-                    popUpTo(Screen.MainGraph.route) { inclusive = true }
+            // عند أول مرة، NavHost سيبدأ من initialStart، فلا داعي لnavigate إضافي
+            // بعد ذلك: لو تغيّر الهدف مقارنة بآخر توجيه منفذ، غيّر المسار بدون هدم متكرر
+            if (lastRoutedGraph == null) {
+                lastRoutedGraph = targetGraph
+            } else if (lastRoutedGraph != targetGraph) {
+                lastRoutedGraph = targetGraph
+                navController.navigate(targetGraph) {
+                    // امسح التكديس لغاية الجذر المناسب مع حفظ الحالة إن أمكن
+                    popUpTo(Screen.MainGraph.route) {
+                        inclusive = true
+                        saveState = true
+                    }
+                    popUpTo(Screen.AuthGraph.route) {
+                        inclusive = true
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
                 }
             }
         }
     }
 
-    // ✅ Define proper start destination (no Splash)
-    val startDestination = if (userProfile != null || isUserLoggedIn)
-        Screen.MainGraph.route
-    else
-        Screen.AuthGraph.route
+    NavHost(navController = navController, startDestination = initialStart) {
 
-    NavHost(
-        navController = navController,
-        startDestination = startDestination
-    ) {
         // ---------------- MAIN GRAPH ----------------
         navigation(
             route = Screen.MainGraph.route,
@@ -91,9 +83,6 @@ fun AppNavGraph(
     }
 }
 
-/* ============================================================
-   ✅ Main Graph
-   ============================================================ */
 fun NavGraphBuilder.addMainGraph(
     navController: NavHostController,
     userQuizViewModel: UserQuizViewModel
@@ -101,15 +90,28 @@ fun NavGraphBuilder.addMainGraph(
     composable(Screen.Home.route) {
         QuizHomeScreen(nav = navController)
     }
+    composable(Screen.Stats.route) { StatsScreen() }
+    composable(Screen.Settings.route) { SettingsScreen() }
+    composable(Screen.Leaderboard.route) { LeaderboardScreen() }
 
-    composable(Screen.Stats.route) {
-        StatsScreen()
-    }
-
+    // ---------- User Quiz Creator ----------
     composable(Screen.UserCategory.route) {
-        CategoryListScreen(viewModel = userQuizViewModel)
+        CategoryListScreen(navController = navController, viewModel = userQuizViewModel)
     }
 
+    composable(
+        route = Screen.CategoryQuestions.route,
+        arguments = listOf(navArgument("categoryId") { type = NavType.IntType })
+    ) { backStackEntry ->
+        val categoryId = backStackEntry.arguments?.getInt("categoryId") ?: 0
+        CategoryQuestionsScreen(
+            categoryId = categoryId,
+            navController = navController,
+            viewModel = userQuizViewModel
+        )
+    }
+
+    // ---------- Quiz ----------
     composable(
         route = Screen.Quiz.route,
         arguments = listOf(
@@ -131,8 +133,8 @@ fun NavGraphBuilder.addMainGraph(
         val quizViewModel: QuizViewModel = hiltViewModel()
         val category: QuizCategory? = when (mode) {
             QuizMode.DEFAULT -> {
-                val default = runCatching { DefaultCategory.valueOf(categoryName) }.getOrNull()
-                default?.let { QuizCategory.Default(it) }
+                val d = runCatching { DefaultCategory.valueOf(categoryName) }.getOrNull()
+                d?.let { QuizCategory.Default(it) }
             }
             QuizMode.CUSTOM -> QuizCategory.Custom(categoryName)
         }
@@ -146,18 +148,8 @@ fun NavGraphBuilder.addMainGraph(
             navController.popBackStack()
         }
     }
-
-    composable(Screen.Settings.route) {
-        SettingsScreen()
-    }
-    composable(Screen.Leaderboard.route) {
-        LeaderboardScreen()
-    }
 }
 
-/* ============================================================
-   ✅ Auth Graph
-   ============================================================ */
 fun NavGraphBuilder.addAuthGraph(
     navController: NavHostController,
     authViewModel: AuthViewModel
@@ -168,7 +160,6 @@ fun NavGraphBuilder.addAuthGraph(
             onNavigateToRegister = { navController.navigate(Screen.Register.route) }
         )
     }
-
     composable(Screen.Register.route) {
         RegisterScreen(
             viewModel = authViewModel,

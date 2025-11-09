@@ -16,40 +16,37 @@ class ThemeViewModel @Inject constructor(
     private val dataStore: AppDataStore
 ) : ViewModel() {
 
-    // ---------------- StateFlows ----------------
     private val _isLoaded = MutableStateFlow(false)
     val isLoaded: StateFlow<Boolean> get() = _isLoaded
 
-    val isDarkTheme: StateFlow<Boolean> = dataStore.isDarkThemeEnabled
-        .onEach { _isLoaded.value = true } // بمجرد تحميل القيمة نضع isLoaded = true
-        .stateIn(
-            viewModelScope,
-            SharingStarted.Eagerly,
-            false // default dark theme
-        )
+    // both flows
+    private val darkFlow = dataStore.isDarkThemeEnabled
+    private val paletteFlow = dataStore.selectedPaletteName
 
-    private val _selectedPaletteName: StateFlow<String> = dataStore.selectedPaletteName
-        .stateIn(
-            viewModelScope,
-            SharingStarted.Eagerly,
-            BluePalette.name // default palette
-        )
+    val isDarkTheme: StateFlow<Boolean> = darkFlow
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    private val _selectedPaletteName: StateFlow<String> = paletteFlow
+        .stateIn(viewModelScope, SharingStarted.Eagerly, BluePalette.name)
     val selectedPaletteName: StateFlow<String> get() = _selectedPaletteName
 
-    // ---------------- Actions ----------------
-    fun toggleTheme(enabled: Boolean) {
+    init {
+        // Wait for both prefs to load at least once before marking loaded
         viewModelScope.launch {
-            dataStore.saveDarkThemePreference(enabled)
+            combine(darkFlow, paletteFlow) { _, _ -> }
+                .first() // suspend until first pair emitted
+            _isLoaded.value = true
         }
+    }
+
+    fun toggleTheme(enabled: Boolean) {
+        viewModelScope.launch { dataStore.saveDarkThemePreference(enabled) }
     }
 
     fun setPalette(name: String) {
-        viewModelScope.launch {
-            dataStore.setSelectedPalette(name)
-        }
+        viewModelScope.launch { dataStore.setSelectedPalette(name) }
     }
 
-    fun getPalette(): AppPalette {
-        return AllPalettes.find { it.name == _selectedPaletteName.value } ?: BluePalette
-    }
+    fun getPalette(): AppPalette =
+        AllPalettes.find { it.name == _selectedPaletteName.value } ?: BluePalette
 }

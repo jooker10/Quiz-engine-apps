@@ -110,7 +110,4 @@ class SettingsViewModel @Inject constructor(
         dataStore.setMaxQuestions(value)
     }
 
-    fun updateGlobalQuizMode(mode: QuizMode) = viewModelScope.launch {
-        dataStore.setGlobalQuizMode(mode)
-    }
 }
