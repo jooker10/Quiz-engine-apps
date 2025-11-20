@@ -4,9 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,11 +13,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 
 @Composable
 fun RegisterScreen(
-    viewModel: AuthViewModel = viewModel(),
+    viewModel: AuthViewModel = hiltViewModel(),
     onNavigateToLogin: () -> Unit
 ) {
     val isLoading by viewModel.isLoading
@@ -30,7 +28,10 @@ fun RegisterScreen(
     var password by remember { mutableStateOf("") }
 
     val gradient = Brush.verticalGradient(
-        listOf(Color(0xFF8E2DE2), Color(0xFF4A90E2))
+        listOf(
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.90f),
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.50f)
+        )
     )
 
     Box(
@@ -40,29 +41,34 @@ fun RegisterScreen(
         contentAlignment = Alignment.Center
     ) {
         Surface(
-            shape = RoundedCornerShape(24.dp),
-            tonalElevation = 6.dp,
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+            shape = RoundedCornerShape(26.dp),
+            tonalElevation = 8.dp,
             modifier = Modifier
-                .padding(24.dp)
+                .padding(horizontal = 24.dp)
                 .fillMaxWidth()
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
-                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.padding(28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Create Account", style = MaterialTheme.typography.headlineSmall)
-                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    "Create Account",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                Spacer(Modifier.height(20.dp))
 
                 OutlinedTextField(
                     value = email,
-                    onValueChange = { email = it },
+                    onValueChange = { email = it.trim() },
                     label = { Text("Email") },
                     leadingIcon = { Icon(Icons.Default.Email, null) },
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+
+                Spacer(Modifier.height(12.dp))
+
                 OutlinedTextField(
                     value = username,
                     onValueChange = { username = it },
@@ -70,7 +76,9 @@ fun RegisterScreen(
                     leadingIcon = { Icon(Icons.Default.Person, null) },
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+
+                Spacer(Modifier.height(12.dp))
+
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
@@ -80,28 +88,41 @@ fun RegisterScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(Modifier.height(22.dp))
+
                 Button(
-                    onClick = { viewModel.register(email, password, username) },
-                    modifier = Modifier.fillMaxWidth()
+                    onClick = {
+                        viewModel.register(
+                            email = email,
+                            password = password,
+                            username = username
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Text("Register")
                 }
+
+                Spacer(Modifier.height(8.dp))
 
                 TextButton(onClick = onNavigateToLogin) {
                     Text("Already have an account? Sign in")
                 }
 
                 if (error != null) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(error!!, color = Color.Red)
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        text = error!!,
+                        color = Color.Red
+                    )
                 }
             }
         }
 
         if (isLoading) {
             Box(
-                modifier = Modifier
+                Modifier
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.4f)),
                 contentAlignment = Alignment.Center

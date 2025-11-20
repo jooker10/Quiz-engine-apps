@@ -22,50 +22,15 @@ import futur.apps.composeproject1.viewmodels.*
 fun AppNavGraph(
     navController: NavHostController,
     authViewModel: AuthViewModel,
-    isUserLoggedIn: Boolean
+    startDestination: String
 ) {
     val userQuizViewModel: UserQuizViewModel = hiltViewModel()
-    val userProfile by authViewModel.userProfile.collectAsState()
-    val isChecking by authViewModel.isCheckingSession
 
-    // 1) ثبّت startDestination مرة واحدة فقط عند أول تركيب
-    val initialStart = remember {
-        if (userProfile != null || isUserLoggedIn) Screen.MainGraph.route
-        else Screen.AuthGraph.route
-    }
-
-    // 2) راقب الهدف الحالي، ولا تنفذ navigate إلا إذا تغيّر الهدف وثبتت حالة الفحص
-    val targetGraph = if (userProfile != null) Screen.MainGraph.route else Screen.AuthGraph.route
-    var lastRoutedGraph by remember { mutableStateOf<String?>(null) }
-
-    LaunchedEffect(isChecking, targetGraph) {
-        if (!isChecking) {
-            // عند أول مرة، NavHost سيبدأ من initialStart، فلا داعي لnavigate إضافي
-            // بعد ذلك: لو تغيّر الهدف مقارنة بآخر توجيه منفذ، غيّر المسار بدون هدم متكرر
-            if (lastRoutedGraph == null) {
-                lastRoutedGraph = targetGraph
-            } else if (lastRoutedGraph != targetGraph) {
-                lastRoutedGraph = targetGraph
-                navController.navigate(targetGraph) {
-                    // امسح التكديس لغاية الجذر المناسب مع حفظ الحالة إن أمكن
-                    popUpTo(Screen.MainGraph.route) {
-                        inclusive = true
-                        saveState = true
-                    }
-                    popUpTo(Screen.AuthGraph.route) {
-                        inclusive = true
-                        saveState = true
-                    }
-                    launchSingleTop = true
-                    restoreState = true
-                }
-            }
-        }
-    }
-
-    NavHost(navController = navController, startDestination = initialStart) {
-
-        // ---------------- MAIN GRAPH ----------------
+    NavHost(
+        navController = navController,
+        startDestination = startDestination
+    ) {
+        // MAIN
         navigation(
             route = Screen.MainGraph.route,
             startDestination = Screen.Home.route
@@ -73,7 +38,7 @@ fun AppNavGraph(
             addMainGraph(navController, userQuizViewModel)
         }
 
-        // ---------------- AUTH GRAPH ----------------
+        // AUTH
         navigation(
             route = Screen.AuthGraph.route,
             startDestination = Screen.Login.route
@@ -82,6 +47,7 @@ fun AppNavGraph(
         }
     }
 }
+
 
 fun NavGraphBuilder.addMainGraph(
     navController: NavHostController,
@@ -97,6 +63,10 @@ fun NavGraphBuilder.addMainGraph(
     // ---------- User Quiz Creator ----------
     composable(Screen.UserCategory.route) {
         CategoryListScreen(navController = navController, viewModel = userQuizViewModel)
+    }
+
+    composable(Screen.About.route) {
+        AboutScreen()
     }
 
     composable(

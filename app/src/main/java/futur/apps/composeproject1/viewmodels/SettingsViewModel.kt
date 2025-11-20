@@ -28,7 +28,8 @@ data class SettingsUiState(
     val soundEnabled: Boolean = true,
     val ttsEnabled: Boolean = true,
     val maxQuestions: Int = 10,
-    val globalQuizMode: QuizMode = QuizMode.DEFAULT
+    val globalQuizMode: QuizMode = QuizMode.DEFAULT,
+    val reminderEnabled: Boolean = true
 )
 
 @HiltViewModel
@@ -48,7 +49,8 @@ class SettingsViewModel @Inject constructor(
             dataStore.enableSounds,
             dataStore.enableTTS,
             dataStore.maxQuestions,
-            dataStore.globalQuizMode
+            dataStore.globalQuizMode,
+            dataStore.showReminderNotifications
         )
     ) { values ->
         val dark = values[0] as? Boolean ?: false
@@ -58,8 +60,9 @@ class SettingsViewModel @Inject constructor(
         val sound = values[4] as? Boolean ?: true
         val tts = values[5] as? Boolean ?: true
         val maxQ = values[6] as? Int ?: 10
-        val quizMode = values[7] as? QuizMode
-            ?: QuizMode.DEFAULT
+        val quizMode = values[7] as? QuizMode ?: QuizMode.DEFAULT
+        val reminderEnabled = values[8] as? Boolean ?: true
+
 
         SettingsUiState(
             isLoading = false,
@@ -70,7 +73,8 @@ class SettingsViewModel @Inject constructor(
             soundEnabled = sound,
             ttsEnabled = tts,
             maxQuestions = maxQ,
-            globalQuizMode = quizMode
+            globalQuizMode = quizMode,
+            reminderEnabled = reminderEnabled
         )
     }.stateIn(
         scope = viewModelScope,
@@ -109,5 +113,9 @@ class SettingsViewModel @Inject constructor(
     fun updateMaxQuestions(value: Int) = viewModelScope.launch {
         dataStore.setMaxQuestions(value)
     }
+    fun updateReminderEnabled(enabled: Boolean) = viewModelScope.launch {
+        dataStore.setShowReminderNotifications(enabled)
+    }
+
 
 }

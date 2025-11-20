@@ -11,20 +11,31 @@ import futur.apps.composeproject1.RoomDatabase.QuizRepository
 import futur.apps.composeproject1.RoomDatabase.userroom.UserQuestionEntity
 import futur.apps.composeproject1.RoomDatabase.userroom.UserQuizRepository
 import futur.apps.composeproject1.ads.AdsManager
+import futur.apps.composeproject1.auth.AuthViewModel
 import futur.apps.composeproject1.dataStore.AppDataStore
 import futur.apps.composeproject1.quiz.core.AppConfig
 import futur.apps.composeproject1.quiz.core.QuizEngine
 import futur.apps.composeproject1.quiz.ui.components.ReviewAnswer
-import futur.apps.composeproject1.utils.*
+import futur.apps.composeproject1.utils.DataEntity
+import futur.apps.composeproject1.utils.DefaultCategory
+import futur.apps.composeproject1.utils.Question
+import futur.apps.composeproject1.utils.QuizMode
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import futur.apps.composeproject1.auth.AuthViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import java.lang.ref.WeakReference
+import javax.inject.Inject
 import kotlin.random.Random
 
 // ============================================================
@@ -403,7 +414,7 @@ class QuizViewModel @Inject constructor(
 
                     if (AppConfig.USE_FIRESTORE_SYNC && authViewModel != null) {
                         val totalPoints = updatedMap.values.sum()
-                        authViewModel.updatePointsInFirestore(totalPoints)
+                        authViewModel.updateDefaultPointsInFirestore(totalPoints)
                     }
                 }
 

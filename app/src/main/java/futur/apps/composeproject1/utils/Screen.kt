@@ -11,6 +11,8 @@ sealed class Screen(val route: String, val title: String = "") {
         fun createRoute(categoryId: Int) = "questions/$categoryId"
     }
     object Leaderboard : Screen("leaderboard", "Leaderboard")
+    object About : Screen("about", "About")
+
 
     // ---------------- Quiz ----------------
     object Quiz : Screen("quiz/{mode}/{categoryName}") {

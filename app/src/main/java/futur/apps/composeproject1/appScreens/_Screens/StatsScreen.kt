@@ -57,17 +57,19 @@ fun StatsScreen(
     val currentMode by quizViewModel.mode.collectAsState()
     var selectedSource by remember { mutableIntStateOf(if (currentMode == QuizMode.DEFAULT) 0 else 1) }
 
+    // Keep quiz mode synced with the selector
     LaunchedEffect(selectedSource) {
         quizViewModel.saveGlobalQuizMode(if (selectedSource == 0) QuizMode.DEFAULT else QuizMode.CUSTOM)
     }
 
     val totalAnswers = stats.totalCorrectAnswers + stats.totalWrongAnswers
-    val accuracy = if (totalAnswers > 0) (stats.totalCorrectAnswers * 100f / totalAnswers).roundToInt() else 0
+    val accuracy = if (totalAnswers > 0)
+        (stats.totalCorrectAnswers * 100f / totalAnswers).roundToInt()
+    else 0
 
+    // ✅ Use unified screen loader
     if (stats.isLoading) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
+        ScreenLoadingIndicator()
         return
     }
 
@@ -77,9 +79,13 @@ fun StatsScreen(
         AlertDialog(
             onDismissRequest = { showConfirm = false },
             icon = {
-                Icon(imageVector = Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
             },
-            title = { Text(text = "Confirm Reset") },
+            title = { Text("Confirm Reset") },
             text = {
                 Text(
                     "Reset ${if (selectedSource == 0) "App Quizzes" else "My Quizzes"} stats? This cannot be undone.",
@@ -95,16 +101,14 @@ fun StatsScreen(
                 }) { Text("Clear Stats", color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
-                TextButton(onClick = { showConfirm = false }) { Text(text = "Cancel") }
+                TextButton(onClick = { showConfirm = false }) { Text("Cancel") }
             }
         )
     }
 
     Scaffold(
         topBar = {
-            Surface(
-                color = MaterialTheme.colorScheme.background
-            ) {
+            Surface(color = MaterialTheme.colorScheme.background) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -127,7 +131,7 @@ fun StatsScreen(
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
-                .padding(paddingValues = innerPadding)
+                .padding(innerPadding)
                 .fillMaxSize()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -139,20 +143,20 @@ fun StatsScreen(
                 item { GeneralStatsGrid(stats, accuracy) }
 
                 item {
-                    var selectedTab by remember { mutableIntStateOf(value = 0) }
+                    var selectedTab by remember { mutableIntStateOf(0) }
                     StatsTabs(selectedTab) { selectedTab = it }
-                    Spacer(Modifier.height(height = 12.dp))
+                    Spacer(Modifier.height(12.dp))
                     Crossfade(targetState = selectedTab, label = "tab") { tab ->
                         when (tab) {
                             0 -> {
                                 Column(
-                                    verticalArrangement = Arrangement.spacedBy(space = 12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp),
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(top = 4.dp, bottom = 12.dp)
                                 ) {
-                                    var metric by remember { mutableStateOf(value = ChartMetric.ACCURACY) }
-                                    var sort by remember { mutableStateOf(value = ChartSort.VALUE_DESC) }
+                                    var metric by remember { mutableStateOf(ChartMetric.ACCURACY) }
+                                    var sort by remember { mutableStateOf(ChartSort.VALUE_DESC) }
 
                                     ChartControls(
                                         metric = metric,

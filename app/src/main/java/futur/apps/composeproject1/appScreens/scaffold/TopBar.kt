@@ -1,5 +1,8 @@
 package futur.apps.composeproject1.appScreens.scaffold
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -11,7 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import futur.apps.composeproject1.auth.AuthViewModel
@@ -20,112 +23,153 @@ import futur.apps.composeproject1.utils.Screen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBar(navController: NavHostController) {
-    val expanded = remember { mutableStateOf(false) }
-    val showDialog = remember { mutableStateOf(false) }
 
-    val backStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = backStackEntry?.destination?.route
+    val authViewModel: AuthViewModel = hiltViewModel()
 
-    val authViewModel: AuthViewModel = viewModel()
+    val userProfile by authViewModel.userProfile.collectAsState()
 
-    val title = when {
-        currentRoute == Screen.Home.route -> "Home"
-        currentRoute == Screen.Stats.route -> "Statistics"
-        currentRoute == Screen.Settings.route -> "Settings"
-        currentRoute == Screen.UserCategory.route -> "User Category"
-        currentRoute?.startsWith("quiz/") == true -> {
-            val categoryName = backStackEntry?.arguments?.getString("category") ?: ""
-            "$categoryName Quiz"
-        }
-        else -> "Home"
+    var expanded by remember { mutableStateOf(false) }
+    var showSignOutDialog by remember { mutableStateOf(false) }
+
+    val backStack by navController.currentBackStackEntryAsState()
+    val route = backStack?.destination?.route
+
+    val mainRoutes = listOf(
+        Screen.Home.route,
+        Screen.Stats.route,
+        Screen.Settings.route,
+        Screen.UserCategory.route,
+        Screen.Leaderboard.route
+    )
+
+    // هل نعرض سهم الرجوع؟
+    val showBack = route !in mainRoutes
+
+    // عنوان الصفحة
+    val title = when (route) {
+        Screen.Home.route -> "Home"
+        Screen.Stats.route -> "Statistics"
+        Screen.Settings.route -> "Settings"
+        Screen.UserCategory.route -> "My Quizzes"
+        Screen.Leaderboard.route -> "Leaderboard"
+        Screen.About.route -> "About"
+        Screen.Login.route -> "Sign In"
+        Screen.Register.route -> "Register"
+        else -> route?.substringAfterLast("/")?.replaceFirstChar { it.uppercase() } ?: ""
     }
 
-    val showBackArrow = currentRoute?.startsWith("quiz/") == true
-
-    // --- Sign-out Confirmation Dialog ---
-    if (showDialog.value) {
+    // Dialog: Sign Out
+    if (showSignOutDialog) {
         AlertDialog(
-            onDismissRequest = { showDialog.value = false },
-            title = { Text("Sign out") },
-            text = { Text("Are you sure you want to sign out?") },
+            onDismissRequest = { showSignOutDialog = false },
+            title = { Text("Sign Out") },
+            text = { Text("Do you really want to sign out?") },
             confirmButton = {
-                TextButton(onClick = {
-                    showDialog.value = false
-                    authViewModel.signOut()
-                    // Optionally navigate back to login if needed
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.MainGraph.route) { inclusive = true }
+                TextButton(
+                    onClick = {
+                        showSignOutDialog = false
+                        authViewModel.signOut()
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(Screen.MainGraph.route) { inclusive = true }
+                        }
                     }
-                }) {
-                    Text("Yes, Sign out")
+                ) {
+                    Text("Yes, Sign Out")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDialog.value = false }) {
+                TextButton(onClick = { showSignOutDialog = false }) {
                     Text("Cancel")
                 }
             }
         )
     }
 
-    TopAppBar(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp, horizontal = 8.dp)
-            .windowInsetsPadding(WindowInsets.statusBars)
-            .clip(RoundedCornerShape(12.dp)),
-        title = {
-            Box(
-                Modifier.fillMaxWidth(),
-                contentAlignment = if (showBackArrow) Alignment.Center else Alignment.CenterStart
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-        },
-        navigationIcon = {
-            if (showBackArrow) {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(Icons.Default.ArrowBackIosNew, contentDescription = "Back")
-                }
-            }
-        },
-        actions = {
-            Box {
-                IconButton(onClick = { expanded.value = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "More options")
-                }
-                DropdownMenu(
-                    expanded = expanded.value,
-                    onDismissRequest = { expanded.value = false }
+    Surface(
+        tonalElevation = 6.dp,
+        shadowElevation = 4.dp,
+        shape = RoundedCornerShape(bottomEnd = 18.dp, bottomStart = 18.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        TopAppBar(
+            modifier = Modifier
+                .padding(horizontal = 6.dp, vertical = 4.dp)
+                .clip(RoundedCornerShape(16.dp)),
+            title = {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = if (showBack) Alignment.Center else Alignment.CenterStart
                 ) {
-                    DropdownMenuItem(
-                        text = { Text("Refresh") },
-                        onClick = {
-                            expanded.value = false
-                            // TODO: implement refresh if needed
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Sign out") },
-                        onClick = {
-                            expanded.value = false
-                            showDialog.value = true
-                        }
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface,
-            navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-            actionIconContentColor = MaterialTheme.colorScheme.onSurface
-        ),
-        scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
-        windowInsets = WindowInsets(0.dp)
-    )
+            },
+            navigationIcon = {
+                AnimatedVisibility(
+                    visible = showBack,
+                    enter = fadeIn(),
+                    exit = fadeOut()
+                ) {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            Icons.Default.ArrowBackIosNew,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            },
+            actions = {
+                Box {
+                    IconButton(onClick = { expanded = true }) {
+                        Icon(
+                            Icons.Default.MoreVert,
+                            contentDescription = "Menu",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+
+                        DropdownMenuItem(
+                            text = { Text("Rate App") },
+                            onClick = {
+                                expanded = false
+                                // TODO: open store
+                            }
+                        )
+
+                        DropdownMenuItem(
+                            text = { Text("About") },
+                            onClick = {
+                                expanded = false
+                                navController.navigate(Screen.About.route)
+                            }
+                        )
+
+                        if (userProfile != null) {
+                            DropdownMenuItem(
+                                text = { Text("Sign Out") },
+                                onClick = {
+                                    expanded = false
+                                    showSignOutDialog = true
+                                }
+                            )
+                        }
+                    }
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                titleContentColor = MaterialTheme.colorScheme.onSurface,
+                navigationIconContentColor = MaterialTheme.colorScheme.primary,
+                actionIconContentColor = MaterialTheme.colorScheme.primary
+            )
+        )
+    }
 }

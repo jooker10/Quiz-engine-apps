@@ -1,5 +1,8 @@
 package futur.apps.composeproject1._Mains
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -14,6 +17,11 @@ import kotlinx.coroutines.launch
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import futur.apps.composeproject1.notifications.ReminderWorker
+import java.util.concurrent.TimeUnit
 
 /**
  * MainActivity — Entry point of the app.
@@ -54,5 +62,35 @@ class MainActivity : ComponentActivity() {
                 e.printStackTrace()
             }
         }
+
+        scheduleReminderWorker()
     }
+
+    private fun scheduleReminderWorker() {
+        val workManager = WorkManager.getInstance(this)
+
+        val request = PeriodicWorkRequestBuilder<ReminderWorker>(
+            24, TimeUnit.HOURS
+        ).build()
+
+        workManager.enqueueUniquePeriodicWork(
+            "quiz_reminder_work",
+            ExistingPeriodicWorkPolicy.UPDATE,
+            request
+        )
+    }
+
+
+    private fun createReminderChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                "reminder_channel",
+                "Quiz Reminder",
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+            val manager = getSystemService(NotificationManager::class.java)
+            manager.createNotificationChannel(channel)
+        }
+    }
+
 }

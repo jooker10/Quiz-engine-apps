@@ -1,0 +1,17 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp" android:viewportWidth="24"
+    android:viewportHeight="24" android:tint="?attr/colorControlActivated">
+    <!-- Cup + stem + base -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M6,6v3c0,3.866 3.134,7 7,7v2H9a1,1 0 1,0 0,2h6a1,1 0 1,0 0,-2h-4v-2c3.866,0 7,-3.134 7,-7v-3H6ZM6,7H4a3,3 0 0,0 3,3V7Zm12,0v3a3,3 0 0,0 3,-3h-3Z"/>
+    <!-- Badge circle -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M18,2a2.5,2.5 0 1,0 0,5a2.5,2.5 0 1,0 0,-5Z"/>
+    <!-- Star (contrast) -->
+    <path
+        android:fillColor="#000000"
+        android:fillAlpha="0.9"
+        android:pathData="M18,3.6l0.45,0.9 1,0.15 -0.72,0.7 0.17,1 -0.9,-0.48 -0.9,0.48 0.17,-1 -0.72,-0.7 1,-0.15 0.45,-0.9Z"/>
+</vector>

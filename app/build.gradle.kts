@@ -115,6 +115,9 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("androidx.hilt:hilt-lifecycle-viewmodel-compose:1.3.0")
 
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+
+
 }
 
 

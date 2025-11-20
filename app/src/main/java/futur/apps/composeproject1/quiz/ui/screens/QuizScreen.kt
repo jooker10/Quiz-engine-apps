@@ -81,7 +81,7 @@ fun QuizScreen(
             AppConfig.USE_FIRESTORE_SYNC
         ) {
             val totalPoints = quizViewModel.getTotalPoints()
-            authViewModel.updatePointsInFirestore(totalPoints)
+            authViewModel.updateDefaultPointsInFirestore(totalPoints)
         }
     }
 
@@ -113,7 +113,7 @@ fun QuizScreen(
                 val currentCategory = uiState.category
                 if (currentCategory is QuizCategory.Default) {
                     val totalPoints = quizViewModel.getTotalPoints()
-                    authViewModel.updatePointsInFirestore(totalPoints)
+                    authViewModel.updateDefaultPointsInFirestore(totalPoints)
                 }
             }
 

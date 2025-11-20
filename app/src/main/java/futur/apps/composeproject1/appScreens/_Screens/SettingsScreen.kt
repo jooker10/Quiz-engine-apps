@@ -16,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -30,62 +29,51 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    var expandedLang by remember { mutableStateOf(false) }
-    var expandedMaxQuestions by remember { mutableStateOf(false) }
+    // Dialog flags
     var showPaletteDialog by remember { mutableStateOf(false) }
+    var showLangDialog by remember { mutableStateOf(false) }
+    var showQuestionsDialog by remember { mutableStateOf(false) }
 
     val languages = listOf("English", "French", "Arabic")
     val questionOptions = listOf(10, 15, 20)
 
-    if(uiState.isLoading){
-        ThemeLoadingScreen()
+    if (uiState.isLoading) {
+        ScreenLoadingIndicator()
         return
     }
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp) // ⬅ adds space between sections
     ) {
         // ---------------- Appearance ----------------
         item {
-            SectionHeader(title = "Appearance")
+            SectionHeader("Appearance")
 
-            SettingCard(
-                icon = Icons.Default.DarkMode,
-                title = "Dark Mode",
-                description = "Switch between light and dark themes"
-            ) {
-                Switch(
-                    checked = uiState.isDarkMode,
-                    onCheckedChange = { viewModel.updateDarkMode(it) }
-                )
-            }
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { // ⬅ space between items
+                SettingCard(
+                    icon = Icons.Default.DarkMode,
+                    title = "Dark Mode",
+                    description = "Switch between light and dark themes"
+                ) {
+                    Switch(
+                        checked = uiState.isDarkMode,
+                        onCheckedChange = { viewModel.updateDarkMode(it) }
+                    )
+                }
 
-            // Palette Selector
-            SettingCard(
-                icon = Icons.Default.Palette,
-                title = "App Colors",
-                description = "Choose a professional color palette"
-            ) {
-                Box(
-                    modifier = Modifier
-                        .clip(MaterialTheme.shapes.small)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-                        .border(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.primary,
-                            shape = MaterialTheme.shapes.small
-                        )
-                        .clickable { showPaletteDialog = true }
-                        .padding(horizontal = 6.dp, vertical = 6.dp)
+                SettingCard(
+                    icon = Icons.Default.Palette,
+                    title = "App Colors",
+                    description = "Choose a professional color palette",
+                    clickable = { showPaletteDialog = true }
                 ) {
                     Text(
-                        text = uiState.selectedPalette,
+                        uiState.selectedPalette,
                         color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 14.sp
+                        fontSize = 15.sp
                     )
                 }
             }
@@ -93,199 +81,271 @@ fun SettingsScreen(
 
         // ---------------- Language ----------------
         item {
+            SectionHeader("Language")
+
             SettingCard(
                 icon = Icons.Default.Language,
                 title = "Language",
-                description = "Choose app language"
+                description = "Choose app language",
+                clickable = { showLangDialog = true }
             ) {
                 Text(
-                    text = uiState.language,
+                    uiState.language,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.clickable { expandedLang = !expandedLang }
+                    fontSize = 15.sp
                 )
-            }
-
-            if (expandedLang) {
-                Column(modifier = Modifier.padding(start = 48.dp, top = 4.dp)) {
-                    languages.forEach { lang ->
-                        Text(
-                            text = lang,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    expandedLang = false
-                                    viewModel.updateLanguage(lang)
-                                }
-                                .padding(vertical = 6.dp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
             }
         }
 
         // ---------------- General ----------------
         item {
-            SectionHeader(title = "General")
+            SectionHeader("General")
 
             SettingCard(
                 icon = Icons.Default.Notifications,
-                title = "Notifications",
-                description = "Daily quiz reminders"
+                title = "Quiz Reminders",
+                description = "Enable daily reminder notifications"
             ) {
                 Switch(
-                    checked = true, // Placeholder — add later if you persist notifications
-                    onCheckedChange = { /* TODO */ }
+                    checked = uiState.reminderEnabled,
+                    onCheckedChange = { viewModel.updateReminderEnabled(it) }
                 )
             }
+
         }
 
         // ---------------- Quiz Configuration ----------------
-
         item {
-            SectionHeader(title = "Quiz Configuration")
+            SectionHeader("Quiz Configuration")
 
-            SettingCard(
-                icon = Icons.Default.PlayCircle,
-                title = "Auto-Next",
-                description = "Automatically move to next question"
-            ) {
-                Switch(
-                    checked = uiState.autoNext,
-                    onCheckedChange = { viewModel.updateAutoNext(it) }
-                )
-            }
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                SettingCard(
+                    icon = Icons.Default.PlayCircle,
+                    title = "Auto-Next",
+                    description = "Automatically move to next question"
+                ) {
+                    Switch(
+                        checked = uiState.autoNext,
+                        onCheckedChange = { viewModel.updateAutoNext(it) }
+                    )
+                }
 
-            SettingCard(
-                icon = Icons.Default.Audiotrack,
-                title = "Sound Effects",
-                description = "Enable quiz sounds"
-            ) {
-                Switch(
-                    checked = uiState.soundEnabled,
-                    onCheckedChange = { viewModel.updateSound(it) }
-                )
-            }
+                SettingCard(
+                    icon = Icons.Default.Audiotrack,
+                    title = "Sound Effects",
+                    description = "Enable quiz sounds"
+                ) {
+                    Switch(
+                        checked = uiState.soundEnabled,
+                        onCheckedChange = { viewModel.updateSound(it) }
+                    )
+                }
 
-            SettingCard(
-                icon = Icons.Default.RecordVoiceOver,
-                title = "Text-to-Speech",
-                description = "Read questions aloud"
-            ) {
-                Switch(
-                    checked = uiState.ttsEnabled,
-                    onCheckedChange = { viewModel.updateTTS(it) }
-                )
-            }
+                SettingCard(
+                    icon = Icons.Default.RecordVoiceOver,
+                    title = "Text-to-Speech",
+                    description = "Read questions aloud"
+                ) {
+                    Switch(
+                        checked = uiState.ttsEnabled,
+                        onCheckedChange = { viewModel.updateTTS(it) }
+                    )
+                }
 
-            SettingCard(
-                icon = Icons.Default.Tune,
-                title = "Max Questions",
-                description = "Questions per quiz session"
-            ) {
-                Text(
-                    text = "${uiState.maxQuestions}",
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.clickable { expandedMaxQuestions = !expandedMaxQuestions }
-                )
-            }
-
-            if (expandedMaxQuestions) {
-                Column(modifier = Modifier.padding(start = 48.dp, top = 4.dp)) {
-                    questionOptions.forEach { count ->
-                        Text(
-                            text = "$count questions",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    expandedMaxQuestions = false
-                                    viewModel.updateMaxQuestions(count)
-                                }
-                                .padding(vertical = 6.dp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                SettingCard(
+                    icon = Icons.Default.Tune,
+                    title = "Max Questions",
+                    description = "Questions per quiz session",
+                    clickable = { showQuestionsDialog = true }
+                ) {
+                    Text(
+                        "${uiState.maxQuestions}",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 15.sp
+                    )
                 }
             }
         }
     }
 
-    // ---------------- Palette Dialog ----------------
-    if (showPaletteDialog) {
-        Dialog(onDismissRequest = { showPaletteDialog = false }) {
-            Surface(
-                tonalElevation = 8.dp,
-                shape = MaterialTheme.shapes.medium,
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Text("Select Color Palette", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    Spacer(modifier = Modifier.height(12.dp))
+    // ---------------- Dialogs ----------------
+    if (showLangDialog) {
+        SelectionDialog(
+            title = "Select Language",
+            options = languages,
+            selectedOption = uiState.language,
+            onOptionSelected = {
+                viewModel.updateLanguage(it)
+                showLangDialog = false
+            },
+            onDismiss = { showLangDialog = false }
+        )
+    }
 
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(5),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    if (showQuestionsDialog) {
+        SelectionDialog(
+            title = "Select Max Questions",
+            options = questionOptions.map { "$it" },
+            selectedOption = uiState.maxQuestions.toString(),
+            onOptionSelected = {
+                viewModel.updateMaxQuestions(it.toInt())
+                showQuestionsDialog = false
+            },
+            onDismiss = { showQuestionsDialog = false }
+        )
+    }
+
+    if (showPaletteDialog) {
+        PaletteDialog(
+            currentPalette = uiState.selectedPalette,
+            onPaletteSelected = {
+                viewModel.updatePalette(it)
+                showPaletteDialog = false
+            },
+            onDismiss = { showPaletteDialog = false }
+        )
+    }
+}
+
+/* -----------------------------------------------------------
+   🎛 Reusable Selection Dialog (Language / Max Questions)
+----------------------------------------------------------- */
+@Composable
+fun SelectionDialog(
+    title: String,
+    options: List<String>,
+    selectedOption: String,
+    onOptionSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = MaterialTheme.shapes.medium,
+            tonalElevation = 8.dp,
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(16.dp))
+
+                options.forEach { option ->
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(max = 250.dp)
-                    ) {
-                        items(AllPalettes) { palette ->
-                            val colors = listOf(
-                                palette.lightColors.primary,
-                                palette.lightColors.secondary,
-                                palette.lightColors.tertiary
-                            )
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                colors.forEach { color ->
-                                    Box(
-                                        modifier = Modifier
-                                            .size(36.dp)
-                                            .clip(MaterialTheme.shapes.small)
-                                            .background(color)
-                                            .border(
-                                                width = 2.dp,
-                                                color = MaterialTheme.colorScheme.primary,
-                                                shape = MaterialTheme.shapes.small
-                                            )
-                                            .clickable {
-                                                viewModel.updatePalette(palette.name)
-                                                showPaletteDialog = false
-                                            }
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                }
-                                Text(palette.name, fontSize = 12.sp)
+                            .clip(MaterialTheme.shapes.small)
+                            .clickable {
+                                onOptionSelected(option)
                             }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = { showPaletteDialog = false },
-                        modifier = Modifier.align(Alignment.End)
+                            .padding(vertical = 10.dp, horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Close")
+                        RadioButton(
+                            selected = option == selectedOption,
+                            onClick = { onOptionSelected(option) }
+                        )
+                        Text(
+                            option,
+                            modifier = Modifier.padding(start = 8.dp),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                     }
+                }
+
+                Spacer(Modifier.height(12.dp))
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Close")
                 }
             }
         }
     }
 }
 
+/* -----------------------------------------------------------
+   🎨 Palette Dialog
+----------------------------------------------------------- */
+@Composable
+fun PaletteDialog(
+    currentPalette: String,
+    onPaletteSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = MaterialTheme.shapes.medium,
+            tonalElevation = 8.dp,
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Text("Select Color Palette", style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(16.dp))
+
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(4),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 280.dp)
+                ) {
+                    items(AllPalettes) { palette ->
+                        val isSelected = palette.name == currentPalette
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(MaterialTheme.shapes.small)
+                                    .background(palette.lightColors.primary)
+                                    .border(
+                                        width = if (isSelected) 3.dp else 1.dp,
+                                        color = if (isSelected)
+                                            MaterialTheme.colorScheme.primary
+                                        else
+                                            MaterialTheme.colorScheme.outlineVariant,
+                                        shape = MaterialTheme.shapes.small
+                                    )
+                                    .clickable {
+                                        onPaletteSelected(palette.name)
+                                    }
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                palette.name,
+                                fontSize = 12.sp,
+                                color = if (isSelected)
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Close")
+                }
+            }
+        }
+    }
+}
+
+/* -----------------------------------------------------------
+   🧱 UI Helpers
+----------------------------------------------------------- */
 @Composable
 private fun SectionHeader(title: String) {
     Text(
         text = title,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 15.sp,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp, start = 2.dp)
+        fontSize = 15.sp,
+        style = MaterialTheme.typography.titleSmall,
+        modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
     )
 }
 
@@ -294,18 +354,19 @@ private fun SettingCard(
     icon: ImageVector,
     title: String,
     description: String,
+    clickable: (() -> Unit)? = null,
     action: @Composable () -> Unit
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 2.dp,
         shape = MaterialTheme.shapes.medium,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = clickable != null) { clickable?.invoke() }
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -316,9 +377,9 @@ private fun SettingCard(
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(26.dp)
                 )
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(Modifier.width(12.dp))
                 Column {
-                    Text(title, fontWeight = FontWeight.Medium, fontSize = 15.sp)
+                    Text(title, fontSize = 15.sp, style = MaterialTheme.typography.titleMedium)
                     Text(
                         description,
                         fontSize = 13.sp,
@@ -330,5 +391,3 @@ private fun SettingCard(
         }
     }
 }
-
-

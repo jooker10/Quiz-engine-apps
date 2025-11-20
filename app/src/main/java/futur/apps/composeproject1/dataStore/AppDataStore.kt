@@ -44,6 +44,13 @@ class AppDataStore @Inject constructor(
         // Global Mode
         val QUIZ_MODE_KEY = stringPreferencesKey("quiz_mode")
         val USE_USER_QUESTIONS_KEY = booleanPreferencesKey("use_user_questions")
+
+         val LAST_OPEN_KEY = longPreferencesKey("last_open_timestamp")
+
+         val REMINDER_SENT_KEY = booleanPreferencesKey("reminder_sent")
+        val SHOW_REMINDER_KEY = booleanPreferencesKey("show_reminder_notifications")
+
+
     }
 
     // ------------------------------------------------------------
@@ -120,6 +127,18 @@ class AppDataStore @Inject constructor(
             }
         }
 
+    val lastOpenTime: Flow<Long> = context.dataStore.data.map {
+        it[LAST_OPEN_KEY] ?: 0L
+    }
+    val reminderSent: Flow<Boolean> = context.dataStore.data.map {
+        it[REMINDER_SENT_KEY] ?: false
+    }
+    val showReminderNotifications = context.dataStore.data.map {
+        it[SHOW_REMINDER_KEY] ?: true
+    }
+
+
+
     // ------------------------------------------------------------
     // 💾 Save / Update Methods
     // ------------------------------------------------------------
@@ -176,4 +195,24 @@ class AppDataStore @Inject constructor(
         it[QUIZ_MODE_KEY] = mode.name
         it.remove(USE_USER_QUESTIONS_KEY)
     }
+
+    // AppDataStore: add this key
+
+    suspend fun updateLastOpenTime() {
+        context.dataStore.edit { it[LAST_OPEN_KEY] = System.currentTimeMillis() }
+    }
+    suspend fun setReminderSent(value: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[REMINDER_SENT_KEY] = value
+        }
+    }
+
+    suspend fun setShowReminderNotifications(enabled: Boolean) {
+        context.dataStore.edit { it[SHOW_REMINDER_KEY] = enabled }
+    }
+
+
+
+
+
 }

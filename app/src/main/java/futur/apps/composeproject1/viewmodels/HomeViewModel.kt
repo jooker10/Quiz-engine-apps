@@ -79,6 +79,13 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun onHomeOpened() {
+        viewModelScope.launch {
+            appDataStore.updateLastOpenTime()
+        }
+    }
+
+
     // ------------------------------------------------------------
     // 🎯 Update points per category
     // ------------------------------------------------------------

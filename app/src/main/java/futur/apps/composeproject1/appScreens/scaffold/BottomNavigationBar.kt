@@ -59,8 +59,8 @@ fun BottomNavigationBar(navController: NavHostController) {
             label = "Top 10",
             navigateRoute = Screen.Leaderboard.route,
             isSelected = { dest -> dest?.hierarchy?.any { it.route == Screen.Leaderboard.route } == true },
-            iconUnselected = R.drawable.outline_menu,
-            iconSelected = R.drawable.outline_menu
+            iconUnselected = R.drawable.ic_top10_outline,
+            iconSelected = R.drawable.ic_top10_filled
         ),
         NavItem(
             label = "Settings",

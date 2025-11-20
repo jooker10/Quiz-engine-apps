@@ -39,6 +39,7 @@ import futur.apps.composeproject1.viewmodels.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.datastore.dataStore
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import futur.apps.composeproject1.quiz.core.AppConfig
 import futur.apps.composeproject1.quiz.ui.components.QuizModeSelectorRow
@@ -49,7 +50,7 @@ fun QuizHomeScreen(
     homeViewModel: HomeViewModel = hiltViewModel(),
     quizViewModel: QuizViewModel = hiltViewModel(),
     userQuizViewModel: UserQuizViewModel = hiltViewModel(),
-    authViewModel: AuthViewModel = viewModel()
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
     val homeUiState by homeViewModel.uiState.collectAsState()
     val currentQuizMode by quizViewModel.mode.collectAsState()
@@ -79,15 +80,39 @@ fun QuizHomeScreen(
             onModeSelected = { mode -> quizViewModel.saveGlobalQuizMode(mode) },
             userCategories = userCategories
         )
-    }
 
-    // ✅ Firestore sync after UI is ready
-    LaunchedEffect(totalPoints) {
-        if (AppConfig.USE_FIRESTORE_SYNC && userProfile != null && totalPoints > 0) {
-            authViewModel.updatePointsInFirestore(totalPoints)
+        // 🔄 Local spinner (only covers Home)
+        if (homeUiState.isLoading) {
+            ScreenLoadingIndicator()
         }
     }
+
+    var lastSynced by remember { mutableStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        homeViewModel.onHomeOpened()
+    }
+
+
+    LaunchedEffect(homeUiState.defaultTotalPoints, userProfile?.uid) {
+        val points = homeUiState.defaultTotalPoints
+
+        if (!AppConfig.USE_FIRESTORE_SYNC) return@LaunchedEffect
+        if (userProfile == null) return@LaunchedEffect
+        if (points <= 0) return@LaunchedEffect
+
+        // ⚡ هذا هو المكان الذي نستخدم فيه lastSynced
+        if (points == lastSynced) return@LaunchedEffect
+
+        lastSynced = points
+
+        authViewModel.updateDefaultPointsInFirestore(points)
+    }
+
+
+
 }
+
 
 
 
